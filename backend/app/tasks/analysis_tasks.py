@@ -32,12 +32,23 @@ def get_task_db_session():
     Returns:
         async_sessionmaker: Session factory for creating sessions
     """
-    engine = create_async_engine(
-        settings.DATABASE_URL,
-        echo=settings.DEBUG,
-        pool_size=5,
-        max_overflow=10,
-    )
+    # Check if using SQLite (no connection pooling needed)
+    is_sqlite = "sqlite" in settings.DATABASE_URL
+    
+    if is_sqlite:
+        engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=settings.DEBUG,
+            connect_args={"check_same_thread": False},
+        )
+    else:
+        engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=settings.DEBUG,
+            pool_size=5,
+            max_overflow=10,
+        )
+    
     return async_sessionmaker(
         bind=engine,
         class_=AsyncSession,
@@ -95,13 +106,20 @@ def run_full_analysis(analysis_id: str) -> Dict[str, Any]:
         dict: Analysis results summary
     
     Note:
-        This function is synchronous but runs async code internally.
-        This is required for Celery compatibility.
+        This function handles both sync (Celery) and async (FastAPI) contexts.
     """
-    # Run the async analysis in an event loop
-    return asyncio.get_event_loop().run_until_complete(
-        _run_analysis_async(analysis_id)
-    )
+    # Try to get existing event loop (when called from async context like FastAPI)
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an async context - create a task and run it
+        # This happens when called from FastAPI background tasks
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            future = pool.submit(asyncio.run, _run_analysis_async(analysis_id))
+            return future.result()
+    except RuntimeError:
+        # No running loop - we're in a sync context (Celery)
+        return asyncio.run(_run_analysis_async(analysis_id))
 
 
 async def _run_analysis_async(analysis_id: str) -> Dict[str, Any]:

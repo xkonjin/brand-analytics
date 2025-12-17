@@ -5,7 +5,7 @@
 # It provides utilities for database connection management.
 # =============================================================================
 
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     AsyncEngine,
@@ -35,10 +35,10 @@ class Base(DeclarativeBase):
 # Async Engine Configuration
 # =============================================================================
 # Global engine instance - initialized on startup
-_engine: AsyncEngine | None = None
+_engine: Optional[AsyncEngine] = None
 
 # Session factory - initialized on startup
-_async_session_factory: async_sessionmaker[AsyncSession] | None = None
+_async_session_factory: Optional[async_sessionmaker] = None
 
 
 async def init_db() -> None:
@@ -51,15 +51,27 @@ async def init_db() -> None:
     """
     global _engine, _async_session_factory
     
-    # Create async engine with connection pool settings
-    _engine = create_async_engine(
-        settings.DATABASE_URL,
-        echo=settings.DEBUG,  # Log SQL queries in debug mode
-        pool_size=settings.DATABASE_POOL_SIZE,
-        max_overflow=settings.DATABASE_MAX_OVERFLOW,
-        pool_pre_ping=True,  # Verify connections before use
-        pool_recycle=3600,   # Recycle connections after 1 hour
-    )
+    # Determine engine options based on database type
+    # SQLite doesn't support connection pooling the same way PostgreSQL does
+    is_sqlite = "sqlite" in settings.DATABASE_URL
+    
+    if is_sqlite:
+        # SQLite configuration - simpler, no pooling needed
+        _engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=settings.DEBUG,  # Log SQL queries in debug mode
+            connect_args={"check_same_thread": False},  # Required for SQLite
+        )
+    else:
+        # PostgreSQL configuration - with connection pooling
+        _engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=settings.DEBUG,  # Log SQL queries in debug mode
+            pool_size=settings.DATABASE_POOL_SIZE,
+            max_overflow=settings.DATABASE_MAX_OVERFLOW,
+            pool_pre_ping=True,  # Verify connections before use
+            pool_recycle=3600,   # Recycle connections after 1 hour
+        )
     
     # Create session factory for creating database sessions
     _async_session_factory = async_sessionmaker(

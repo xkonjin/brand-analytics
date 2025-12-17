@@ -505,9 +505,11 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
         if readability.get("is_jargon_heavy"):
             recommendations.append(Recommendation(
                 title="Reduce Jargon and Buzzwords",
-                description="Replace industry jargon with plain language. Instead of 'leveraging '
-                           "synergies', say 'working together'. Clear language builds trust "
-                           "and converts better.",
+                description=(
+                    "Replace industry jargon with plain language. Instead of 'leveraging "
+                    "synergies', say 'working together'. Clear language builds trust "
+                    "and converts better."
+                ),
                 priority=SeverityLevel.MEDIUM,
                 category="brand_messaging",
                 impact="medium",

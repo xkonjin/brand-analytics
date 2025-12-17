@@ -45,8 +45,10 @@ export default function AnalyzePage({ params }: { params: { id: string } }) {
       if (!res.ok) throw new Error('Failed to fetch progress')
       return res.json()
     },
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Stop polling when completed or failed
+      // In React Query v5, the callback receives the query state
+      const data = query.state.data;
       if (data?.status === 'completed' || data?.status === 'failed') {
         return false
       }

@@ -19,11 +19,37 @@ from sqlalchemy import (
     JSON,
     Enum as SQLEnum,
     Index,
+    TypeDecorator,
 )
-from sqlalchemy.dialects.postgresql import UUID
 import enum
 
 from app.database import Base
+from app.config import settings
+
+
+# =============================================================================
+# Cross-Database UUID Type
+# =============================================================================
+# SQLite doesn't support UUID natively. This custom type stores UUIDs as
+# strings for SQLite and uses native UUID for PostgreSQL.
+# =============================================================================
+class GUID(TypeDecorator):
+    """
+    Platform-independent GUID type.
+    Uses String(36) for SQLite, stores as UUID string.
+    """
+    impl = String(36)
+    cache_ok = True
+    
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return str(value)
+        return value
+    
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            return uuid.UUID(value)
+        return value
 
 
 class AnalysisStatusEnum(str, enum.Enum):
@@ -70,7 +96,7 @@ class Analysis(Base):
     # Primary Key
     # -------------------------------------------------------------------------
     id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4,
         comment="Unique identifier for the analysis"
@@ -221,7 +247,7 @@ class AnalysisCache(Base):
     __tablename__ = "analysis_cache"
     
     id = Column(
-        UUID(as_uuid=True),
+        GUID(),
         primary_key=True,
         default=uuid.uuid4,
     )
