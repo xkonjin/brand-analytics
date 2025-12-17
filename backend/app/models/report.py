@@ -493,6 +493,7 @@ class ScoreCard(BaseModel):
     Overall Scorecard & Recommendations Summary.
     
     Aggregates all module scores and provides a final assessment.
+    Uses A+ to F grading scale based on marketing industry standards.
     """
     overall_score: float = Field(..., ge=0, le=100)
     
@@ -502,14 +503,23 @@ class ScoreCard(BaseModel):
         description="Scores for each module (0-100)"
     )
     
-    # Score Interpretation
-    grade: str = Field(..., description="Letter grade: A, B, C, D, F")
+    # Score Interpretation (A+ to F scale)
+    grade: str = Field(
+        ..., 
+        description="Letter grade: A+, A, B, C, D, F based on industry standards"
+    )
     summary: str = Field(..., description="One-paragraph overall assessment")
     
     # Key Insights
     strengths: List[str] = Field(default_factory=list)
     weaknesses: List[str] = Field(default_factory=list)
     opportunities: List[str] = Field(default_factory=list)
+    
+    # Benchmark Comparison (compares scores to industry averages)
+    benchmark_comparison: Dict[str, Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Comparison of each module score against industry benchmarks"
+    )
     
     # Top Recommendations (prioritized from all modules)
     top_recommendations: List[Recommendation] = Field(default_factory=list)
