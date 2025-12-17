@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     # Apify for social media scraping
     APIFY_API_TOKEN: Optional[str] = None
     
+    # Twitter/X API v2 (get from developer.twitter.com)
+    TWITTER_BEARER_TOKEN: Optional[str] = None
+    
     # Clearbit for company logos (free tier)
     CLEARBIT_API_KEY: Optional[str] = None
     

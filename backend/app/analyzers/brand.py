@@ -6,7 +6,6 @@
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
-import httpx
 import textstat
 
 from app.config import settings
@@ -15,6 +14,7 @@ from app.models.report import (
     Finding, Recommendation, SeverityLevel,
     BrandArchetype,
 )
+from app.services.openai_service import OpenAIService
 
 
 class BrandMessagingAnalyzer(BaseAnalyzer):
@@ -194,7 +194,12 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
     
     async def _analyze_with_gpt(self, content: str) -> Dict[str, Any]:
         """
-        Analyze brand messaging using GPT-4.
+        Analyze brand messaging using the enhanced OpenAI service.
+        
+        Uses the OpenAIService for:
+        - Brand archetype identification
+        - Tone analysis
+        - Value proposition clarity
         
         Args:
             content: Website text content
@@ -202,58 +207,34 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
         Returns:
             dict: GPT analysis results
         """
-        prompt = f"""Analyze this brand's website content and identify:
-
-1. Primary brand archetype (from the 12 Jungian archetypes: Hero, Outlaw, Magician, Everyman, Lover, Jester, Caregiver, Ruler, Creator, Innocent, Sage, Explorer)
-2. Secondary archetype if applicable
-3. Confidence level (0-1)
-4. Brand voice characteristics (3-5 keywords)
-5. Tone description (1-2 sentences)
-6. Key messaging themes (3-5)
-7. Emotional hooks used
-8. Tone consistency rating (1-10)
-
-Respond in JSON format:
-{{
-    "archetype": {{
-        "primary": "archetype_name",
-        "secondary": "archetype_name or null",
-        "confidence": 0.8,
-        "description": "Why this archetype fits"
-    }},
-    "tone_keywords": ["keyword1", "keyword2"],
-    "tone_description": "Description of voice/tone",
-    "themes": ["theme1", "theme2"],
-    "emotional_hooks": ["hook1", "hook2"],
-    "tone_consistency": 7
-}}
-
-Website content:
-{content[:4000]}"""
-
         try:
-            async with httpx.AsyncClient(timeout=60) as client:
-                response = await client.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": settings.OPENAI_MODEL,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.3,
-                        "response_format": {"type": "json_object"},
-                    },
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    content = result["choices"][0]["message"]["content"]
-                    import json
-                    return json.loads(content)
-                else:
-                    return self._analyze_with_heuristics(content)
+            # Initialize OpenAI service
+            openai_service = OpenAIService()
+            
+            # Get brand name for context
+            brand_name = self.scraped_data.get("brand_name") or self.domain
+            
+            # Run archetype and tone analysis in parallel
+            archetype_result = await openai_service.analyze_archetype(content, brand_name)
+            tone_result = await openai_service.analyze_tone(content)
+            
+            # Build result from service responses
+            return {
+                "archetype": {
+                    "primary": archetype_result.primary_archetype,
+                    "secondary": archetype_result.secondary_archetype,
+                    "confidence": archetype_result.confidence,
+                    "description": archetype_result.reasoning or archetype_result.archetype_description,
+                    "example_brands": archetype_result.example_brands,
+                },
+                "tone_keywords": tone_result.tone_descriptors,
+                "tone_description": f"{tone_result.primary_tone} tone. {tone_result.emotional_appeal}" if tone_result.emotional_appeal else tone_result.primary_tone,
+                "themes": [],  # Will be populated by content analysis if available
+                "emotional_hooks": [tone_result.emotional_appeal] if tone_result.emotional_appeal else [],
+                "tone_consistency": int(tone_result.consistency_score * 10),
+                "formality_level": tone_result.formality_level,
+                "tone_issues": tone_result.issues,
+            }
                     
         except Exception as e:
             print(f"GPT analysis failed: {e}")

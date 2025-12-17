@@ -15,6 +15,7 @@ from app.models.report import (
     Finding, Recommendation, SeverityLevel,
     SocialPlatformMetrics,
 )
+from app.services.twitter_service import TwitterService, extract_twitter_username
 
 
 class SocialMediaAnalyzer(BaseAnalyzer):
@@ -142,8 +143,8 @@ class SocialMediaAnalyzer(BaseAnalyzer):
         """
         Analyze a specific social media platform.
         
-        For MVP, we use estimated/mock data. In production, this would
-        integrate with Apify or platform APIs.
+        Uses real APIs where available (Twitter), falls back to
+        estimated data for other platforms.
         
         Args:
             platform: Platform name (twitter, linkedin, etc.)
@@ -152,20 +153,11 @@ class SocialMediaAnalyzer(BaseAnalyzer):
         Returns:
             SocialPlatformMetrics: Platform metrics
         """
-        # In production, this would call Apify or scrape the platform
-        # For now, return estimated metrics based on platform type
+        # Twitter/X - Use real API if configured
+        if platform == "twitter" or platform == "x":
+            return await self._analyze_twitter(url)
         
-        if platform == "twitter":
-            return SocialPlatformMetrics(
-                platform="twitter",
-                url=url,
-                followers=self._estimate_followers(platform),
-                posts_last_30_days=self._estimate_posts(),
-                engagement_rate=0.08,  # Slightly above average
-                avg_likes=15,
-                avg_comments=2,
-                avg_shares=3,
-            )
+        # LinkedIn - Use estimated data (API requires OAuth)
         elif platform == "linkedin":
             return SocialPlatformMetrics(
                 platform="linkedin",
@@ -174,6 +166,8 @@ class SocialMediaAnalyzer(BaseAnalyzer):
                 posts_last_30_days=4,
                 engagement_rate=1.5,
             )
+        
+        # Instagram - Use estimated data
         elif platform == "instagram":
             return SocialPlatformMetrics(
                 platform="instagram",
@@ -182,11 +176,97 @@ class SocialMediaAnalyzer(BaseAnalyzer):
                 posts_last_30_days=8,
                 engagement_rate=2.0,
             )
+        
+        # Other platforms - Basic data
         else:
             return SocialPlatformMetrics(
                 platform=platform,
                 url=url,
                 followers=self._estimate_followers(platform),
+            )
+    
+    async def _analyze_twitter(self, url: str) -> Optional[SocialPlatformMetrics]:
+        """
+        Analyze Twitter/X account using the Twitter API v2.
+        
+        Uses real API data if TWITTER_BEARER_TOKEN is configured,
+        otherwise falls back to estimated data.
+        
+        Args:
+            url: Twitter profile URL
+        
+        Returns:
+            SocialPlatformMetrics: Twitter metrics
+        """
+        # Extract username from URL
+        username = extract_twitter_username(url)
+        if not username:
+            return SocialPlatformMetrics(
+                platform="twitter",
+                url=url,
+                followers=self._estimate_followers("twitter"),
+            )
+        
+        # Use Twitter API service
+        twitter_service = TwitterService()
+        analysis = await twitter_service.analyze_account(username)
+        
+        if analysis.success and analysis.user:
+            # Calculate engagement rate as percentage
+            # (avg engagement / followers) * 100
+            engagement_rate = analysis.engagement_rate
+            
+            # Determine last post date
+            last_post_date = None
+            if analysis.last_post_date:
+                last_post_date = analysis.last_post_date.isoformat()
+            
+            # Store raw analysis data for content analyzer
+            self._raw_data["twitter_analysis"] = {
+                "username": username,
+                "user": {
+                    "name": analysis.user.name,
+                    "description": analysis.user.description,
+                    "verified": analysis.user.verified,
+                    "created_at": analysis.user.created_at.isoformat() if analysis.user.created_at else None,
+                },
+                "tweets": [
+                    {
+                        "text": t.text,
+                        "created_at": t.created_at.isoformat(),
+                        "like_count": t.like_count,
+                        "retweet_count": t.retweet_count,
+                        "reply_count": t.reply_count,
+                    }
+                    for t in analysis.recent_tweets[:10]
+                ],
+                "engagement_rate": engagement_rate,
+                "posts_per_week": analysis.posts_per_week,
+            }
+            
+            return SocialPlatformMetrics(
+                platform="twitter",
+                url=url,
+                handle=f"@{username}",
+                followers=analysis.user.followers_count,
+                following=analysis.user.following_count,
+                posts_last_30_days=int(analysis.posts_per_week * 4.3),  # Approx monthly
+                engagement_rate=engagement_rate,
+                avg_likes=analysis.avg_likes,
+                avg_comments=analysis.avg_replies,
+                avg_shares=analysis.avg_retweets,
+                last_post_date=last_post_date,
+                is_verified=analysis.user.verified,
+            )
+        else:
+            # Fall back to estimated data
+            return SocialPlatformMetrics(
+                platform="twitter",
+                url=url,
+                handle=f"@{username}" if username else None,
+                followers=self._estimate_followers("twitter"),
+                posts_last_30_days=self._estimate_posts(),
+                engagement_rate=0.08,
             )
     
     def _estimate_followers(self, platform: str) -> int:
