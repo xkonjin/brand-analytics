@@ -1,0 +1,84 @@
+# =============================================================================
+# Brand Analytics Tool - Backend Dependencies
+# =============================================================================
+# This file contains all Python dependencies required for the FastAPI backend
+# Install with: pip install -r requirements.txt
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Web Framework & Server
+# -----------------------------------------------------------------------------
+fastapi>=0.109.0          # Modern async web framework for building APIs
+uvicorn[standard]>=0.27.0 # ASGI server for running FastAPI
+python-multipart>=0.0.6   # Required for form data handling
+
+# -----------------------------------------------------------------------------
+# Database & ORM
+# -----------------------------------------------------------------------------
+sqlalchemy>=2.0.0         # SQL toolkit and ORM
+asyncpg>=0.29.0           # Async PostgreSQL driver
+alembic>=1.13.0           # Database migrations
+psycopg2-binary>=2.9.9    # PostgreSQL adapter (sync, for migrations)
+
+# -----------------------------------------------------------------------------
+# Task Queue & Caching
+# -----------------------------------------------------------------------------
+celery[redis]>=5.3.0      # Distributed task queue
+redis>=5.0.0              # Redis client for caching and Celery broker
+flower>=2.0.0             # Celery monitoring tool (optional)
+
+# -----------------------------------------------------------------------------
+# HTTP Client & Web Scraping
+# -----------------------------------------------------------------------------
+httpx>=0.26.0             # Async HTTP client for API calls
+playwright>=1.41.0        # Browser automation for JS-rendered pages
+beautifulsoup4>=4.12.0    # HTML parsing
+lxml>=5.1.0               # Fast XML/HTML parser
+feedparser>=6.0.0         # RSS feed parsing for blog content
+
+# -----------------------------------------------------------------------------
+# AI & NLP
+# -----------------------------------------------------------------------------
+openai>=1.10.0            # OpenAI GPT-4 API client
+textstat>=0.7.3           # Readability metrics (Flesch-Kincaid, etc.)
+nltk>=3.8.0               # Natural language toolkit for sentiment
+textblob>=0.17.0          # Simple NLP library for sentiment analysis
+
+# -----------------------------------------------------------------------------
+# PDF Generation & Reporting
+# -----------------------------------------------------------------------------
+weasyprint>=60.0          # HTML to PDF converter
+jinja2>=3.1.0             # Template engine for report generation
+matplotlib>=3.8.0         # Charts and visualizations
+plotly>=5.18.0            # Interactive charts (optional)
+
+# -----------------------------------------------------------------------------
+# Data Validation & Serialization
+# -----------------------------------------------------------------------------
+pydantic>=2.5.0           # Data validation using Python type hints
+pydantic-settings>=2.1.0  # Settings management with Pydantic
+python-dotenv>=1.0.0      # Load environment variables from .env
+
+# -----------------------------------------------------------------------------
+# Utilities
+# -----------------------------------------------------------------------------
+python-slugify>=8.0.0     # URL/slug generation
+uuid6>=2024.1.12          # UUID generation
+tenacity>=8.2.0           # Retry logic for flaky operations
+aiofiles>=23.2.0          # Async file operations
+
+# -----------------------------------------------------------------------------
+# Testing (Development)
+# -----------------------------------------------------------------------------
+pytest>=7.4.0             # Testing framework
+pytest-asyncio>=0.23.0    # Async test support
+pytest-cov>=4.1.0         # Coverage reporting
+httpx>=0.26.0             # Already included, used for test client
+
+# -----------------------------------------------------------------------------
+# Code Quality (Development)
+# -----------------------------------------------------------------------------
+black>=24.1.0             # Code formatter
+ruff>=0.1.0               # Fast Python linter
+mypy>=1.8.0               # Static type checker
+

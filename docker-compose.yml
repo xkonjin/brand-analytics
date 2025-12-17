@@ -1,0 +1,178 @@
+# =============================================================================
+# Docker Compose Configuration for Brand Analytics Tool
+# =============================================================================
+# This file defines all services needed to run the application locally.
+# 
+# Usage:
+#   Start all services:     docker-compose up -d
+#   View logs:             docker-compose logs -f
+#   Stop all services:     docker-compose down
+#   Reset everything:      docker-compose down -v
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  # Primary database for storing analyses and reports
+  postgres:
+    image: postgres:16-alpine
+    container_name: brand_analytics_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: brand_analytics
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persist database data
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: Initialize with SQL scripts
+      # - ./backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis Cache & Message Broker
+  # ---------------------------------------------------------------------------
+  # Used for caching scraped data and as Celery message broker
+  redis:
+    image: redis:7-alpine
+    container_name: brand_analytics_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      # Persist Redis data (optional for development)
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # FastAPI Backend
+  # ---------------------------------------------------------------------------
+  # Main API server handling analysis requests
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: brand_analytics_backend
+    environment:
+      # Database connection
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/brand_analytics
+      # Redis connection
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      # Development settings
+      DEBUG: "true"
+      ENVIRONMENT: development
+      # API keys (set these in .env file)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GOOGLE_SEARCH_ENGINE_ID: ${GOOGLE_SEARCH_ENGINE_ID:-}
+      APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source code for hot reloading in development
+      - ./backend/app:/app/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker
+  # ---------------------------------------------------------------------------
+  # Background task worker for running analyses
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: brand_analytics_celery
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/brand_analytics
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      DEBUG: "true"
+      ENVIRONMENT: development
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GOOGLE_SEARCH_ENGINE_ID: ${GOOGLE_SEARCH_ENGINE_ID:-}
+      APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
+    volumes:
+      - ./backend/app:/app/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Celery Flower (Monitoring Dashboard)
+  # ---------------------------------------------------------------------------
+  # Optional: Web UI for monitoring Celery tasks
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: brand_analytics_flower
+    command: celery -A app.tasks.celery_app flower --port=5555
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery_worker
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Next.js Frontend (Optional - can also run locally)
+  # ---------------------------------------------------------------------------
+  # Uncomment to run frontend in Docker
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: brand_analytics_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     NEXT_PUBLIC_API_URL: http://localhost:8000
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
+
+# =============================================================================
+# Volumes
+# =============================================================================
+# Named volumes for data persistence
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
