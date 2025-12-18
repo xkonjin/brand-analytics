@@ -1,7 +1,26 @@
 # =============================================================================
-# Content Analysis Module
+# EXPLAINER: Content Analysis Module
 # =============================================================================
-# Analyzes recent social posts and content strategy.
+#
+# WHAT IS THIS?
+# This module evaluates the brand's content strategy (blogs, social posts).
+#
+# WHY DO WE NEED IT?
+# 1. **Balance**: Too much "Buy My Stuff" (Promotional) kills engagement.
+# 2. **Topics**: Are you talking about things your audience cares about?
+# 3. **Consistency**: Is the content feed alive?
+#
+# HOW IT WORKS:
+# 1. **Topic Modeling**: Extracts keywords/themes from website text.
+# 2. **Post Analysis**: (Mocked for now) Categorizes social posts into:
+#    - Promotional (Sales)
+#    - Educational (Value)
+#    - Community (Engagement)
+# 3. **The 3-2-1 Rule**: We check if the mix aligns with best practices.
+#
+# SCORING LOGIC:
+# - Mix Quality: Is it balanced?
+# - Topic Relevance: Do topics match the industry?
 # =============================================================================
 
 from typing import Dict, Any, List
@@ -26,6 +45,7 @@ class ContentAnalyzer(BaseAnalyzer):
             self._raw_data["web"] = web_content
             
             # Mock social post analysis (would use API in production)
+            # This is a placeholder until we have full social history access
             posts = self._mock_post_analysis()
             self._raw_data["posts"] = posts
             
@@ -129,4 +149,3 @@ class ContentAnalyzer(BaseAnalyzer):
                 effort="medium",
             ),
         ]
-

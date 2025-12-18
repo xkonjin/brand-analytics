@@ -43,7 +43,7 @@ export function ReportHeader({
   analysisId,
   url,
   generatedAt,
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || '',
+  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   className = '',
 }: ReportHeaderProps) {
   const router = useRouter();
@@ -177,4 +177,3 @@ export function ReportHeader({
 }
 
 export default ReportHeader;
-

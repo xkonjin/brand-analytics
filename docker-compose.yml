@@ -29,8 +29,6 @@ services:
     volumes:
       # Persist database data
       - postgres_data:/var/lib/postgresql/data
-      # Optional: Initialize with SQL scripts
-      # - ./backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -62,6 +60,7 @@ services:
   # FastAPI Backend
   # ---------------------------------------------------------------------------
   # Main API server handling analysis requests
+  # NOTE: Container runs on port 8080, mapped to host port 8000
   backend:
     build:
       context: ./backend
@@ -77,13 +76,15 @@ services:
       # Development settings
       DEBUG: "true"
       ENVIRONMENT: development
-      # API keys (set these in .env file)
+      # API keys (set these in .env file in project root)
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       GOOGLE_SEARCH_ENGINE_ID: ${GOOGLE_SEARCH_ENGINE_ID:-}
+      TWITTER_BEARER_TOKEN: ${TWITTER_BEARER_TOKEN:-}
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
     ports:
-      - "8000:8000"
+      # Map host port 8000 to container port 8080 (where uvicorn runs)
+      - "8000:8080"
     volumes:
       # Mount source code for hot reloading in development
       - ./backend/app:/app/app
@@ -93,7 +94,8 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      # Health check uses internal container port 8080
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -119,6 +121,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       GOOGLE_SEARCH_ENGINE_ID: ${GOOGLE_SEARCH_ENGINE_ID:-}
+      TWITTER_BEARER_TOKEN: ${TWITTER_BEARER_TOKEN:-}
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
     volumes:
       - ./backend/app:/app/app
@@ -150,21 +153,21 @@ services:
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
-  # Next.js Frontend (Optional - can also run locally)
+  # Next.js Frontend
   # ---------------------------------------------------------------------------
-  # Uncomment to run frontend in Docker
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: brand_analytics_frontend
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     NEXT_PUBLIC_API_URL: http://localhost:8000
-  #   depends_on:
-  #     - backend
-  #   restart: unless-stopped
+  # Frontend application - uncomment to run in Docker
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: brand_analytics_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 # =============================================================================
 # Volumes
@@ -175,4 +178,3 @@ volumes:
     driver: local
   redis_data:
     driver: local
-

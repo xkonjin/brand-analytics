@@ -1,8 +1,26 @@
 # =============================================================================
-# SEO Performance Analyzer
+# EXPLAINER: SEO Performance Analyzer
 # =============================================================================
-# This module analyzes SEO health including PageSpeed, meta tags, indexing,
-# and technical SEO factors. It uses Google PageSpeed Insights API.
+#
+# WHAT IS THIS?
+# This module audits the website's technical health and search engine visibility.
+# It acts as a "Technical SEO Specialist".
+#
+# WHY DO WE NEED IT?
+# 1. **Traffic**: 53% of traffic comes from organic search. If you don't rank, you don't exist.
+# 2. **Conversion**: Slow sites (poor LCP) kill conversion rates.
+# 3. **Trust**: Missing SSL or meta tags looks unprofessional to both users and bots.
+#
+# HOW IT WORKS:
+# 1. **PageSpeed**: Calls Google API to get Core Web Vitals (LCP, CLS, etc.).
+# 2. **Meta Analysis**: Checks title tags (length, keywords) and descriptions.
+# 3. **Technical Checks**: SSL, Schema Markup, H1 structure.
+#
+# SCORING LOGIC (Total 100):
+# - Performance (30%): Speed is king.
+# - Meta Tags (25%): Click-through rate optimization.
+# - Mobile (20%): Mobile-first indexing is the standard.
+# - Technical (25%): The plumbing must work (SSL, Schema).
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
@@ -19,18 +37,6 @@ from app.models.report import (
 class SEOAnalyzer(BaseAnalyzer):
     """
     Analyzes SEO Performance for a website.
-    
-    This analyzer evaluates:
-    - Page speed and Core Web Vitals (via PageSpeed Insights API)
-    - Meta tag quality (title, description, OG tags)
-    - Technical SEO factors (SSL, mobile-friendliness, schema markup)
-    - Site structure and indexability indicators
-    
-    Score Calculation:
-    - Performance (PageSpeed): 30%
-    - Meta Tags: 25%
-    - Mobile-Friendliness: 20%
-    - Technical SEO: 25%
     """
     
     MODULE_NAME = "seo"
@@ -40,12 +46,6 @@ class SEOAnalyzer(BaseAnalyzer):
         """
         Run the SEO analysis.
         
-        Steps:
-        1. Call PageSpeed Insights API
-        2. Analyze meta tags from scraped data
-        3. Check technical SEO factors
-        4. Calculate score and generate insights
-        
         Returns:
             AnalyzerResult: SEO analysis results
         """
@@ -54,30 +54,33 @@ class SEOAnalyzer(BaseAnalyzer):
             self._raw_data = {}
             
             # ----------------------------------------------------------------
-            # Get PageSpeed Insights data
+            # 1. Get PageSpeed Insights data
             # ----------------------------------------------------------------
+            # We fetch this first because it takes the longest (API call)
             pagespeed_data = await self._get_pagespeed_insights()
             self._raw_data["pagespeed"] = pagespeed_data
             
             # ----------------------------------------------------------------
-            # Analyze meta tags from scraped data
+            # 2. Analyze meta tags from scraped data
             # ----------------------------------------------------------------
+            # This uses data we scraped earlier (in the Orchestrator)
             meta_analysis = self._analyze_meta_tags()
             self._raw_data["meta_tags"] = meta_analysis
             
             # ----------------------------------------------------------------
-            # Analyze technical SEO
+            # 3. Analyze technical SEO
             # ----------------------------------------------------------------
+            # Checks for SSL, Schema, etc.
             technical_analysis = self._analyze_technical_seo()
             self._raw_data["technical"] = technical_analysis
             
             # ----------------------------------------------------------------
-            # Calculate score
+            # 4. Calculate score
             # ----------------------------------------------------------------
             score = self._calculate_score()
             
             # ----------------------------------------------------------------
-            # Generate findings and recommendations
+            # 5. Generate findings and recommendations
             # ----------------------------------------------------------------
             self._findings = self._generate_findings()
             self._recommendations = self._generate_recommendations()
@@ -140,9 +143,6 @@ class SEOAnalyzer(BaseAnalyzer):
     async def _get_pagespeed_insights(self) -> Optional[Dict[str, Any]]:
         """
         Fetch PageSpeed Insights data from Google API.
-        
-        Returns:
-            Optional[dict]: PageSpeed API response or None if failed
         """
         if not settings.GOOGLE_API_KEY:
             # Return mock data for development without API key
@@ -153,7 +153,7 @@ class SEOAnalyzer(BaseAnalyzer):
             "url": self.url,
             "key": settings.GOOGLE_API_KEY,
             "category": ["performance", "accessibility", "best-practices", "seo"],
-            "strategy": "mobile",  # Mobile-first
+            "strategy": "mobile",  # Mobile-first index means we check mobile
         }
         
         try:
@@ -217,9 +217,6 @@ class SEOAnalyzer(BaseAnalyzer):
     def _analyze_meta_tags(self) -> Dict[str, Any]:
         """
         Analyze meta tags from scraped data.
-        
-        Returns:
-            dict: Meta tag analysis results
         """
         title = self.scraped_data.get("title", "")
         description = self.scraped_data.get("meta_description", "")
@@ -263,9 +260,6 @@ class SEOAnalyzer(BaseAnalyzer):
     def _analyze_technical_seo(self) -> Dict[str, Any]:
         """
         Analyze technical SEO factors.
-        
-        Returns:
-            dict: Technical SEO analysis
         """
         return {
             "has_ssl": self.url.startswith("https"),
@@ -282,15 +276,6 @@ class SEOAnalyzer(BaseAnalyzer):
     def _calculate_score(self) -> float:
         """
         Calculate the overall SEO score.
-        
-        Weighting:
-        - PageSpeed Performance: 30%
-        - Meta Tags Quality: 25%
-        - Mobile-Friendliness: 20%
-        - Technical SEO: 25%
-        
-        Returns:
-            float: Score from 0-100
         """
         score = 0.0
         
@@ -517,4 +502,3 @@ class SEOAnalyzer(BaseAnalyzer):
             ))
         
         return recommendations
-

@@ -1,8 +1,23 @@
 # =============================================================================
-# OpenAI Service
+# EXPLAINER: OpenAI Service (The "Brain")
 # =============================================================================
-# Comprehensive service for interacting with OpenAI's GPT-4 API.
-# Provides structured analysis for brand messaging, tone, archetypes, and more.
+#
+# WHAT IS THIS?
+# This service is the interface to OpenAI's Large Language Models (LLMs).
+# It handles all "intelligence" tasks: figuring out brand archetypes, analyzing sentiment,
+# and writing marketing recommendations.
+#
+# WHY DO WE NEED IT?
+# Raw data (like page speed or follower counts) is useful, but it doesn't tell the "story".
+# We use LLMs to synthesize this data into human-readable insights.
+# - Instead of just saying "Text is Grade 12 level", we say "Your text is too complex for a consumer brand."
+# - Instead of just "You use words like 'hero'", we identify the "Hero Archetype".
+#
+# KEY FEATURES:
+# 1. **Prompt Engineering**: Structured prompts to get consistent JSON outputs from the LLM.
+# 2. **Resilience**: Uses `tenacity` for exponential backoff retries (crucial for API stability).
+# 3. **Type Safety**: Returns dataclasses, not raw dicts, so the rest of the app is safe.
+# 4. **Cost Control**: Truncates content to avoid hitting token limits and excessive costs.
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
@@ -12,6 +27,7 @@ import httpx
 import json
 import logging
 import asyncio
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.config import settings
 
@@ -80,25 +96,14 @@ class OpenAIService:
     """
     Comprehensive OpenAI service for brand analysis.
     
-    This service provides:
-    - Brand archetype identification
-    - Tone and voice analysis
-    - Value proposition clarity assessment
-    - Content theme categorization
-    - Sentiment analysis
-    - Personalized recommendation generation
-    
-    Usage:
-        service = OpenAIService()
-        archetype = await service.analyze_archetype(website_content)
-        tone = await service.analyze_tone(website_content)
+    Uses Tenacity for robust retries on API failures.
     """
     
     API_URL = "https://api.openai.com/v1/chat/completions"
     TIMEOUT = 60
-    MAX_RETRIES = 2
     
     # Archetype descriptions for context
+    # These are passed to the frontend or used in report generation
     ARCHETYPE_INFO = {
         "Hero": {
             "description": "Courageous, bold, inspirational. Seeks to prove worth through mastery.",
@@ -165,13 +170,15 @@ class OpenAIService:
     def __init__(self, api_key: Optional[str] = None):
         """
         Initialize the OpenAI service.
-        
-        Args:
-            api_key: OpenAI API key. Falls back to settings.
         """
         self.api_key = api_key or settings.OPENAI_API_KEY
         self.model = settings.OPENAI_MODEL
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
+    )
     async def _call_api(
         self,
         prompt: str,
@@ -181,7 +188,12 @@ class OpenAIService:
         json_mode: bool = True,
     ) -> Optional[Dict[str, Any]]:
         """
-        Make a call to the OpenAI API.
+        Make a call to the OpenAI API with retry logic.
+        
+        Uses Tenacity decorators to handle:
+        - Network errors (httpx.RequestError)
+        - HTTP 5xx errors (via raise_for_status logic inside)
+        - Rate limiting (429) usually needs specific handling, but exponential backoff often helps.
         
         Args:
             prompt: User prompt
@@ -189,9 +201,6 @@ class OpenAIService:
             temperature: Creativity level (0-1)
             max_tokens: Maximum response tokens
             json_mode: Whether to enforce JSON response
-        
-        Returns:
-            dict: Parsed response or None on error
         """
         if not self.api_key:
             logger.warning("OpenAI API key not configured")
@@ -212,46 +221,34 @@ class OpenAIService:
         if json_mode:
             request_body["response_format"] = {"type": "json_object"}
         
-        for attempt in range(self.MAX_RETRIES + 1):
-            try:
-                async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
-                    response = await client.post(
-                        self.API_URL,
-                        headers={
-                            "Authorization": f"Bearer {self.api_key}",
-                            "Content-Type": "application/json",
-                        },
-                        json=request_body,
-                    )
-                    
-                    if response.status_code == 200:
-                        result = response.json()
-                        content = result["choices"][0]["message"]["content"]
-                        
-                        if json_mode:
-                            return json.loads(content)
-                        return {"text": content}
-                    
-                    elif response.status_code == 429:
-                        # Rate limited
-                        if attempt < self.MAX_RETRIES:
-                            wait_time = (attempt + 1) * 2
-                            logger.warning(f"OpenAI rate limited, waiting {wait_time}s")
-                            await asyncio.sleep(wait_time)
-                            continue
-                    
-                    else:
-                        logger.error(f"OpenAI API error: {response.status_code}")
-                        return None
-                        
-            except Exception as e:
-                logger.error(f"OpenAI request failed: {e}")
-                if attempt < self.MAX_RETRIES:
-                    await asyncio.sleep(1)
-                    continue
+        async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
+            response = await client.post(
+                self.API_URL,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=request_body,
+            )
+            
+            # Raise exception for 4xx/5xx to trigger retry
+            # Note: We might want to avoid retrying 400 Bad Request, but 429/500/503 are good to retry
+            if response.status_code in [429, 500, 502, 503, 504]:
+                response.raise_for_status()
+            elif response.status_code != 200:
+                logger.error(f"OpenAI API error: {response.status_code} - {response.text}")
                 return None
-        
-        return None
+            
+            result = response.json()
+            content = result["choices"][0]["message"]["content"]
+            
+            if json_mode:
+                try:
+                    return json.loads(content)
+                except json.JSONDecodeError:
+                    logger.error("Failed to decode JSON from OpenAI response")
+                    return None
+            return {"text": content}
     
     async def analyze_archetype(
         self,
@@ -260,17 +257,13 @@ class OpenAIService:
     ) -> ArchetypeAnalysis:
         """
         Analyze brand archetype from website content.
-        
-        Args:
-            content: Website text content
-            brand_name: Optional brand name for context
-        
-        Returns:
-            ArchetypeAnalysis: Detailed archetype analysis
         """
-        # Truncate content to fit token limits
+        # Truncate content to fit token limits (heuristic)
         content = content[:4000]
         
+        # PROMPT STRATEGY:
+        # We define the 12 archetypes in the system prompt to ground the model.
+        # We ask for "key indicators" to make the reasoning transparent.
         system_prompt = """You are a brand strategist expert in Jungian brand archetypes. 
 Analyze the brand content and identify the primary and secondary archetypes.
 The 12 archetypes are: Hero, Outlaw, Magician, Everyman, Lover, Jester, Caregiver, Ruler, Creator, Innocent, Sage, Explorer."""
@@ -292,7 +285,11 @@ Respond with JSON:
     "brand_personality_traits": ["trait1", "trait2", ...]
 }}"""
         
-        result = await self._call_api(prompt, system_prompt)
+        try:
+            result = await self._call_api(prompt, system_prompt)
+        except Exception as e:
+            logger.error(f"Archetype analysis failed after retries: {e}")
+            result = None
         
         if not result:
             return ArchetypeAnalysis(
@@ -316,12 +313,6 @@ Respond with JSON:
     async def analyze_tone(self, content: str) -> ToneAnalysis:
         """
         Analyze the brand's tone and voice.
-        
-        Args:
-            content: Website text content
-        
-        Returns:
-            ToneAnalysis: Tone analysis results
         """
         content = content[:4000]
         
@@ -343,7 +334,10 @@ Respond with JSON:
     "issues": ["Any tone inconsistencies or problems"]
 }}"""
         
-        result = await self._call_api(prompt, system_prompt)
+        try:
+            result = await self._call_api(prompt, system_prompt)
+        except Exception:
+            result = None
         
         if not result:
             return ToneAnalysis(
@@ -368,16 +362,11 @@ Respond with JSON:
     ) -> ValuePropositionAnalysis:
         """
         Analyze the clarity of the brand's value proposition.
-        
-        Args:
-            content: Website text content (preferably homepage)
-            brand_name: Optional brand name
-        
-        Returns:
-            ValuePropositionAnalysis: Value proposition analysis
         """
         content = content[:3000]
         
+        # PROMPT STRATEGY:
+        # We specifically ask about "clarity in 5 seconds" because that's the web usability standard.
         system_prompt = """You are a marketing strategist. Analyze whether the brand clearly communicates what they do, for whom, and why it matters."""
         
         prompt = f"""Analyze the value proposition clarity of this brand content.
@@ -397,7 +386,10 @@ Respond with JSON:
     "issues": ["clarity issue 1", "clarity issue 2"]
 }}"""
         
-        result = await self._call_api(prompt, system_prompt)
+        try:
+            result = await self._call_api(prompt, system_prompt)
+        except Exception:
+            result = None
         
         if not result:
             return ValuePropositionAnalysis(clarity_score=60)
@@ -416,14 +408,11 @@ Respond with JSON:
         posts: List[str],
     ) -> ContentThemeAnalysis:
         """
-        Analyze themes and sentiment across content pieces.
-        
-        Args:
-            posts: List of content pieces (tweets, blog titles, etc.)
-        
-        Returns:
-            ContentThemeAnalysis: Theme and sentiment analysis
+        Analyze themes and sentiment across content pieces (tweets, blogs).
         """
+        if not posts:
+            return ContentThemeAnalysis()
+
         # Join posts for analysis
         posts_text = "\n".join([f"- {p}" for p in posts[:20]])
         
@@ -450,7 +439,10 @@ Respond with JSON:
     "top_topics": ["topic1", "topic2"]
 }}"""
         
-        result = await self._call_api(prompt, system_prompt)
+        try:
+            result = await self._call_api(prompt, system_prompt)
+        except Exception:
+            result = None
         
         if not result:
             return ContentThemeAnalysis(
@@ -473,15 +465,8 @@ Respond with JSON:
     ) -> List[Dict[str, Any]]:
         """
         Generate personalized recommendations based on findings.
-        
-        Args:
-            findings: List of analysis findings
-            context: Brand context/description
-            industry: Optional industry category
-        
-        Returns:
-            list: Prioritized recommendations
         """
+        # Filter and format findings for context
         findings_text = "\n".join([
             f"- {f.get('title', '')}: {f.get('detail', '')}"
             for f in findings[:10]
@@ -511,7 +496,10 @@ Respond with JSON:
     ]
 }}"""
         
-        result = await self._call_api(prompt, system_prompt, temperature=0.5)
+        try:
+            result = await self._call_api(prompt, system_prompt, temperature=0.5)
+        except Exception:
+            result = None
         
         if not result:
             return []
@@ -522,11 +510,7 @@ Respond with JSON:
         """
         Analyze content readability and complexity.
         
-        Args:
-            content: Text content to analyze
-        
-        Returns:
-            dict: Readability metrics and suggestions
+        Uses heuristic algorithms (Flesch-Kincaid style) instead of LLM to save costs and latency.
         """
         # Calculate basic metrics without API
         words = content.split()

@@ -1,12 +1,32 @@
 // =============================================================================
-// API Client
+// EXPLAINER: Frontend API Client
 // =============================================================================
-// Helper functions for making API calls to the backend.
+//
+// WHAT IS THIS?
+// This is the bridge between the Next.js frontend and the FastAPI backend.
+// It handles all HTTP requests, error parsing, and type definitions.
+//
+// WHY DO WE NEED IT?
+// 1. **Abstraction**: Components shouldn't know about `fetch` or headers.
+// 2. **Error Handling**: Centralized error logic (e.g., throwing helpful messages).
+// 3. **Type Safety**: Generics (`<T>`) ensure we know what the backend returns.
+//
+// HOW IT WORKS:
+// - `fetchAPI`: The core wrapper around `fetch`. Handles base URL and JSON parsing.
+// - `startAnalysis`: Triggers the long-running analysis job.
+// - `getAnalysisProgress`: Polling endpoint to check status.
+// - `getReport`: Fetches the final JSON report.
 // =============================================================================
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
-// Generic fetch wrapper with error handling
+/**
+ * Generic fetch wrapper with error handling.
+ * 
+ * @template T - The expected return type
+ * @param endpoint - API endpoint (e.g., '/api/v1/analyze')
+ * @param options - Fetch options (method, body, headers)
+ */
 async function fetchAPI<T>(
   endpoint: string,
   options?: RequestInit
@@ -21,6 +41,7 @@ async function fetchAPI<T>(
     },
   })
 
+  // Fail fast if the response is not OK (2xx)
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
     throw new Error(error.detail || `API Error: ${response.status}`)
@@ -29,48 +50,78 @@ async function fetchAPI<T>(
   return response.json()
 }
 
-// Start a new analysis
-export async function startAnalysis(url: string, options?: {
+// -----------------------------------------------------------------------------
+// Analysis Endpoints
+// -----------------------------------------------------------------------------
+
+export interface AnalysisResponse {
+  id: string
+  status: string
+}
+
+export interface AnalysisOptions {
   description?: string
   industry?: string
   email?: string
-}) {
-  return fetchAPI<{ id: string; status: string }>('/api/v1/analyze', {
+}
+
+/**
+ * Start a new brand analysis.
+ * This is an async operation that returns a job ID immediately.
+ */
+export async function startAnalysis(url: string, options?: AnalysisOptions) {
+  return fetchAPI<AnalysisResponse>('/api/v1/analyze', {
     method: 'POST',
     body: JSON.stringify({ url, ...options }),
   })
 }
 
-// Get analysis status/progress
+export interface AnalysisProgress {
+  id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  modules: Record<string, string> // e.g., { seo: "completed", social: "running" }
+  completion_percentage: number
+  error?: string
+}
+
+/**
+ * Get analysis status/progress.
+ * Used for polling the progress bar.
+ */
 export async function getAnalysisProgress(id: string) {
-  return fetchAPI<{
-    id: string
-    status: string
-    modules: Record<string, string>
-    completion_percentage: number
-  }>(`/api/v1/analysis/${id}/progress`)
+  return fetchAPI<AnalysisProgress>(`/api/v1/analysis/${id}/progress`)
 }
 
-// Get the full report
+export interface ReportData {
+  id: string
+  url: string
+  overall_score: number
+  scores: Record<string, number>
+  report: any // This would be the full typed report object
+}
+
+/**
+ * Get the full analysis report.
+ * Called once the status is 'completed'.
+ */
 export async function getReport(id: string) {
-  return fetchAPI<{
-    id: string
-    url: string
-    overall_score: number
-    scores: Record<string, number>
-    report: any
-  }>(`/api/v1/analysis/${id}/report`)
+  return fetchAPI<ReportData>(`/api/v1/analysis/${id}/report`)
 }
 
-// Get PDF download URL
+/**
+ * Get PDF download URL.
+ * Does not fetch; just returns the string for the <a> tag.
+ */
 export function getPDFUrl(id: string): string {
   return `${API_URL}/api/v1/analysis/${id}/pdf`
 }
 
-// Alias for backwards compatibility
+// Alias for backwards compatibility with older components
 export const submitAnalysis = startAnalysis
 
-// Get analysis status (for polling)
+/**
+ * Get analysis status (alternative endpoint).
+ */
 export async function getAnalysisStatus(id: string) {
   return fetchAPI<{
     id: string
@@ -79,4 +130,3 @@ export async function getAnalysisStatus(id: string) {
     result_data?: any
   }>(`/api/v1/analysis/${id}`)
 }
-

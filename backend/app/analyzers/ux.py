@@ -1,8 +1,27 @@
 # =============================================================================
-# Website UX & Conversion Analyzer
+# EXPLAINER: Website UX & Conversion Analyzer
 # =============================================================================
-# This module analyzes website user experience and conversion optimization.
-# It evaluates CTAs, navigation, trust signals, and mobile responsiveness.
+#
+# WHAT IS THIS?
+# This module evaluates the website from a Conversion Rate Optimization (CRO) perspective.
+#
+# WHY DO WE NEED IT?
+# 1. **Conversion**: Traffic is useless if it doesn't convert.
+# 2. **Clarity**: "Don't Make Me Think" - Steve Krug. Users should know what to do instantly.
+# 3. **Trust**: Trust seals (logos, badges) increase conversion by 48% (Baymard Institute).
+#
+# HOW IT WORKS:
+# 1. **Clarity Check**: Does the text above the fold answer "What", "Who", "Why"?
+# 2. **CTA Audit**: Is there a button? Is it visible? Is the text actionable?
+# 3. **Trust Audit**: Scans for "Testimonials", "Reviews", "Trusted By" sections.
+# 4. **Navigation Check**: Is the menu bloated? (Hick's Law: more choices = less action).
+#
+# SCORING LOGIC (Total 100):
+# - First Impression (25%): The 5-second test.
+# - CTA Effectiveness (25%): The path to conversion.
+# - Trust Signals (20%): Social proof.
+# - Navigation (20%): Usability.
+# - Mobile (10%): Responsiveness.
 # =============================================================================
 
 from typing import Dict, Any, List
@@ -18,80 +37,56 @@ from app.models.report import (
 class UXAnalyzer(BaseAnalyzer):
     """
     Analyzes Website UX & Conversion Optimization.
-    
-    This analyzer evaluates:
-    - First impression and clarity
-    - Call-to-action visibility and effectiveness
-    - Navigation structure and usability
-    - Trust signals (testimonials, logos, badges)
-    - Mobile responsiveness
-    - Form design and accessibility
-    
-    Score Calculation:
-    - First impression/clarity: 25%
-    - CTA effectiveness: 25%
-    - Navigation: 20%
-    - Trust signals: 20%
-    - Mobile/accessibility: 10%
     """
     
     MODULE_NAME = "website_ux"
     WEIGHT = 0.15
     
     async def analyze(self) -> AnalyzerResult:
-        """
-        Run the UX analysis.
-        
-        Returns:
-            AnalyzerResult: UX analysis results
-        """
         try:
             self._raw_data = {}
             
             # ----------------------------------------------------------------
-            # Analyze first impression/clarity
+            # 1. Analyze first impression/clarity
             # ----------------------------------------------------------------
             clarity = self._analyze_first_impression()
             self._raw_data["clarity"] = clarity
             
             # ----------------------------------------------------------------
-            # Analyze CTAs
+            # 2. Analyze CTAs
             # ----------------------------------------------------------------
             cta_analysis = self._analyze_ctas()
             self._raw_data["cta"] = cta_analysis
             
             # ----------------------------------------------------------------
-            # Analyze navigation
+            # 3. Analyze navigation
             # ----------------------------------------------------------------
             navigation = self._analyze_navigation()
             self._raw_data["navigation"] = navigation
             
             # ----------------------------------------------------------------
-            # Analyze trust signals
+            # 4. Analyze trust signals
             # ----------------------------------------------------------------
             trust = self._analyze_trust_signals()
             self._raw_data["trust"] = trust
             
             # ----------------------------------------------------------------
-            # Analyze mobile/accessibility
+            # 5. Analyze mobile/accessibility
             # ----------------------------------------------------------------
             mobile = self._analyze_mobile_accessibility()
             self._raw_data["mobile"] = mobile
             
             # ----------------------------------------------------------------
-            # Calculate score
+            # 6. Calculate score
             # ----------------------------------------------------------------
             score = self._calculate_score()
             
             # ----------------------------------------------------------------
-            # Generate findings and recommendations
+            # 7. Generate findings and recommendations
             # ----------------------------------------------------------------
             self._findings = self._generate_findings()
             self._recommendations = self._generate_recommendations()
             
-            # ----------------------------------------------------------------
-            # Build result data
-            # ----------------------------------------------------------------
             result_data = {
                 "score": score,
                 "first_impression_clarity": clarity.get("score", 5),
@@ -129,11 +124,6 @@ class UXAnalyzer(BaseAnalyzer):
     def _analyze_first_impression(self) -> Dict[str, Any]:
         """
         Analyze if the homepage clearly answers the key questions.
-        
-        Checks:
-        - What: Does it explain what the product/service is?
-        - Who: Does it identify the target audience?
-        - Why: Does it communicate the value/benefit?
         """
         h1s = self.scraped_data.get("headings", {}).get("h1", [])
         h2s = self.scraped_data.get("headings", {}).get("h2", [])
@@ -507,4 +497,3 @@ class UXAnalyzer(BaseAnalyzer):
             ))
         
         return recommendations
-

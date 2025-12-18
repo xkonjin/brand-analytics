@@ -1,9 +1,27 @@
 # =============================================================================
-# AI Discoverability Analyzer
+# EXPLAINER: AI Discoverability Analyzer
 # =============================================================================
-# Evaluates how well the brand can be discovered by AI assistants and
-# AI-powered search engines. Checks Wikipedia, Knowledge Graph, structured
-# data, and content depth.
+#
+# WHAT IS THIS?
+# This module answers the question: "Does ChatGPT/Claude/Gemini know who you are?"
+#
+# WHY DO WE NEED IT?
+# 1. **The New SEO**: Search is moving from 10 blue links to AI-generated answers.
+# 2. **Training Data**: AI models trust authoritative sources like Wikipedia and Knowledge Graphs.
+# 3. **Structured Data**: Schema.org markup is the language AI reads directly.
+#
+# HOW IT WORKS:
+# 1. **Wikipedia Check**: Do you have a page? Are you mentioned? (High authority signal).
+# 2. **Knowledge Graph**: Is there a Google Knowledge Panel for the brand?
+# 3. **Schema Audit**: Do you use Organization/Product schema?
+# 4. **Content Depth**: Do you have enough deep content (blogs/docs) for AI to "read"?
+#
+# SCORING LOGIC (Total 100):
+# - Wikipedia (30%): The gold standard for entity recognition.
+# - Structured Data (25%): Direct feed to machines.
+# - Content Depth (20%): Volume of training data.
+# - SERP Visibility (15%): Traditional signals still matter.
+# - Knowledge Panel (10%): Google's entity verification.
 # =============================================================================
 
 from typing import Dict, Any, List, Optional
@@ -17,21 +35,7 @@ from app.services.google_search_service import GoogleSearchService, SERPAnalysis
 
 class AIDiscoverabilityAnalyzer(BaseAnalyzer):
     """
-    Analyzes AI Discoverability.
-    
-    This analyzer evaluates:
-    - Wikipedia presence (direct page or mentions)
-    - Google Knowledge Panel likelihood
-    - Schema.org structured data
-    - Content depth for AI training
-    - Brand visibility in search results
-    
-    Score Calculation:
-    - Wikipedia presence: 30%
-    - Structured data: 25%
-    - Content depth: 20%
-    - SERP visibility: 15%
-    - Knowledge panel signals: 10%
+    Analyzes AI Discoverability (AEO - Answer Engine Optimization).
     """
     
     MODULE_NAME = "ai_discoverability"
@@ -47,8 +51,9 @@ class AIDiscoverabilityAnalyzer(BaseAnalyzer):
             self._raw_data["brand_name"] = brand_name
             
             # ----------------------------------------------------------------
-            # Check Wikipedia presence using the Wikipedia service
+            # 1. Check Wikipedia presence
             # ----------------------------------------------------------------
+            # Wikipedia is the primary "fact source" for most LLMs.
             wiki_service = WikipediaService()
             wiki_presence = await wiki_service.check_brand_presence(brand_name)
             self._raw_data["wikipedia"] = {
@@ -62,30 +67,33 @@ class AIDiscoverabilityAnalyzer(BaseAnalyzer):
             }
             
             # ----------------------------------------------------------------
-            # Check SERP visibility (if Google Search API is configured)
+            # 2. Check SERP visibility
             # ----------------------------------------------------------------
+            # If Google trusts you (Knowledge Panel), AI likely trusts you too.
             serp_data = await self._check_serp_visibility(brand_name)
             self._raw_data["serp"] = serp_data
             
             # ----------------------------------------------------------------
-            # Analyze structured data
+            # 3. Analyze structured data (Schema)
             # ----------------------------------------------------------------
+            # This is how we "speak machine" to search engines.
             schema = self._analyze_schema_markup()
             self._raw_data["schema"] = schema
             
             # ----------------------------------------------------------------
-            # Analyze content depth
+            # 4. Analyze content depth
             # ----------------------------------------------------------------
+            # More high-quality text = higher chance of being in training data.
             content = self._analyze_content_depth()
             self._raw_data["content_depth"] = content
             
             # ----------------------------------------------------------------
-            # Calculate score
+            # 5. Calculate score
             # ----------------------------------------------------------------
             score = self._calculate_score()
             
             # ----------------------------------------------------------------
-            # Generate findings and recommendations
+            # 6. Generate findings and recommendations
             # ----------------------------------------------------------------
             self._findings = self._generate_findings()
             self._recommendations = self._generate_recommendations()
@@ -303,32 +311,28 @@ class AIDiscoverabilityAnalyzer(BaseAnalyzer):
     def _calculate_score(self) -> float:
         """
         Calculate the overall AI discoverability score.
-        
-        Weighting:
-        - Wikipedia presence: 30%
-        - Structured data: 25%
-        - Content depth: 20%
-        - SERP visibility: 15%
-        - Knowledge panel: 10%
         """
         score = 0.0
         
         # Wikipedia presence (30%)
+        # It's hard to get, but extremely valuable for AI trust
         wiki = self._raw_data.get("wikipedia", {})
         if wiki.get("exists"):
             # Full Wikipedia page
             notability = wiki.get("notability_score", 50)
             score += (notability / 100) * 30
         elif wiki.get("mentioned_in"):
-            # Mentioned in other articles
+            # Mentioned in other articles (better than nothing)
             score += min(15, len(wiki.get("mentioned_in", [])) * 5)
         
         # Structured data (25%)
+        # Easy technical win
         schema = self._raw_data.get("schema", {})
         schema_score = schema.get("schema_score", 0)
         score += (schema_score / 100) * 25
         
         # Content depth (20%)
+        # AI feeds on text
         content = self._raw_data.get("content_depth", {})
         content_score = content.get("score", 0)
         score += (content_score / 10) * 20

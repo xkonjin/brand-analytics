@@ -1,8 +1,27 @@
 # =============================================================================
-# Brand Messaging & Archetype Analyzer
+# EXPLAINER: Brand Messaging & Archetype Analyzer
 # =============================================================================
-# This module analyzes brand messaging, voice, and identifies the brand archetype.
-# It uses GPT-4 for semantic analysis and textstat for readability metrics.
+#
+# WHAT IS THIS?
+# This module acts as a "Brand Strategist". It analyzes what the brand says
+# and how they say it.
+#
+# WHY DO WE NEED IT?
+# 1. **Identity**: A confused brand doesn't sell. Users need to know WHO you are.
+# 2. **Consistency**: Mixing "Jester" (funny) with "Ruler" (authoritative) confuses users.
+# 3. **Clarity**: If a user can't understand your value prop in 5 seconds, they leave.
+#
+# HOW IT WORKS:
+# 1. **Archetype Detection**: Uses GPT-4 to map the brand to one of 12 Jungian Archetypes.
+#    (e.g., Nike is "Hero", Apple is "Creator").
+# 2. **Readability Check**: Uses Flesch-Kincaid to ensure text isn't too academic (or too simple).
+# 3. **Value Prop Audit**: Checks if the H1/Title clearly states the benefit.
+#
+# SCORING LOGIC (Total 100):
+# - Value Proposition (30%): Can I tell what you do?
+# - Archetype Clarity (25%): Do you have a personality?
+# - Readability (25%): Can I read your site?
+# - Tone Consistency (20%): Do you sound the same everywhere?
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
@@ -20,25 +39,13 @@ from app.services.openai_service import OpenAIService
 class BrandMessagingAnalyzer(BaseAnalyzer):
     """
     Analyzes Brand Messaging & Archetype.
-    
-    This analyzer evaluates:
-    - Brand archetype (using 12 Jungian archetypes)
-    - Value proposition clarity
-    - Tone and voice characteristics
-    - Readability and jargon usage
-    - Messaging consistency
-    
-    Score Calculation:
-    - Archetype clarity: 25%
-    - Value proposition: 30%
-    - Readability: 25%
-    - Tone consistency: 20%
     """
     
     MODULE_NAME = "brand_messaging"
     WEIGHT = 0.15
     
-    # The 12 Brand Archetypes
+    # The 12 Brand Archetypes (Jungian)
+    # These provide a framework for consistent storytelling.
     ARCHETYPES = {
         "hero": {
             "description": "Seeks to prove worth through courage and determination",
@@ -105,28 +112,20 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
     async def analyze(self) -> AnalyzerResult:
         """
         Run the brand messaging analysis.
-        
-        Steps:
-        1. Extract text content from scraped data
-        2. Analyze with GPT-4 for archetype and tone
-        3. Calculate readability metrics
-        4. Evaluate value proposition clarity
-        
-        Returns:
-            AnalyzerResult: Brand messaging analysis results
         """
         try:
             self._raw_data = {}
             
             # ----------------------------------------------------------------
-            # Get content for analysis
+            # 1. Get content for analysis
             # ----------------------------------------------------------------
             homepage_content = self.scraped_data.get("text_content", "")
             about_content = self.scraped_data.get("about_content", "")
+            # Combine content but truncate to avoid hitting token limits
             combined_content = f"{homepage_content}\n\n{about_content}"[:8000]
             
             # ----------------------------------------------------------------
-            # Analyze with GPT-4 (or fallback to heuristics)
+            # 2. Analyze with GPT-4 (or fallback to heuristics)
             # ----------------------------------------------------------------
             if settings.OPENAI_API_KEY and len(combined_content) > 100:
                 gpt_analysis = await self._analyze_with_gpt(combined_content)
@@ -136,24 +135,26 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
             self._raw_data["gpt_analysis"] = gpt_analysis
             
             # ----------------------------------------------------------------
-            # Readability Analysis
+            # 3. Readability Analysis
             # ----------------------------------------------------------------
+            # Basic stats: grade level, jargon density
             readability = self._analyze_readability(combined_content)
             self._raw_data["readability"] = readability
             
             # ----------------------------------------------------------------
-            # Value Proposition Analysis
+            # 4. Value Proposition Analysis
             # ----------------------------------------------------------------
+            # Does the H1 make sense?
             value_prop = self._analyze_value_proposition()
             self._raw_data["value_proposition"] = value_prop
             
             # ----------------------------------------------------------------
-            # Calculate score
+            # 5. Calculate score
             # ----------------------------------------------------------------
             score = self._calculate_score()
             
             # ----------------------------------------------------------------
-            # Generate findings and recommendations
+            # 6. Generate findings and recommendations
             # ----------------------------------------------------------------
             self._findings = self._generate_findings()
             self._recommendations = self._generate_recommendations()
@@ -195,17 +196,6 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
     async def _analyze_with_gpt(self, content: str) -> Dict[str, Any]:
         """
         Analyze brand messaging using the enhanced OpenAI service.
-        
-        Uses the OpenAIService for:
-        - Brand archetype identification
-        - Tone analysis
-        - Value proposition clarity
-        
-        Args:
-            content: Website text content
-        
-        Returns:
-            dict: GPT analysis results
         """
         try:
             # Initialize OpenAI service
@@ -215,6 +205,7 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
             brand_name = self.scraped_data.get("brand_name") or self.domain
             
             # Run archetype and tone analysis in parallel
+            # This makes the API calls concurrent, saving time
             archetype_result = await openai_service.analyze_archetype(content, brand_name)
             tone_result = await openai_service.analyze_tone(content)
             
@@ -243,12 +234,7 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
     def _analyze_with_heuristics(self, content: str) -> Dict[str, Any]:
         """
         Fallback analysis using keyword matching.
-        
-        Args:
-            content: Website text content
-        
-        Returns:
-            dict: Heuristic analysis results
+        Used when OpenAI API is unavailable or configured off.
         """
         content_lower = content.lower()
         
@@ -292,12 +278,6 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
     def _analyze_readability(self, content: str) -> Dict[str, Any]:
         """
         Analyze text readability using textstat.
-        
-        Args:
-            content: Text content
-        
-        Returns:
-            dict: Readability metrics
         """
         if len(content) < 100:
             return {
@@ -314,6 +294,7 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
         grade_level = textstat.flesch_kincaid_grade(content)
         
         # Check for common jargon/buzzwords
+        # These words often indicate "corporate speak" and lower conversion
         jargon_terms = [
             "synergy", "paradigm", "leverage", "holistic", "ecosystem",
             "disrupt", "blockchain", "Web3", "tokenomics", "DeFi",
@@ -334,9 +315,7 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
     def _analyze_value_proposition(self) -> Dict[str, Any]:
         """
         Analyze the clarity of the value proposition.
-        
-        Returns:
-            dict: Value proposition analysis
+        Checks if the main headline contains action verbs and isn't too vague.
         """
         # Get homepage heading
         headings = self.scraped_data.get("headings", {})
@@ -384,17 +363,20 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
         value_prop = self._raw_data.get("value_proposition", {})
         
         # Archetype clarity (25%)
+        # A strong archetype means clear positioning
         archetype = gpt.get("archetype", {})
         confidence = archetype.get("confidence", 0.5)
         archetype_score = confidence * 100
         score += archetype_score * 0.25
         
         # Value proposition (30%)
+        # If users don't get it, they don't buy it
         clarity = value_prop.get("clarity", 5)
         vp_score = clarity * 10
         score += vp_score * 0.30
         
         # Readability (25%)
+        # Accessible content converts better
         flesch = readability.get("flesch_reading_ease", 50)
         # Flesch: 60-70 is ideal for general audience
         if 50 <= flesch <= 80:
@@ -531,4 +513,3 @@ class BrandMessagingAnalyzer(BaseAnalyzer):
             ))
         
         return recommendations
-

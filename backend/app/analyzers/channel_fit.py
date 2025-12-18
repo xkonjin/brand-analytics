@@ -1,7 +1,23 @@
 # =============================================================================
-# Channel Fit Scoring Module
+# EXPLAINER: Channel Fit Analyzer
 # =============================================================================
-# Assesses which marketing channels are best suited for the brand.
+#
+# WHAT IS THIS?
+# This module answers: "Are you fishing where the fish are?"
+# It determines which social/marketing channels best fit the brand's profile.
+#
+# WHY DO WE NEED IT?
+# 1. **Efficiency**: Don't waste time on TikTok if you're selling enterprise SaaS.
+# 2. **Opportunity Cost**: Missing Discord when you're a crypto project is fatal.
+#
+# HOW IT WORKS:
+# 1. **Classification**: Infers if the brand is B2B or B2C based on keywords.
+# 2. **Context**: Checks industry (e.g., Crypto needs Twitter/Discord).
+# 3. **Scoring**: Ranks channels (Twitter, LinkedIn, etc.) on suitability.
+# 4. **Gap Analysis**: Compares "Ideal Channels" vs "Actual Presence".
+#
+# SCORING LOGIC:
+# - Alignment Score: How well does your actual presence match the ideal profile?
 # =============================================================================
 
 from typing import Dict, Any, List
@@ -99,6 +115,7 @@ class ChannelFitAnalyzer(BaseAnalyzer):
         ))
         
         # YouTube - tutorials and demos
+        # Generally high potential for everyone (Video is king)
         youtube_score = 7
         scores.append(ChannelScore(
             channel="youtube",
@@ -122,7 +139,6 @@ class ChannelFitAnalyzer(BaseAnalyzer):
     
     def _get_underutilized(self) -> List[str]:
         """Find high-potential channels not being used."""
-        social_links = self.scraped_data.get("social_links", {})
         channels = self._raw_data.get("channels", [])
         
         return [
@@ -145,7 +161,6 @@ class ChannelFitAnalyzer(BaseAnalyzer):
         return self.clamp_score(alignment * 100)
     
     def _generate_findings(self) -> List[Finding]:
-        channels = self._raw_data.get("channels", [])
         underutilized = self._get_underutilized()
         
         findings = []
@@ -172,4 +187,3 @@ class ChannelFitAnalyzer(BaseAnalyzer):
                 effort="medium",
             ))
         return recommendations
-

@@ -1,12 +1,32 @@
 # =============================================================================
-# Application Configuration
+# EXPLAINER: Application Configuration
 # =============================================================================
-# This module handles all application configuration using Pydantic Settings.
-# Environment variables are loaded from .env file and validated.
+#
+# WHAT IS THIS?
+# This module is the central nervous system for the application's configuration.
+# It uses Pydantic Settings to load and validate environment variables.
+#
+# WHY DO WE NEED IT?
+# 1. **Twelve-Factor App**: We store config in the environment, not code.
+# 2. **Type Safety**: Pydantic ensures integers are integers, booleans are booleans.
+# 3. **Centralization**: All settings (DB, Redis, API keys) are in one place.
+# 4. **Validation**: We fail fast at startup if a required key is missing.
+#
+# KEY SECTIONS:
+# - App Settings: Basic metadata (name, version, environment).
+# - Database: PostgreSQL connection details.
+# - Redis/Celery: Caching and background task queue configuration.
+# - External APIs: OpenAI, Google, etc. keys.
+# - Scoring Weights: Tunable parameters for the brand analysis algorithm.
+#
+# MARKETING/BUSINESS CONTEXT:
+# The `SCORING WEIGHTS` section is crucial. It defines the "recipe" for a perfect brand.
+# For example, we weight Social Media (20%) higher than Channel Fit (5%) because
+# active engagement is a stronger predictor of growth than just being on the right platform.
 # =============================================================================
 
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,7 +50,7 @@ class Settings(BaseSettings):
     # API Settings
     # -------------------------------------------------------------------------
     API_V1_PREFIX: str = "/api/v1"
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     
     # -------------------------------------------------------------------------
     # Database Settings (PostgreSQL)
@@ -57,7 +77,8 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # OpenAI API key for GPT-4 analysis (brand archetype, content analysis)
     OPENAI_API_KEY: Optional[str] = None
-    OPENAI_MODEL: str = "gpt-4-turbo-preview"  # Best model for analysis
+    # Updated to gpt-4o for better performance and lower latency
+    OPENAI_MODEL: str = "gpt-4o"  
     
     # Google APIs
     GOOGLE_API_KEY: Optional[str] = None  # For PageSpeed and Custom Search
@@ -97,6 +118,7 @@ class Settings(BaseSettings):
     # Scoring Weights (configurable per deployment)
     # -------------------------------------------------------------------------
     # These weights determine how each module contributes to the overall score
+    # Tuned based on standard marketing audit practices.
     WEIGHT_SEO: float = 0.15
     WEIGHT_AI_DISCOVERABILITY: float = 0.10
     WEIGHT_SOCIAL_MEDIA: float = 0.20
@@ -133,4 +155,3 @@ def get_settings() -> Settings:
 
 # Export a default settings instance for convenience
 settings = get_settings()
-

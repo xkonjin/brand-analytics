@@ -1,7 +1,24 @@
 # =============================================================================
-# Team Presence Analyzer
+# EXPLAINER: Team Presence Analyzer
 # =============================================================================
-# Evaluates team visibility and credibility signals.
+#
+# WHAT IS THIS?
+# This module evaluates the "Human Element" of the brand.
+#
+# WHY DO WE NEED IT?
+# 1. **Trust**: People buy from people. Faceless brands are suspicious (especially in crypto).
+# 2. **Credibility**: Knowing the CEO has 10 years of experience builds confidence.
+# 3. **Recruiting**: Good talent wants to know who they will work with.
+#
+# HOW IT WORKS:
+# 1. **Team Page Detection**: Looks for "About", "Team", "Our Story" pages.
+# 2. **LinkedIn Check**: Does the company exist on LinkedIn?
+# 3. **Founder Visibility**: Looks for "CEO", "Founder" keywords in the copy.
+#
+# SCORING LOGIC:
+# - Team Page Exists (25%): The basics.
+# - Founders Identified (15%): Visible leadership.
+# - LinkedIn Presence (20%): Professional footprint.
 # =============================================================================
 
 from typing import Dict, Any, List
@@ -130,4 +147,3 @@ class TeamPresenceAnalyzer(BaseAnalyzer):
             ))
         
         return recommendations
-

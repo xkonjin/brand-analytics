@@ -1,8 +1,25 @@
 # =============================================================================
-# Google PageSpeed Insights Service
+# EXPLAINER: Google PageSpeed Service
 # =============================================================================
-# This service handles all interactions with the Google PageSpeed Insights API.
-# It provides performance metrics, Core Web Vitals, and SEO insights.
+#
+# WHAT IS THIS?
+# This service talks to the Google PageSpeed Insights API (Lighthouse) to measure
+# website performance.
+#
+# WHY DO WE NEED IT?
+# 1. **User Experience**: Slow sites = high bounce rates. Amazon found 100ms latency = 1% revenue loss.
+# 2. **SEO**: Google explicitly uses "Core Web Vitals" as a ranking factor.
+# 3. **Mobile First**: Google indexes the mobile version of sites. If mobile is slow, you lose rank.
+#
+# KEY METRICS (CORE WEB VITALS):
+# - **LCP (Largest Contentful Paint)**: How fast the main content loads. (<2.5s is good).
+# - **FID (First Input Delay)**: How responsive the site is to clicks. (<100ms is good).
+# - **CLS (Cumulative Layout Shift)**: Visual stability. Does stuff jump around? (<0.1 is good).
+#
+# HOW IT WORKS:
+# - We check mobile strategy by default (since it's harder and more important).
+# - We cache results for 6 hours because this data doesn't change minute-by-minute.
+# - We implement retries because Lighthouse scans can time out on complex sites.
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
@@ -34,7 +51,10 @@ class Category(str, Enum):
 
 @dataclass
 class CoreWebVitals:
-    """Core Web Vitals metrics."""
+    """
+    Core Web Vitals metrics.
+    These are the "vital signs" of a healthy website.
+    """
     lcp: Optional[float] = None  # Largest Contentful Paint (seconds)
     fid: Optional[float] = None  # First Input Delay (milliseconds)
     cls: Optional[float] = None  # Cumulative Layout Shift (score)
@@ -89,17 +109,6 @@ class PageSpeedResult:
 class PageSpeedService:
     """
     Service for interacting with Google PageSpeed Insights API.
-    
-    This service:
-    - Fetches performance data for any URL
-    - Parses Core Web Vitals and category scores
-    - Provides optimization opportunities
-    - Handles rate limiting and errors gracefully
-    
-    Usage:
-        service = PageSpeedService()
-        result = await service.analyze("https://example.com")
-        print(f"Performance: {result.performance_score}/100")
     """
     
     API_URL = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
@@ -109,9 +118,6 @@ class PageSpeedService:
     def __init__(self, api_key: Optional[str] = None):
         """
         Initialize the PageSpeed service.
-        
-        Args:
-            api_key: Google API key. Falls back to settings if not provided.
         """
         self.api_key = api_key or settings.GOOGLE_API_KEY
     
@@ -126,14 +132,6 @@ class PageSpeedService:
         
         Results are cached for 6 hours to reduce API calls.
         Rate limiting is applied to stay within quota.
-        
-        Args:
-            url: URL to analyze
-            strategy: Mobile or desktop analysis
-            categories: Which categories to include (default: all)
-        
-        Returns:
-            PageSpeedResult: Structured analysis result
         """
         if not self.api_key:
             logger.warning("No Google API key configured, using mock data")
@@ -241,12 +239,6 @@ class PageSpeedService:
     async def analyze_both_strategies(self, url: str) -> Dict[str, PageSpeedResult]:
         """
         Analyze a URL for both mobile and desktop.
-        
-        Args:
-            url: URL to analyze
-        
-        Returns:
-            dict: Results for both strategies
         """
         mobile_task = self.analyze(url, Strategy.MOBILE)
         desktop_task = self.analyze(url, Strategy.DESKTOP)
@@ -544,14 +536,6 @@ class PageSpeedService:
 async def analyze_pagespeed(url: str, strategy: Strategy = Strategy.MOBILE) -> PageSpeedResult:
     """
     Quick function to analyze a URL with PageSpeed Insights.
-    
-    Args:
-        url: URL to analyze
-        strategy: Mobile or desktop
-    
-    Returns:
-        PageSpeedResult: Analysis result
     """
     service = PageSpeedService()
     return await service.analyze(url, strategy)
-

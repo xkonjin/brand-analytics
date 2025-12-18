@@ -1,9 +1,23 @@
 /**
  * =============================================================================
- * Score Overview Section
+ * EXPLAINER: Score Overview Section
  * =============================================================================
- * Radar chart visualization of all module scores with benchmark comparison.
- * Provides a quick visual overview of brand performance across dimensions.
+ *
+ * WHAT IS THIS?
+ * The "Hero" section of the report results. It shows the high-level scores.
+ *
+ * VISUALIZATION LOGIC:
+ * 1. **Radar Chart**: Used to show balance/skew. A perfect brand is a full circle.
+ *    - Spikes indicate strengths.
+ *    - Dips indicate weaknesses.
+ * 2. **Benchmark Line**: Dotted line on the radar chart.
+ *    - Shows "Industry Average". If you're inside the line, you're losing.
+ * 3. **Bar Charts**: Break down the individual module scores for clarity.
+ *
+ * DATA FLOW:
+ * - Takes `scores` (Record<string, number>) as input.
+ * - Maps them to `MODULE_BENCHMARKS` to get labels and ordering.
+ * - Computes aggregate stats (Average, Highest, Lowest).
  * =============================================================================
  */
 
@@ -26,11 +40,11 @@ interface ModuleScore {
 }
 
 interface ScoreOverviewProps {
-  /** Scores for each module */
+  /** Scores for each module (0-100) */
   scores: Record<string, number>;
   /** Whether to show benchmark comparisons */
   showBenchmarks?: boolean;
-  /** Optional className */
+  /** Optional className for styling */
   className?: string;
 }
 
@@ -42,19 +56,19 @@ export function ScoreOverview({
   showBenchmarks = true,
   className = '',
 }: ScoreOverviewProps) {
-  // Transform scores into sorted array
+  // Transform raw score object into sorted array for rendering
   const moduleScores: ModuleScore[] = MODULE_BENCHMARKS
     .map((benchmark) => ({
       key: benchmark.key,
       label: benchmark.label,
       score: scores[benchmark.key] ?? 0,
     }))
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.score - a.score); // Sort highest to lowest
 
-  // Calculate stats
-  const avgScore = Object.values(scores).reduce((sum, s) => sum + s, 0) / Object.keys(scores).length;
-  const highestScore = Math.max(...Object.values(scores));
-  const lowestScore = Math.min(...Object.values(scores));
+  // Calculate summary statistics
+  const avgScore = Object.values(scores).reduce((sum, s) => sum + s, 0) / (Object.keys(scores).length || 1);
+  
+  // Count how many modules beat the benchmark
   const aboveBenchmark = moduleScores.filter(
     (m) => m.score > (MODULE_BENCHMARKS.find((b) => b.key === m.key)?.benchmark ?? 0)
   ).length;
@@ -77,9 +91,10 @@ export function ScoreOverview({
           </p>
         </motion.div>
 
-        {/* Two-column layout: Radar chart + Score bars */}
+        {/* Two-column layout: Radar chart (Visual) + Score bars (Detail) */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left - Radar chart */}
+          
+          {/* Left Column: Radar Chart */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -97,6 +112,7 @@ export function ScoreOverview({
                 </div>
               )}
             </div>
+            {/* The Radar Chart component handles the SVG rendering */}
             <BrandRadarChart
               scores={scores}
               showBenchmark={showBenchmarks}
@@ -104,14 +120,14 @@ export function ScoreOverview({
             />
           </motion.div>
 
-          {/* Right - Score breakdown bars */}
+          {/* Right Column: Detailed Breakdown */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             className="space-y-6"
           >
-            {/* Quick stats */}
+            {/* KPI Cards */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white rounded-lg border border-slate-200 p-4">
                 <div className="text-2xl font-bold text-slate-900">
@@ -127,7 +143,7 @@ export function ScoreOverview({
               </div>
             </div>
 
-            {/* Score bars */}
+            {/* Score Bars List */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900 mb-5">
                 Module Scores
@@ -135,9 +151,6 @@ export function ScoreOverview({
               <div className="space-y-4">
                 {moduleScores.map((module, index) => {
                   const comparison = compareToBenchmark(module.score, module.key);
-                  const TrendIcon = 
-                    comparison.percentile === 'above' ? TrendingUp :
-                    comparison.percentile === 'below' ? TrendingDown : Minus;
                   
                   return (
                     <motion.div
@@ -163,14 +176,14 @@ export function ScoreOverview({
           </motion.div>
         </div>
 
-        {/* Strengths and Weaknesses summary */}
+        {/* Bottom Section: Strengths & Weaknesses Analysis */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="mt-8 grid md:grid-cols-2 gap-6"
         >
-          {/* Top strengths */}
+          {/* Top strengths (Top 3 scores) */}
           <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-5">
             <h4 className="font-semibold text-emerald-800 mb-3 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
@@ -191,7 +204,7 @@ export function ScoreOverview({
             </ul>
           </div>
 
-          {/* Areas for improvement */}
+          {/* Areas for improvement (Bottom 3 scores) */}
           <div className="bg-orange-50 rounded-xl border border-orange-100 p-5">
             <h4 className="font-semibold text-orange-800 mb-3 flex items-center gap-2">
               <TrendingDown className="w-4 h-4" />
@@ -218,4 +231,3 @@ export function ScoreOverview({
 }
 
 export default ScoreOverview;
-

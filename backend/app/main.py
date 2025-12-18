@@ -1,8 +1,19 @@
 # =============================================================================
-# FastAPI Application Entry Point
+# EXPLAINER: FastAPI Application Entry Point
 # =============================================================================
-# This is the main entry point for the Brand Analytics API.
-# It configures the FastAPI application, middleware, and routes.
+#
+# WHAT IS THIS?
+# This file is the "main" entry point for the backend. It bootstraps the FastAPI application.
+#
+# KEY RESPONSIBILITIES:
+# 1. **Lifespan Management**: Handles startup (DB connection) and shutdown (cleanup) logic.
+# 2. **Middleware**: Configures CORS (Cross-Origin Resource Sharing) so our frontend can talk to us.
+# 3. **Routing**: Mounts the API routes (e.g., /api/v1/analysis) from other modules.
+# 4. **Exception Handling**: Ensures we return clean JSON errors, not raw stack traces (in prod).
+#
+# ARCHITECTURAL NOTE:
+# We use an `asynccontextmanager` for the lifespan. This is the modern FastAPI way to handle
+# startup/shutdown events, replacing the old `on_event("startup")` hooks.
 # =============================================================================
 
 from contextlib import asynccontextmanager
@@ -32,10 +43,12 @@ async def lifespan(app: FastAPI):
     print(f"📊 Environment: {settings.ENVIRONMENT}")
     
     # Initialize database connection pool
+    # This establishes the connection to PostgreSQL so we don't open/close it per request
     await init_db()
     print("✅ Database connection pool initialized")
     
     # Yield control to the application
+    # This is where the application actually runs and accepts requests
     yield
     
     # ---------------------------------------------------------------------
@@ -44,6 +57,7 @@ async def lifespan(app: FastAPI):
     print("🛑 Shutting down application...")
     
     # Close database connections
+    # Crucial to prevent hanging connections on the DB side
     await close_db()
     print("✅ Database connections closed")
 
@@ -86,7 +100,8 @@ app = FastAPI(
 # =============================================================================
 # Configure CORS Middleware
 # =============================================================================
-# Allow frontend applications to make requests to this API
+# Allow frontend applications to make requests to this API.
+# SECURITY NOTE: In production, `allow_origins` should be restricted to specific domains.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -185,4 +200,3 @@ if __name__ == "__main__":
         reload=settings.DEBUG,
         log_level="info" if settings.DEBUG else "warning",
     )
-

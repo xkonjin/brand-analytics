@@ -1,17 +1,32 @@
 # =============================================================================
-# Google Custom Search Service
+# EXPLAINER: Google Search Service
 # =============================================================================
-# This service handles interactions with the Google Custom Search API.
-# It provides SERP analysis, indexing checks, and brand visibility data.
+#
+# WHAT IS THIS?
+# This service interacts with the Google Custom Search API to find out how the brand
+# appears in search results (SERPs).
+#
+# WHY DO WE NEED IT?
+# 1. **Visibility**: Is the brand #1 for its own name? If not, that's a crisis.
+# 2. **Indexing**: Does Google know about the brand's pages? (site:domain.com check)
+# 3. **Authority**: Does the brand have a Knowledge Panel or Wikipedia page?
+#    (These are strong trust signals for both users and AI agents).
+#
+# HOW IT WORKS:
+# - Uses `site:domain.com` to estimate indexed pages.
+# - Searches for the brand name to see ranking position.
+# - Checks specific domains (Wikipedia, Social Media) in the results to gauge footprint.
+#
+# LIMITATIONS:
+# - Custom Search API has a daily quota (usually 100 queries free).
+# - It's an approximation of real Google Search (which varies by user/location).
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
-from urllib.parse import urlparse, quote_plus
 import httpx
 import asyncio
 import logging
-import re
 
 from app.config import settings
 
@@ -62,23 +77,15 @@ class GoogleSearchService:
     """
     Service for interacting with Google Custom Search API.
     
-    This service provides:
-    - SERP analysis for brand keywords
-    - Site indexing status checks
-    - Wikipedia/Knowledge Graph presence detection
-    - Brand visibility metrics
-    
-    Usage:
-        service = GoogleSearchService()
-        serp = await service.search_brand("Company Name")
-        indexing = await service.check_indexing("example.com")
+    Provides critical SEO data about how the world (and AI) sees the brand.
     """
     
     API_URL = "https://www.googleapis.com/customsearch/v1"
     TIMEOUT = 15
     MAX_RETRIES = 2
     
-    # Social media domains to detect
+    # Social media domains to detect in search results
+    # Presence here indicates strong "Brand SEO"
     SOCIAL_DOMAINS = [
         "twitter.com", "x.com", "linkedin.com", "facebook.com",
         "instagram.com", "youtube.com", "tiktok.com", "github.com",
@@ -92,10 +99,6 @@ class GoogleSearchService:
     ):
         """
         Initialize the Google Search service.
-        
-        Args:
-            api_key: Google API key. Falls back to settings.
-            search_engine_id: Custom Search Engine ID. Falls back to settings.
         """
         self.api_key = api_key or settings.GOOGLE_API_KEY
         self.search_engine_id = search_engine_id or settings.GOOGLE_SEARCH_ENGINE_ID
@@ -110,18 +113,9 @@ class GoogleSearchService:
         Search for a brand name and analyze the results.
         
         This checks:
-        - Brand's position in search results
-        - Wikipedia presence
-        - Knowledge panel indicators
-        - Social media presence in results
-        
-        Args:
-            brand_name: Name of the brand to search
-            brand_domain: Domain to look for in results (e.g., "example.com")
-            num_results: Number of results to analyze (max 10)
-        
-        Returns:
-            SERPAnalysis: Detailed SERP analysis
+        - Brand's position in search results (Navigational intent)
+        - Wikipedia presence (Authority signal)
+        - Knowledge panel indicators (Entity recognition)
         """
         if not self.api_key or not self.search_engine_id:
             logger.warning("Google Search API not configured, using mock data")
@@ -170,13 +164,8 @@ class GoogleSearchService:
         """
         Check how many pages of a domain are indexed by Google.
         
-        Uses the "site:domain.com" search operator.
-        
-        Args:
-            domain: Domain to check (without protocol)
-        
-        Returns:
-            IndexingAnalysis: Indexing status analysis
+        Uses the `site:domain.com` search operator.
+        Low indexing count (<10) usually means the site is new or has technical SEO issues.
         """
         # Clean domain
         domain = domain.replace("https://", "").replace("http://", "").replace("www.", "")
@@ -214,13 +203,8 @@ class GoogleSearchService:
         """
         Check if a brand has a Wikipedia page.
         
-        Searches Google for "brand name site:wikipedia.org"
-        
-        Args:
-            brand_name: Name of the brand
-        
-        Returns:
-            dict: Wikipedia presence information
+        Searches Google for `"brand name" site:wikipedia.org`.
+        Wikipedia presence is a massive boost for "AI Discoverability" (LLMs trust Wiki).
         """
         if not self.api_key or not self.search_engine_id:
             return {"found": False, "url": None, "title": None}
@@ -245,9 +229,9 @@ class GoogleSearchService:
                         link = item.get("link", "")
                         title = item.get("title", "")
                         
-                        # Check if it's a Wikipedia article (not a talk page, etc.)
+                        # Check if it's a Wikipedia article (not a talk page, category, etc.)
                         if "wikipedia.org/wiki/" in link and ":" not in link.split("/wiki/")[-1]:
-                            # Check if brand name is in title
+                            # Check if brand name is in title to avoid false positives
                             if brand_name.lower() in title.lower():
                                 return {
                                     "found": True,
@@ -271,16 +255,9 @@ class GoogleSearchService:
         """
         Comprehensive brand visibility analysis.
         
-        Combines SERP analysis, indexing check, and Wikipedia presence.
-        
-        Args:
-            brand_name: Name of the brand
-            brand_domain: Brand's domain
-        
-        Returns:
-            dict: Complete visibility analysis
+        Combines SERP analysis, indexing check, and Wikipedia presence into a holistic view.
         """
-        # Run all checks in parallel
+        # Run all checks in parallel to save time
         serp_task = self.search_brand(brand_name, brand_domain)
         indexing_task = self.check_indexing(brand_domain)
         wikipedia_task = self.check_wikipedia_presence(brand_name)
@@ -293,6 +270,7 @@ class GoogleSearchService:
         visibility_score = 0
         
         # SERP position (40 points max)
+        # Being #1 for your own name is non-negotiable for established brands.
         if serp.brand_in_top_3:
             visibility_score += 40
         elif serp.brand_in_top_10:
@@ -301,6 +279,7 @@ class GoogleSearchService:
             visibility_score += 10
         
         # Indexing (30 points max)
+        # More pages = more surface area for discovery.
         if indexing.estimated_indexed_pages >= 100:
             visibility_score += 30
         elif indexing.estimated_indexed_pages >= 50:
@@ -375,7 +354,8 @@ class GoogleSearchService:
                 is_social_media=is_social,
             ))
         
-        # Detect knowledge panel (heuristic: brand in top 3 + Wikipedia + social)
+        # Detect knowledge panel (heuristic: brand in top 3 + Wikipedia + social in top results)
+        # Real knowledge panels aren't always explicitly in Custom Search JSON, so we infer.
         brand_in_top_3 = brand_position is not None and brand_position <= 3
         knowledge_panel_likely = brand_in_top_3 and wikipedia_found
         
@@ -488,4 +468,3 @@ async def check_indexing(domain: str) -> IndexingAnalysis:
     """Quick function to check domain indexing."""
     service = GoogleSearchService()
     return await service.check_indexing(domain)
-

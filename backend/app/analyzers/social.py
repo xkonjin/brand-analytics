@@ -1,8 +1,25 @@
 # =============================================================================
-# Social Media Presence Analyzer
+# EXPLAINER: Social Media Presence Analyzer
 # =============================================================================
-# This module analyzes social media presence across major platforms.
-# It evaluates follower counts, engagement rates, and posting consistency.
+#
+# WHAT IS THIS?
+# This module evaluates the brand's footprint on social media.
+#
+# WHY DO WE NEED IT?
+# 1. **Social Proof**: "If you don't have a Twitter/LinkedIn, are you even real?"
+# 2. **Engagement**: High followers + low engagement = fake followers (or boring content).
+# 3. **Consistency**: Posting once a year looks worse than not having an account.
+#
+# HOW IT WORKS:
+# 1. **Detection**: Finds social links on the website.
+# 2. **Metrics**: Fetches follower counts and engagement (likes/comments) via APIs or scraping.
+# 3. **Benchmarking**: Compares engagement rates against industry standards (e.g., 0.05% for Twitter).
+#
+# SCORING LOGIC (Total 100):
+# - Engagement Rate (30%): Are people listening?
+# - Presence (25%): Are you on the right platforms?
+# - Followers (25%): Do you have an audience?
+# - Consistency (20%): Do you show up regularly?
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
@@ -21,25 +38,13 @@ from app.services.twitter_service import TwitterService, extract_twitter_usernam
 class SocialMediaAnalyzer(BaseAnalyzer):
     """
     Analyzes Social Media Presence & Engagement.
-    
-    This analyzer evaluates:
-    - Presence across major platforms (Twitter, LinkedIn, Instagram, etc.)
-    - Follower counts and growth indicators
-    - Engagement rates (likes, comments, shares)
-    - Posting frequency and consistency
-    - Community channels (Discord, Telegram)
-    
-    Score Calculation:
-    - Platform presence (having accounts): 25%
-    - Follower count (relative to industry): 25%
-    - Engagement rate: 30%
-    - Posting consistency: 20%
     """
     
     MODULE_NAME = "social_media"
     WEIGHT = 0.20
     
     # Engagement rate benchmarks by platform (2024 data)
+    # These are used to determine if engagement is "Good", "Average", or "Poor".
     ENGAGEMENT_BENCHMARKS = {
         "twitter": 0.05,      # 0.05% is average
         "instagram": 1.5,     # 1.5% is average
@@ -51,27 +56,19 @@ class SocialMediaAnalyzer(BaseAnalyzer):
     async def analyze(self) -> AnalyzerResult:
         """
         Run the social media analysis.
-        
-        Steps:
-        1. Identify linked social profiles from scraped data
-        2. Fetch metrics for each platform (via APIs or estimation)
-        3. Calculate engagement rates
-        4. Generate score and insights
-        
-        Returns:
-            AnalyzerResult: Social media analysis results
         """
         try:
             self._raw_data = {}
             
             # ----------------------------------------------------------------
-            # Get social links from scraped data
+            # 1. Get social links from scraped data
             # ----------------------------------------------------------------
+            # The Orchestrator already scraped the homepage and found links like twitter.com/brand
             social_links = self.scraped_data.get("social_links", {})
             self._raw_data["social_links"] = social_links
             
             # ----------------------------------------------------------------
-            # Analyze each platform
+            # 2. Analyze each platform
             # ----------------------------------------------------------------
             platforms = []
             for platform, url in social_links.items():
@@ -82,23 +79,24 @@ class SocialMediaAnalyzer(BaseAnalyzer):
             self._raw_data["platforms"] = platforms
             
             # ----------------------------------------------------------------
-            # Check for community channels
+            # 3. Check for community channels
             # ----------------------------------------------------------------
+            # Discord and Telegram are special cases (Community vs Broadcast)
             community = self._analyze_community_channels()
             self._raw_data["community"] = community
             
             # ----------------------------------------------------------------
-            # Calculate overall metrics
+            # 4. Calculate overall metrics
             # ----------------------------------------------------------------
             self._raw_data["summary"] = self._calculate_summary(platforms)
             
             # ----------------------------------------------------------------
-            # Calculate score
+            # 5. Calculate score
             # ----------------------------------------------------------------
             score = self._calculate_score()
             
             # ----------------------------------------------------------------
-            # Generate findings and recommendations
+            # 6. Generate findings and recommendations
             # ----------------------------------------------------------------
             self._findings = self._generate_findings()
             self._recommendations = self._generate_recommendations()
@@ -142,16 +140,6 @@ class SocialMediaAnalyzer(BaseAnalyzer):
     ) -> Optional[SocialPlatformMetrics]:
         """
         Analyze a specific social media platform.
-        
-        Uses real APIs where available (Twitter), falls back to
-        estimated data for other platforms.
-        
-        Args:
-            platform: Platform name (twitter, linkedin, etc.)
-            url: Profile URL
-        
-        Returns:
-            SocialPlatformMetrics: Platform metrics
         """
         # Twitter/X - Use real API if configured
         if platform == "twitter" or platform == "x":
@@ -188,15 +176,6 @@ class SocialMediaAnalyzer(BaseAnalyzer):
     async def _analyze_twitter(self, url: str) -> Optional[SocialPlatformMetrics]:
         """
         Analyze Twitter/X account using the Twitter API v2.
-        
-        Uses real API data if TWITTER_BEARER_TOKEN is configured,
-        otherwise falls back to estimated data.
-        
-        Args:
-            url: Twitter profile URL
-        
-        Returns:
-            SocialPlatformMetrics: Twitter metrics
         """
         # Extract username from URL
         username = extract_twitter_username(url)
@@ -328,12 +307,6 @@ class SocialMediaAnalyzer(BaseAnalyzer):
     def _calculate_score(self) -> float:
         """
         Calculate the social media score.
-        
-        Components:
-        - Platform presence: 25%
-        - Follower count: 25%
-        - Engagement rate: 30%
-        - Posting consistency: 20%
         """
         score = 0.0
         summary = self._raw_data.get("summary", {})
@@ -374,6 +347,7 @@ class SocialMediaAnalyzer(BaseAnalyzer):
         score += follower_score * 0.25
         
         # Engagement rate (30%)
+        # High engagement = sticky brand
         avg_engagement = summary.get("avg_engagement", 0)
         if avg_engagement >= 2.0:
             engagement_score = 100
@@ -388,6 +362,7 @@ class SocialMediaAnalyzer(BaseAnalyzer):
         score += engagement_score * 0.30
         
         # Posting consistency (20%)
+        # Dead accounts are worse than no accounts
         active_platforms = summary.get("active_platforms", 0)
         total_platforms = summary.get("total_platforms", 1)
         consistency_ratio = active_platforms / max(total_platforms, 1)
@@ -532,4 +507,3 @@ class SocialMediaAnalyzer(BaseAnalyzer):
             ))
         
         return recommendations
-

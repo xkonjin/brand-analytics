@@ -1,185 +1,269 @@
-# Brand Analytics Tool
+# 🚀 Brand Analytics Tool
 
-A comprehensive brand analysis tool that provides professional marketing audits across multiple dimensions: SEO, social media, brand messaging, website UX, AI discoverability, and more.
+**A comprehensive, automated 360° brand audit platform for startups.**
 
-## Features
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Node](https://img.shields.io/badge/node-20+-green.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-teal.svg)
+![Next.js](https://img.shields.io/badge/Next.js-14-black)
 
-- **SEO Performance Analysis**: PageSpeed, meta tags, Core Web Vitals, indexing status
-- **Social Media Presence**: Follower counts, engagement rates, platform coverage
-- **Brand Messaging & Archetype**: Jungian archetype identification, tone analysis, readability
-- **Website UX & Conversion**: CTAs, navigation, trust signals, mobile responsiveness
-- **AI Discoverability**: Wikipedia presence, structured data, content depth
-- **Content Analysis**: Recent posts, sentiment, content mix evaluation
-- **Team Presence**: LinkedIn, founder visibility, credibility signals
-- **Channel Fit Scoring**: Platform suitability recommendations
+## 📖 Overview
 
-## Architecture
+The **Brand Analytics Tool** is designed to be an automated "virtual brand analyst." In a world where agency audits take weeks and cost thousands, this tool delivers a consulting-grade report in minutes.
 
-```
-brand-analytics/
-├── backend/          # FastAPI Python backend
-│   ├── app/
-│   │   ├── analyzers/    # 9 analysis modules
-│   │   ├── api/          # REST endpoints
-│   │   ├── models/       # Pydantic schemas
-│   │   ├── scrapers/     # Web scraping utilities
-│   │   ├── services/     # External API integrations
-│   │   └── tasks/        # Celery async tasks
-│   └── requirements.txt
-├── frontend/         # Next.js React frontend
-│   └── src/
-│       ├── app/          # Pages (home, analyze, report)
-│       ├── components/   # React components
-│       └── lib/          # API client
-└── docker-compose.yml
-```
+It analyzes a brand's online presence across **8 critical dimensions**:
 
-## Quick Start
+| Module | What It Analyzes |
+|--------|-----------------|
+| 🔍 **SEO Performance** | Core Web Vitals, meta tags, indexing status |
+| 🤖 **AI Discoverability** | Wikipedia presence, Knowledge Graph, LLM visibility |
+| 📱 **Social Media** | Followers, engagement rates, posting consistency |
+| 🎭 **Brand Messaging** | Archetype, tone, value proposition clarity |
+| 🎨 **Website UX** | CTAs, navigation, trust signals, conversion readiness |
+| 📝 **Content Analysis** | Content mix, sentiment, themes |
+| 👥 **Team Presence** | Team visibility, founder credibility |
+| 📊 **Channel Fit** | Marketing channel recommendations |
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.12+
-- Node.js 20+
-- Docker & Docker Compose (for local development)
-- API Keys (optional but recommended):
-  - OpenAI API key (for GPT-4 analysis)
-  - Google API key (for PageSpeed)
+- **Docker** & **Docker Compose** (Recommended)
+- **API Keys** (at minimum, an OpenAI API key)
 
-### 1. Clone and Setup
+### Option 1: Docker (Fastest) ⭐
 
 ```bash
+# 1. Clone the repository
+git clone <repo-url>
 cd brand-analytics
 
-# Copy environment file
-cp backend/.env.example backend/.env
-# Edit .env with your API keys
+# 2. Copy environment template and add your API keys
+cp .env.example .env
+# Edit .env and add at minimum: OPENAI_API_KEY
+
+# 3. Start all services
+./start-dev.sh docker
+# Or manually: docker-compose up -d
+
+# 4. Open the app
+# Frontend: http://localhost:3000
+# API Docs: http://localhost:8000/docs
 ```
 
-### 2. Start with Docker Compose
+### Option 2: Local Development
 
 ```bash
-# Start all services (PostgreSQL, Redis, Backend, Celery)
-docker-compose up -d
+# 1. Start database services with Docker
+./start-dev.sh services
 
-# View logs
-docker-compose logs -f backend
-```
-
-### 3. Start Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### 4. Access the Application
-
-- Frontend: http://localhost:3000
-- API Docs: http://localhost:8000/docs
-- Celery Monitor: http://localhost:5555
-
-## Development Setup (Without Docker)
-
-### Backend
-
-```bash
+# 2. In terminal 1 - Start backend
 cd backend
-
-# Create virtual environment
+cp env.example .env
+# Edit .env and add your API keys
 python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-
-# Install dependencies
+source venv/bin/activate
 pip install -r requirements.txt
-
-# Install Playwright browsers
-playwright install chromium
-
-# Start PostgreSQL and Redis (local or cloud)
-# Update DATABASE_URL and REDIS_URL in .env
-
-# Run database migrations
-# alembic upgrade head
-
-# Start the API server
 uvicorn app.main:app --reload --port 8000
 
-# In another terminal, start Celery worker
-celery -A app.tasks.celery_app worker --loglevel=info
-```
-
-### Frontend
-
-```bash
+# 3. In terminal 2 - Start frontend
 cd frontend
 npm install
 npm run dev
 ```
 
-## API Endpoints
+---
+
+## ⚙️ Configuration
+
+### Required API Keys
+
+| Key | Purpose | Get It At |
+|-----|---------|-----------|
+| `OPENAI_API_KEY` | Brand archetype & tone analysis | [OpenAI Platform](https://platform.openai.com/api-keys) |
+
+### Recommended API Keys (Enhanced Analysis)
+
+| Key | Purpose | Get It At |
+|-----|---------|-----------|
+| `GOOGLE_API_KEY` | PageSpeed & Search analysis | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
+| `GOOGLE_SEARCH_ENGINE_ID` | SERP & indexing checks | [Programmable Search](https://programmablesearchengine.google.com/) |
+| `TWITTER_BEARER_TOKEN` | Social media metrics | [Twitter Developer](https://developer.twitter.com/) |
+
+### Optional API Keys
+
+| Key | Purpose |
+|-----|---------|
+| `APIFY_API_TOKEN` | Advanced social scraping |
+| `CLEARBIT_API_KEY` | Company logo fetching |
+
+> **Note:** All API-dependent features have fallback behavior. Without API keys, the tool will use mock data or heuristic analysis.
+
+---
+
+## 🏗 Architecture
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Next.js 14    │────▶│   FastAPI       │────▶│   PostgreSQL    │
+│   Frontend      │     │   Backend       │     │   Database      │
+│   :3000         │     │   :8000         │     │   :5432         │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                        ┌────────▼────────┐     ┌─────────────────┐
+                        │  Celery Worker  │────▶│     Redis       │
+                        │  (Background)   │     │   :6379         │
+                        └────────┬────────┘     └─────────────────┘
+                                 │
+              ┌──────────────────┼──────────────────┐
+              │                  │                  │
+       ┌──────▼──────┐    ┌──────▼──────┐    ┌──────▼──────┐
+       │   OpenAI    │    │   Google    │    │  Twitter    │
+       │   GPT-4     │    │  PageSpeed  │    │   API v2    │
+       └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+### Directory Structure
+
+```
+brand-analytics/
+├── backend/                 # Python FastAPI Application
+│   ├── app/
+│   │   ├── analyzers/       # 8 analysis modules
+│   │   ├── api/             # REST endpoints
+│   │   ├── models/          # Database & Pydantic models
+│   │   ├── scrapers/        # Website scraping
+│   │   ├── services/        # External API integrations
+│   │   └── tasks/           # Celery background tasks
+│   ├── env.example          # Environment template
+│   └── Dockerfile
+├── frontend/                # Next.js 14 Application
+│   ├── src/
+│   │   ├── app/             # Pages (home, analyze, report)
+│   │   ├── components/      # UI components
+│   │   └── lib/             # Utilities & API client
+│   └── Dockerfile
+├── docker-compose.yml       # Full stack orchestration
+├── start-dev.sh             # Development helper script
+└── .env.example             # Root env for Docker Compose
+```
+
+---
+
+## 🛠 API Endpoints
+
+Once running, visit **http://localhost:8000/docs** for interactive documentation.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/v1/analyze` | Start new analysis |
-| GET | `/api/v1/analysis/{id}` | Get analysis status |
-| GET | `/api/v1/analysis/{id}/progress` | Real-time progress |
-| GET | `/api/v1/analysis/{id}/report` | Get full report |
-| GET | `/api/v1/analysis/{id}/pdf` | Download PDF |
-| GET | `/api/v1/health` | Health check |
+| `POST` | `/api/v1/analyze` | Start a new brand analysis |
+| `GET` | `/api/v1/analysis/{id}` | Get analysis status |
+| `GET` | `/api/v1/analysis/{id}/progress` | Get detailed progress |
+| `GET` | `/api/v1/analysis/{id}/report` | Get complete report JSON |
+| `GET` | `/api/v1/analysis/{id}/pdf` | Download PDF report |
+| `GET` | `/api/v1/health` | Health check |
 
-## Configuration
+### Example: Start an Analysis
 
-Key environment variables:
-
-```env
-# Required
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/brand_analytics
-REDIS_URL=redis://localhost:6379/0
-
-# Recommended for full functionality
-OPENAI_API_KEY=sk-...          # GPT-4 for brand analysis
-GOOGLE_API_KEY=...             # PageSpeed Insights
-
-# Optional
-APIFY_API_TOKEN=...            # Social media scraping
-S3_BUCKET_NAME=...             # PDF storage
+```bash
+curl -X POST http://localhost:8000/api/v1/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
 ```
 
-## Scoring System
+---
 
-Each module generates a score from 0-100, weighted to calculate the overall brand score:
+## 🔧 Development Commands
+
+```bash
+# Start everything with Docker
+./start-dev.sh docker
+
+# Start only database services
+./start-dev.sh services
+
+# View logs
+docker-compose logs -f backend
+
+# Stop all services
+docker-compose down
+
+# Reset database (caution: deletes data)
+docker-compose down -v
+
+# Run backend tests
+cd backend && pytest
+
+# Run frontend type check
+cd frontend && npm run build
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### "Connection refused" errors
+
+1. Make sure Docker is running
+2. Check if services are healthy: `docker-compose ps`
+3. Wait for health checks to pass (30-60 seconds)
+
+### "API key not configured" warnings
+
+This is normal if you haven't set all API keys. The tool will use fallback/mock data.
+
+### Frontend can't connect to backend
+
+1. Check backend is running: `curl http://localhost:8000/api/v1/health`
+2. Ensure `NEXT_PUBLIC_API_URL=http://localhost:8000` is set
+
+### PDF download not working
+
+PDF generation requires WeasyPrint system dependencies. In Docker, these are pre-installed. For local development, you may need to install them separately.
+
+---
+
+## 📊 Scoring Methodology
+
+The tool generates a **0-100 Brand Health Score** using weighted analysis:
 
 | Module | Weight |
 |--------|--------|
-| SEO Performance | 15% |
 | Social Media | 20% |
+| SEO Performance | 15% |
 | Brand Messaging | 15% |
 | Website UX | 15% |
 | AI Discoverability | 10% |
-| Content Analysis | 10% |
+| Content | 10% |
 | Team Presence | 10% |
 | Channel Fit | 5% |
 
-## Deployment
+### Grade Scale
 
-### Backend (Railway/Render)
+| Score | Grade | Interpretation |
+|-------|-------|----------------|
+| 90-100 | A+ | Industry leader |
+| 80-89 | A | Excellent foundation |
+| 70-79 | B | Good, above average |
+| 60-69 | C | Average, room to improve |
+| 50-59 | D | Below average |
+| 0-49 | F | Needs immediate attention |
 
-1. Connect your GitHub repository
-2. Set environment variables
-3. Deploy with `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+---
 
-### Frontend (Vercel)
+## 🤝 Contributing
 
-1. Connect your GitHub repository
-2. Set `NEXT_PUBLIC_API_URL` to your backend URL
-3. Deploy automatically
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-### Database (Supabase/Railway)
+---
 
-Use managed PostgreSQL for production reliability.
+## 📄 License
 
-## License
-
-MIT License - see LICENSE file for details.
-
+This project is licensed under the MIT License.
