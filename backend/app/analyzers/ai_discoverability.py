@@ -304,9 +304,8 @@ class AIDiscoverabilityAnalyzer(BaseAnalyzer):
             return "high"
         elif score >= 50:
             return "medium"
-        elif score >= 25:
+        else:
             return "low"
-        return "very_low"
     
     def _calculate_score(self) -> float:
         """
