@@ -62,6 +62,12 @@ pydantic-settings>=2.1.0  # Settings management with Pydantic
 python-dotenv>=1.0.0      # Load environment variables from .env
 
 # -----------------------------------------------------------------------------
+# Logging & Monitoring
+# -----------------------------------------------------------------------------
+structlog>=24.1.0         # Structured logging with JSON output
+sentry-sdk[fastapi,celery,sqlalchemy,httpx]>=1.40.0  # Error tracking
+
+# -----------------------------------------------------------------------------
 # Utilities
 # -----------------------------------------------------------------------------
 python-slugify>=8.0.0     # URL/slug generation

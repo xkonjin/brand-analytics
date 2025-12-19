@@ -24,6 +24,15 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.api.routes import analysis, reports, health
 from app.database import init_db, close_db
+from app.utils.logging import configure_logging, get_logger
+from app.utils.sentry import init_sentry, capture_exception
+from app.middleware.logging import RequestLoggingMiddleware
+
+configure_logging(
+    log_level=settings.LOG_LEVEL,
+    json_logs=settings.LOG_JSON,
+)
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
@@ -36,30 +45,29 @@ async def lifespan(app: FastAPI):
     - Playwright browser initialization (if needed)
     - Graceful shutdown of connections
     """
-    # ---------------------------------------------------------------------
-    # Startup: Initialize resources
-    # ---------------------------------------------------------------------
-    print(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
-    print(f"📊 Environment: {settings.ENVIRONMENT}")
+    logger.info(
+        "Application starting",
+        app_name=settings.APP_NAME,
+        version=settings.APP_VERSION,
+        environment=settings.ENVIRONMENT,
+    )
     
-    # Initialize database connection pool
-    # This establishes the connection to PostgreSQL so we don't open/close it per request
+    init_sentry(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.ENVIRONMENT,
+        release=settings.APP_VERSION,
+    )
+    
     await init_db()
-    print("✅ Database connection pool initialized")
+    logger.info("Database connection pool initialized")
     
     # Yield control to the application
     # This is where the application actually runs and accepts requests
     yield
     
-    # ---------------------------------------------------------------------
-    # Shutdown: Clean up resources
-    # ---------------------------------------------------------------------
-    print("🛑 Shutting down application...")
-    
-    # Close database connections
-    # Crucial to prevent hanging connections on the DB side
+    logger.info("Application shutting down")
     await close_db()
-    print("✅ Database connections closed")
+    logger.info("Database connections closed")
 
 
 # =============================================================================
@@ -110,6 +118,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(RequestLoggingMiddleware)
 
 # =============================================================================
 # Register API Routes
@@ -158,14 +167,16 @@ async def root():
 # =============================================================================
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    """
-    Global exception handler for unhandled errors.
+    """Global exception handler - logs errors and sends to Sentry."""
+    logger.exception(
+        "Unhandled exception",
+        path=str(request.url.path),
+        method=request.method,
+        error=str(exc),
+    )
+    capture_exception(exc, path=str(request.url.path), method=request.method)
     
-    In production, this prevents stack traces from leaking to clients.
-    In development, it provides more detailed error information.
-    """
     if settings.DEBUG:
-        # In debug mode, include exception details
         return JSONResponse(
             status_code=500,
             content={
@@ -175,7 +186,6 @@ async def global_exception_handler(request, exc):
             }
         )
     else:
-        # In production, hide implementation details
         return JSONResponse(
             status_code=500,
             content={

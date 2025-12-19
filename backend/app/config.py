@@ -93,6 +93,15 @@ class Settings(BaseSettings):
     # Clearbit for company logos (free tier)
     CLEARBIT_API_KEY: Optional[str] = None
     
+    # Sentry for error tracking (get from sentry.io)
+    SENTRY_DSN: Optional[str] = None
+    
+    # -------------------------------------------------------------------------
+    # Logging Settings
+    # -------------------------------------------------------------------------
+    LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    LOG_JSON: bool = True    # True for production (JSON), False for dev (colored)
+    
     # -------------------------------------------------------------------------
     # Storage Settings (S3/R2 for PDF storage)
     # -------------------------------------------------------------------------
