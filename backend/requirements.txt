@@ -68,6 +68,12 @@ python-jose[cryptography]>=3.3.0  # JWT token encoding/decoding
 passlib[bcrypt]>=1.7.4            # Password and API key hashing
 
 # -----------------------------------------------------------------------------
+# Logging & Monitoring
+# -----------------------------------------------------------------------------
+structlog>=24.1.0         # Structured logging with JSON output
+sentry-sdk[fastapi,celery,sqlalchemy,httpx]>=1.40.0  # Error tracking
+
+# -----------------------------------------------------------------------------
 # Utilities
 # -----------------------------------------------------------------------------
 python-slugify>=8.0.0     # URL/slug generation
