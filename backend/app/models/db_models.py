@@ -136,8 +136,14 @@ class Analysis(Base):
     # -------------------------------------------------------------------------
     # Status & Progress
     # -------------------------------------------------------------------------
+    # SQLAlchemy stores enum names by default, but our PostgreSQL enum uses
+    # lowercase values ("pending", not "PENDING"). Using values_callable
+    # ensures the .value attribute is stored, matching the DB enum definition.
     status = Column(
-        SQLEnum(AnalysisStatusEnum),
+        SQLEnum(
+            AnalysisStatusEnum,
+            values_callable=lambda x: [e.value for e in x],
+        ),
         default=AnalysisStatusEnum.PENDING,
         nullable=False,
         index=True,
@@ -314,7 +320,11 @@ class UserRecord(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(SQLEnum(UserRoleEnum), default=UserRoleEnum.USER, nullable=False)
+    role = Column(
+        SQLEnum(UserRoleEnum, values_callable=lambda x: [e.value for e in x]),
+        default=UserRoleEnum.USER,
+        nullable=False,
+    )
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

@@ -60,33 +60,37 @@ def get_task_db_session():
 # Progress Update Helper
 # =============================================================================
 async def update_progress(
-    session: AsyncSession,
+    session_factory,
     analysis_id: str,
     module: str,
     status: str
 ) -> None:
     """
-    Update the progress of a specific analysis module.
+    Update the progress of a specific analysis module using its own session.
+    
+    Uses a separate session to avoid conflicts with the main analysis session
+    when committing progress updates mid-operation.
     
     Args:
-        session: Database session
+        session_factory: Factory to create new database sessions
         analysis_id: UUID of the analysis
         module: Name of the module (e.g., 'seo', 'social_media')
         status: New status ('pending', 'running', 'completed', 'failed')
     """
     from uuid import UUID
     
-    result = await session.execute(
-        select(Analysis).where(Analysis.id == UUID(analysis_id))
-    )
-    analysis = result.scalar_one_or_none()
-    
-    if analysis:
-        progress = analysis.progress or {}
-        progress[module] = status
-        analysis.progress = progress
-        analysis.updated_at = datetime.utcnow()
-        await session.commit()
+    async with session_factory() as progress_session:
+        result = await progress_session.execute(
+            select(Analysis).where(Analysis.id == UUID(analysis_id))
+        )
+        analysis = result.scalar_one_or_none()
+        
+        if analysis:
+            progress = analysis.progress or {}
+            progress[module] = status
+            analysis.progress = progress
+            analysis.updated_at = datetime.utcnow()
+            await progress_session.commit()
 
 
 # =============================================================================
@@ -180,9 +184,8 @@ async def _run_analysis_async(analysis_id: str) -> Dict[str, Any]:
                 industry=analysis.industry,
             )
             
-            # Define progress callback
-            async def progress_callback(module: str, status: str):
-                await update_progress(session, analysis_id, module, status)
+            async def progress_callback(module: str, module_status: str):
+                await update_progress(session_factory, analysis_id, module, module_status)
             
             # Run the analysis
             report = await orchestrator.run(progress_callback=progress_callback)

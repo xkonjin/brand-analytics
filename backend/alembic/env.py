@@ -31,12 +31,17 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
-def get_url() -> str:
+def get_url(sync: bool = False) -> str:
     """Get database URL, converting async URL for sync operations if needed."""
     url = settings.DATABASE_URL
-    # For autogenerate, we need the sync driver
-    if url.startswith("postgresql+asyncpg://"):
-        url = url.replace("postgresql+asyncpg://", "postgresql://")
+    if sync:
+        # For sync operations, convert async URL to sync
+        if url.startswith("postgresql+asyncpg://"):
+            url = url.replace("postgresql+asyncpg://", "postgresql://")
+    else:
+        # For async operations, ensure we have asyncpg
+        if url.startswith("postgresql://") and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+asyncpg://")
     return url
 
 
@@ -47,7 +52,7 @@ def run_migrations_offline() -> None:
     This configures the context with just a URL and not an Engine.
     Calls to context.execute() emit the given string to the script output.
     """
-    url = get_url()
+    url = get_url(sync=True)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -77,7 +82,7 @@ def do_run_migrations(connection: Connection) -> None:
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode with async engine."""
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = get_url()
+    configuration["sqlalchemy.url"] = get_url(sync=False)
 
     connectable = async_engine_from_config(
         configuration,
