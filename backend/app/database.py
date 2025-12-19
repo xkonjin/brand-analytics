@@ -139,22 +139,15 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 def get_engine() -> AsyncEngine:
-    """
-    Get the database engine instance.
-    
-    Useful for raw SQL operations or bulk operations.
-    
-    Returns:
-        AsyncEngine: SQLAlchemy async engine
-    
-    Raises:
-        RuntimeError: If database is not initialized
-    """
     if _engine is None:
-        raise RuntimeError(
-            "Database not initialized. Call init_db() first."
-        )
+        raise RuntimeError("Database not initialized. Call init_db() first.")
     return _engine
+
+
+def get_session_factory() -> async_sessionmaker:
+    if _async_session_factory is None:
+        raise RuntimeError("Database not initialized. Call init_db() first.")
+    return _async_session_factory
 
 
 # =============================================================================

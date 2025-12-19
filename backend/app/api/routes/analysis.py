@@ -9,12 +9,15 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from uuid import UUID
 
+import asyncio
+import json
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, get_session_factory
 from app.models.db_models import Analysis, AnalysisStatusEnum
 from app.models.analysis import (
     AnalysisRequest,
@@ -254,6 +257,93 @@ async def get_analysis_progress(
         "completion_percentage": round(completion_percentage, 1),
         "updated_at": analysis.updated_at.isoformat() + "Z",
     }
+
+
+@router.get(
+    "/analysis/{analysis_id}/stream",
+    summary="Stream analysis progress via SSE",
+    description="Server-Sent Events stream for real-time progress updates.",
+)
+async def stream_analysis_progress(
+    analysis_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """
+    Stream real-time progress updates via Server-Sent Events.
+    
+    The stream sends JSON-formatted events with progress updates until
+    the analysis completes or fails.
+    """
+    result = await db.execute(
+        select(Analysis).where(Analysis.id == analysis_id)
+    )
+    analysis = result.scalar_one_or_none()
+    
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Analysis with ID {analysis_id} not found",
+        )
+    
+    async def event_generator():
+        last_progress = None
+        poll_interval = 1.0
+        max_iterations = 600
+        iteration = 0
+        session_factory = get_session_factory()
+        
+        while iteration < max_iterations:
+            async with session_factory() as session:
+                result = await session.execute(
+                    select(Analysis).where(Analysis.id == analysis_id)
+                )
+                current = result.scalar_one_or_none()
+                
+                if not current:
+                    yield f"data: {json.dumps({'error': 'Analysis not found'})}\n\n"
+                    break
+                
+                current_progress = current.progress or {}
+                progress_data = {
+                    "status": current.status.value,
+                    "modules": current_progress,
+                    "overall_score": current.overall_score,
+                    "completion_percentage": _calculate_completion(current_progress),
+                }
+                
+                if progress_data != last_progress:
+                    yield f"data: {json.dumps(progress_data)}\n\n"
+                    last_progress = progress_data.copy()
+                
+                if current.status in (AnalysisStatusEnum.COMPLETED, AnalysisStatusEnum.FAILED):
+                    final_data = {
+                        "status": current.status.value,
+                        "overall_score": current.overall_score,
+                        "completed": True,
+                    }
+                    yield f"data: {json.dumps(final_data)}\n\n"
+                    break
+            
+            await asyncio.sleep(poll_interval)
+            iteration += 1
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+def _calculate_completion(progress: dict) -> float:
+    if not progress:
+        return 0.0
+    total = len(progress)
+    completed = sum(1 for s in progress.values() if s in ("completed", "failed"))
+    return round((completed / total) * 100, 1) if total > 0 else 0.0
 
 
 @router.delete(
