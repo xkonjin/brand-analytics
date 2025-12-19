@@ -23,6 +23,7 @@ from app.models.analysis import (
     AnalysisProgress,
 )
 from app.tasks.analysis_tasks import run_full_analysis
+from app.auth.dependencies import get_optional_auth, check_rate_limit
 
 
 router = APIRouter()
@@ -53,6 +54,8 @@ async def start_analysis(
     request: AnalysisRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
+    _auth = Depends(get_optional_auth),
+    _rate_limit = Depends(check_rate_limit),
 ) -> AnalysisResponse:
     """
     Start a new brand analysis for the provided URL.

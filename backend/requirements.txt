@@ -62,6 +62,12 @@ pydantic-settings>=2.1.0  # Settings management with Pydantic
 python-dotenv>=1.0.0      # Load environment variables from .env
 
 # -----------------------------------------------------------------------------
+# Authentication & Security
+# -----------------------------------------------------------------------------
+python-jose[cryptography]>=3.3.0  # JWT token encoding/decoding
+passlib[bcrypt]>=1.7.4            # Password and API key hashing
+
+# -----------------------------------------------------------------------------
 # Utilities
 # -----------------------------------------------------------------------------
 python-slugify>=8.0.0     # URL/slug generation
