@@ -82,12 +82,7 @@ async def init_db() -> None:
         autoflush=False,
     )
     
-    # Create all tables (in development only - use Alembic in production)
-    if settings.ENVIRONMENT == "development":
-        async with _engine.begin() as conn:
-            # Import all models to ensure they're registered
-            from app.models import db_models  # noqa
-            await conn.run_sync(Base.metadata.create_all)
+
 
 
 async def close_db() -> None:
