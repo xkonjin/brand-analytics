@@ -8,6 +8,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create query client with sensible defaults
@@ -26,7 +27,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
     </QueryClientProvider>
   )
 }
