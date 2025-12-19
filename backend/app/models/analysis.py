@@ -10,7 +10,14 @@ from enum import Enum
 from typing import Optional, Dict, Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
+
+from app.utils.validation import (
+    sanitize_string,
+    validate_url,
+    validate_email,
+    normalize_url,
+)
 
 
 class AnalysisStatus(str, Enum):
@@ -130,29 +137,30 @@ class AnalysisRequest(BaseModel):
     
     @field_validator("url", mode="before")
     @classmethod
-    def normalize_url(cls, v: str) -> str:
-        """
-        Normalize the URL by ensuring it has a protocol.
-        
-        Adds https:// if no protocol is specified.
-        """
+    def normalize_url_field(cls, v: str) -> str:
         if isinstance(v, str):
-            v = v.strip()
-            if not v.startswith(("http://", "https://")):
-                v = f"https://{v}"
+            v = normalize_url(v)
+            is_valid, error = validate_url(v)
+            if not is_valid:
+                raise ValueError(error)
         return v
-    
+
+    @field_validator("description", "industry", mode="before")
+    @classmethod
+    def sanitize_text_fields(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        return sanitize_string(v)
+
     @field_validator("email", mode="before")
     @classmethod
-    def validate_email(cls, v: Optional[str]) -> Optional[str]:
-        """
-        Basic email validation.
-        """
+    def validate_email_field(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         v = v.strip().lower()
-        if "@" not in v or "." not in v:
-            raise ValueError("Invalid email address")
+        is_valid, error = validate_email(v)
+        if not is_valid:
+            raise ValueError(error)
         return v
 
 
