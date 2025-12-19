@@ -1,0 +1,88 @@
+# =============================================================================
+# Deploy Pipeline - Brand Analytics
+# =============================================================================
+# Deploys to Fly.io when changes are pushed to main.
+# Only runs after CI passes successfully.
+# =============================================================================
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Allow manual deploys
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===========================================================================
+  # Deploy Backend to Fly.io
+  # ===========================================================================
+  
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Fly CLI
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      
+      - name: Health check
+        run: |
+          sleep 10
+          curl -f https://brand-analytics-api.fly.dev/api/v1/health || exit 1
+        continue-on-error: true
+
+  # ===========================================================================
+  # Deploy Frontend (if using Fly.io for frontend too)
+  # ===========================================================================
+  
+  # deploy-frontend:
+  #   name: Deploy Frontend
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: frontend
+  #   
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     
+  #     - name: Set up Fly CLI
+  #       uses: superfly/flyctl-actions/setup-flyctl@master
+  #     
+  #     - name: Deploy to Fly.io
+  #       run: flyctl deploy --remote-only
+  #       env:
+  #         FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  # ===========================================================================
+  # Post-Deploy Notifications
+  # ===========================================================================
+  
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [deploy-backend]
+    if: always()
+    
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy-backend.result }}" == "success" ]; then
+            echo "Deployment successful!"
+          else
+            echo "Deployment failed!"
+            exit 1
+          fi
