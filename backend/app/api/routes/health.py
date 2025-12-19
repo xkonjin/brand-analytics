@@ -15,6 +15,8 @@ import redis.asyncio as redis
 
 from app.config import settings
 from app.database import get_db
+from app.utils.metrics import get_metrics_collector
+from app.utils.circuit_breaker import get_all_circuit_states
 
 
 router = APIRouter()
@@ -175,4 +177,23 @@ async def liveness_check() -> Dict[str, str]:
         dict: Alive status
     """
     return {"status": "alive"}
+
+
+@router.get("/metrics")
+async def get_metrics() -> Dict[str, Any]:
+    """Application metrics for monitoring."""
+    collector = get_metrics_collector()
+    return {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        **collector.get_metrics(),
+    }
+
+
+@router.get("/circuits")
+async def get_circuit_status() -> Dict[str, Any]:
+    """Circuit breaker status for all external services."""
+    return {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "circuits": get_all_circuit_states(),
+    }
 
