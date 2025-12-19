@@ -177,32 +177,7 @@ class AnalysisOrchestrator:
             ),
         }
         
-        # Run analyzers with progress tracking
-        results: Dict[str, AnalyzerResult] = {}
-        
-        for module_name, analyzer in analyzers.items():
-            await self._update_progress(module_name, "running")
-            
-            try:
-                result = await asyncio.wait_for(
-                    analyzer.analyze(),
-                    timeout=settings.ANALYSIS_TIMEOUT / len(analyzers),
-                )
-                results[module_name] = result
-                await self._update_progress(module_name, "completed")
-            except asyncio.TimeoutError:
-                results[module_name] = AnalyzerResult(
-                    score=0,
-                    error=f"Analysis timed out after {settings.ANALYSIS_TIMEOUT}s",
-                )
-                await self._update_progress(module_name, "failed")
-            except Exception as e:
-                results[module_name] = AnalyzerResult(
-                    score=0,
-                    error=str(e),
-                )
-                await self._update_progress(module_name, "failed")
-        
+        results = await self._run_analyzers_parallel(analyzers)
         self.context.results = results
         
         # ---------------------------------------------------------------------
@@ -218,6 +193,81 @@ class AnalysisOrchestrator:
         report = self._build_report(results, scorecard, scraped_data)
         
         return report
+    
+    async def _run_analyzers_parallel(
+        self,
+        analyzers: Dict[str, Any],
+    ) -> Dict[str, AnalyzerResult]:
+        """
+        Run all analyzers in parallel for faster execution.
+        
+        Analyzers are grouped into waves to manage resource usage:
+        - Wave 1: SEO, Social, AI Discoverability (external API heavy)
+        - Wave 2: Brand, UX, Content (compute heavy)
+        - Wave 3: Team, Channel Fit (depends on other results)
+        
+        Returns:
+            Dict mapping module names to their results
+        """
+        results: Dict[str, AnalyzerResult] = {}
+        
+        wave_1 = ["seo", "social_media", "ai_discoverability"]
+        wave_2 = ["brand_messaging", "website_ux", "content"]
+        wave_3 = ["team_presence", "channel_fit"]
+        
+        per_analyzer_timeout = settings.ANALYSIS_TIMEOUT / 3
+        
+        for wave in [wave_1, wave_2, wave_3]:
+            wave_analyzers = {k: v for k, v in analyzers.items() if k in wave}
+            wave_results = await self._execute_wave(
+                wave_analyzers,
+                timeout=per_analyzer_timeout,
+            )
+            results.update(wave_results)
+        
+        return results
+    
+    async def _execute_wave(
+        self,
+        wave_analyzers: Dict[str, Any],
+        timeout: float,
+    ) -> Dict[str, AnalyzerResult]:
+        """Execute a wave of analyzers in parallel."""
+        results: Dict[str, AnalyzerResult] = {}
+        
+        async def run_single(name: str, analyzer) -> tuple[str, AnalyzerResult]:
+            await self._update_progress(name, "running")
+            try:
+                result = await asyncio.wait_for(
+                    analyzer.analyze(),
+                    timeout=timeout,
+                )
+                await self._update_progress(name, "completed")
+                return name, result
+            except asyncio.TimeoutError:
+                await self._update_progress(name, "failed")
+                return name, AnalyzerResult(
+                    score=0,
+                    error=f"Analysis timed out after {timeout:.0f}s",
+                )
+            except Exception as e:
+                await self._update_progress(name, "failed")
+                return name, AnalyzerResult(
+                    score=0,
+                    error=str(e),
+                )
+        
+        tasks = [
+            run_single(name, analyzer)
+            for name, analyzer in wave_analyzers.items()
+        ]
+        
+        completed = await asyncio.gather(*tasks, return_exceptions=False)
+        
+        for name, result in completed:
+            results[name] = result
+        
+        return results
     
     async def _update_progress(self, module: str, status: str) -> None:
         """Update progress via callback if provided."""
