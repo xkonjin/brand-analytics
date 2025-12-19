@@ -17,10 +17,13 @@ from sqlalchemy import (
     Integer,
     Float,
     JSON,
+    Boolean,
+    ForeignKey,
     Enum as SQLEnum,
     Index,
     TypeDecorator,
 )
+from sqlalchemy.orm import relationship
 import enum
 
 from app.database import Base
@@ -297,4 +300,51 @@ class AnalysisCache(Base):
     
     def __repr__(self) -> str:
         return f"<AnalysisCache(key={self.cache_key}, type={self.data_type})>"
+
+
+class UserRoleEnum(str, enum.Enum):
+    USER = "user"
+    ADMIN = "admin"
+
+
+class UserRecord(Base):
+    """User account for API authentication."""
+    __tablename__ = "users"
+    
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    role = Column(SQLEnum(UserRoleEnum), default=UserRoleEnum.USER, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    api_keys = relationship("APIKeyRecord", back_populates="user", cascade="all, delete-orphan")
+    
+    def __repr__(self) -> str:
+        return f"<UserRecord(id={self.id}, email={self.email})>"
+
+
+class APIKeyRecord(Base):
+    """API key for authenticating requests."""
+    __tablename__ = "api_keys"
+    
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    key_prefix = Column(String(11), nullable=False)  # "ba_" + 8 chars
+    hashed_key = Column(String(255), nullable=False, unique=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    last_used_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    user = relationship("UserRecord", back_populates="api_keys")
+    
+    __table_args__ = (
+        Index("ix_api_keys_prefix", key_prefix),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<APIKeyRecord(id={self.id}, prefix={self.key_prefix})>"
 

@@ -53,6 +53,22 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     
     # -------------------------------------------------------------------------
+    # Authentication Settings
+    # -------------------------------------------------------------------------
+    # JWT Configuration (for future session-based auth)
+    JWT_SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    
+    # API Key Authentication
+    REQUIRE_AUTH: bool = False  # Set True in production to require API keys
+    
+    # Rate Limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_AUTHENTICATED: int = 100  # requests per minute for authenticated users
+    RATE_LIMIT_UNAUTHENTICATED: int = 10  # requests per minute for unauthenticated users
+    
+    # -------------------------------------------------------------------------
     # Database Settings (PostgreSQL)
     # -------------------------------------------------------------------------
     # Database connection string format: postgresql+asyncpg://user:pass@host:port/db

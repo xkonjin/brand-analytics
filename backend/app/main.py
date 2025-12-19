@@ -23,6 +23,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.api.routes import analysis, reports, health
+from app.auth.routes import router as auth_router
 from app.database import init_db, close_db
 
 
@@ -131,6 +132,12 @@ app.include_router(
     reports.router,
     prefix=settings.API_V1_PREFIX,
     tags=["Reports"]
+)
+
+app.include_router(
+    auth_router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["Authentication"]
 )
 
 
