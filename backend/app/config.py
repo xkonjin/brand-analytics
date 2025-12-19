@@ -162,6 +162,9 @@ class Settings(BaseSettings):
     # Number of recent blog posts to analyze
     BLOG_POSTS_LIMIT: int = 5
     
+    # Max concurrent analyzers per wave (for parallel execution)
+    ANALYZER_CONCURRENCY: int = 3
+    
     # -------------------------------------------------------------------------
     # Scoring Weights (configurable per deployment)
     # -------------------------------------------------------------------------
