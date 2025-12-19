@@ -50,7 +50,30 @@ class Settings(BaseSettings):
     # API Settings
     # -------------------------------------------------------------------------
     API_V1_PREFIX: str = "/api/v1"
+    
+    # -------------------------------------------------------------------------
+    # CORS Configuration (Security Critical)
+    # -------------------------------------------------------------------------
+    # Allowed origins for CORS - set via CORS_ORIGINS env var as comma-separated list
+    # In production, this should be restricted to your actual frontend domain(s)
+    # Example: CORS_ORIGINS=https://brand-analytics.vercel.app,https://www.brand-analytics.com
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    
+    # Allowed hosts for Host header validation (prevents host header attacks)
+    # Set via ALLOWED_HOSTS env var as comma-separated list
+    # Use "*" only for development, never in production
+    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1"]
+    
+    # -------------------------------------------------------------------------
+    # Debug & Documentation Settings
+    # -------------------------------------------------------------------------
+    # Enable OpenAPI documentation endpoints (/docs, /redoc, /openapi.json)
+    # Should be False in production unless explicitly needed
+    ENABLE_DOCS: bool = True
+    
+    # Enable detailed error messages in API responses
+    # Should be False in production to prevent information leakage
+    ENABLE_DEBUG_ERRORS: bool = True
     
     # -------------------------------------------------------------------------
     # Database Settings (PostgreSQL)

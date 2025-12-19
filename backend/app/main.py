@@ -20,10 +20,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import settings
 from app.api.routes import analysis, reports, health
 from app.database import init_db, close_db
+from app.middleware.security import SecurityHeadersMiddleware
 
 
 @asynccontextmanager
@@ -91,23 +93,36 @@ app = FastAPI(
     """,
     version=settings.APP_VERSION,
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/docs" if settings.ENABLE_DOCS else None,
+    redoc_url="/redoc" if settings.ENABLE_DOCS else None,
+    openapi_url="/openapi.json" if settings.ENABLE_DOCS else None,
 )
 
 
 # =============================================================================
-# Configure CORS Middleware
+# Configure Middleware Stack (order matters - first added = outermost)
 # =============================================================================
-# Allow frontend applications to make requests to this API.
-# SECURITY NOTE: In production, `allow_origins` should be restricted to specific domains.
+
+# Security Headers - adds XSS protection, clickjacking prevention, etc.
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Trusted Host - validates Host header to prevent host header attacks
+# In production, restrict to actual domains. Use ["*"] only for development.
+if settings.ENVIRONMENT != "development":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.ALLOWED_HOSTS,
+    )
+
+# CORS - allows frontend applications to make requests to this API
+# Methods are restricted to what the API actually uses
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+    expose_headers=["X-Request-ID"],
 )
 
 
@@ -164,8 +179,7 @@ async def global_exception_handler(request, exc):
     In production, this prevents stack traces from leaking to clients.
     In development, it provides more detailed error information.
     """
-    if settings.DEBUG:
-        # In debug mode, include exception details
+    if settings.ENABLE_DEBUG_ERRORS:
         return JSONResponse(
             status_code=500,
             content={
@@ -175,7 +189,6 @@ async def global_exception_handler(request, exc):
             }
         )
     else:
-        # In production, hide implementation details
         return JSONResponse(
             status_code=500,
             content={
