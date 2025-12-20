@@ -15,6 +15,21 @@ import { ModuleSection } from './ModuleSection';
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------
+interface PlatformData {
+  platform: string;
+  url?: string;
+  handle?: string;
+  followers?: number;
+  following?: number;
+  posts_last_30_days?: number;
+  engagement_rate?: number;
+  avg_likes?: number;
+  avg_comments?: number;
+  avg_shares?: number;
+  is_verified?: boolean;
+  last_post_date?: string;
+}
+
 interface SocialData {
   score?: number;
   twitter_followers?: number;
@@ -23,17 +38,25 @@ interface SocialData {
   linkedin_followers?: number;
   total_followers?: number;
   engagement_rate?: number;
+  overall_engagement_rate?: number;
   posting_frequency?: string;
+  posting_consistency?: string;
+  platforms?: PlatformData[];
   platforms_found?: string[];
+  platforms_active?: string[];
+  platforms_dormant?: string[];
+  platforms_missing?: string[];
   findings?: Array<{
     title: string;
-    description: string;
+    detail?: string;
+    description?: string;
     severity: string;
     data?: Record<string, any>;
   }>;
   recommendations?: Array<{
     title: string;
-    description: string;
+    detail?: string;
+    description?: string;
     priority: string;
     category: string;
     impact: string;
@@ -65,26 +88,28 @@ function formatPercent(num?: number): string {
 // Component
 // -----------------------------------------------------------------------------
 export function SocialSection({ data, className = '' }: SocialSectionProps) {
-  // Build metrics
+  const twitterData = data.platforms?.find(p => p.platform === 'twitter');
+  const linkedinData = data.platforms?.find(p => p.platform === 'linkedin');
+
   const metrics = [
     {
       label: 'Total Followers',
-      value: formatNumber(data.total_followers || (data.twitter_followers || 0) + (data.linkedin_followers || 0)),
+      value: formatNumber(data.total_followers || (twitterData?.followers || 0) + (linkedinData?.followers || 0)),
       icon: <Users className="w-4 h-4 text-blue-500" />,
     },
     {
       label: 'Engagement Rate',
-      value: formatPercent(data.engagement_rate || data.twitter_engagement_rate),
+      value: formatPercent(data.overall_engagement_rate || data.engagement_rate || twitterData?.engagement_rate),
       icon: <Heart className="w-4 h-4 text-red-500" />,
     },
     {
       label: 'Twitter Followers',
-      value: formatNumber(data.twitter_followers),
+      value: formatNumber(twitterData?.followers || data.twitter_followers),
       icon: <Twitter className="w-4 h-4 text-sky-500" />,
     },
     {
       label: 'LinkedIn Followers',
-      value: formatNumber(data.linkedin_followers),
+      value: formatNumber(linkedinData?.followers || data.linkedin_followers),
       icon: <Linkedin className="w-4 h-4 text-blue-600" />,
     },
   ].filter(m => m.value !== 'N/A') as Array<{
@@ -94,21 +119,22 @@ export function SocialSection({ data, className = '' }: SocialSectionProps) {
     trend?: 'up' | 'down' | 'stable';
   }>;
 
-  // Platform presence
-  const platforms = data.platforms_found || [];
+  // Platform presence - handle both object array and string array formats
+  const platformObjects = data.platforms || [];
+  const platformNames = (data.platforms_found || []).concat(
+    platformObjects.map((p: PlatformData) => p.platform)
+  ).filter((v, i, a) => v && a.indexOf(v) === i); // unique, non-null
 
-  // Transform findings
   const findings = (data.findings || []).map(f => ({
     title: f.title,
-    description: f.description,
+    description: f.description || f.detail || '',
     severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
     data: f.data as Record<string, string | number> | undefined,
   }));
 
-  // Transform recommendations
   const recommendations = (data.recommendations || []).map(r => ({
     title: r.title,
-    description: r.description,
+    description: r.description || r.detail || '',
     priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
     category: r.category,
     impact: r.impact as 'high' | 'medium' | 'low',
@@ -128,23 +154,25 @@ export function SocialSection({ data, className = '' }: SocialSectionProps) {
       recommendations={recommendations}
       className={className}
     >
-      {/* Platform presence */}
-      {platforms.length > 0 && (
+      {platformNames.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
             Platforms Found
           </h3>
           <div className="flex flex-wrap gap-2">
-            {platforms.map((platform) => (
-              <span
-                key={platform}
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700"
-              >
-                {platform.toLowerCase() === 'twitter' && <Twitter className="w-4 h-4 text-sky-500" />}
-                {platform.toLowerCase() === 'linkedin' && <Linkedin className="w-4 h-4 text-blue-600" />}
-                {platform}
-              </span>
-            ))}
+            {platformNames.map((platform) => {
+              const name = String(platform || '').toLowerCase();
+              return (
+                <span
+                  key={platform}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700"
+                >
+                  {name === 'twitter' && <Twitter className="w-4 h-4 text-sky-500" />}
+                  {name === 'linkedin' && <Linkedin className="w-4 h-4 text-blue-600" />}
+                  {platform}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}

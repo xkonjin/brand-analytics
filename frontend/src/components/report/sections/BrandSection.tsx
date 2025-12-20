@@ -16,27 +16,39 @@ import { ArchetypeCard } from '../cards/ArchetypeCard';
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------
+interface ArchetypeData {
+  primary: string;
+  secondary?: string;
+  confidence?: number;
+  description?: string;
+  example_brands?: string[];
+}
+
 interface BrandData {
   score?: number;
-  archetype?: string;
+  archetype?: string | ArchetypeData;
   archetype_secondary?: string;
   archetype_confidence?: number;
   archetype_description?: string;
   value_proposition?: string;
   value_proposition_clarity?: number;
   tone?: string[];
+  tone_keywords?: string[];
+  tone_description?: string;
   tone_consistency?: number;
   readability_score?: number;
   clarity_score?: number;
   findings?: Array<{
     title: string;
-    description: string;
+    detail?: string;
+    description?: string;
     severity: string;
     data?: Record<string, any>;
   }>;
   recommendations?: Array<{
     title: string;
-    description: string;
+    detail?: string;
+    description?: string;
     priority: string;
     category: string;
     impact: string;
@@ -53,7 +65,14 @@ interface BrandSectionProps {
 // Component
 // -----------------------------------------------------------------------------
 export function BrandSection({ data, className = '' }: BrandSectionProps) {
-  // Build metrics
+  const archetype = typeof data.archetype === 'object' && data.archetype !== null
+    ? data.archetype
+    : data.archetype
+      ? { primary: data.archetype, secondary: data.archetype_secondary, confidence: data.archetype_confidence, description: data.archetype_description }
+      : null;
+  
+  const toneKeywords = data.tone_keywords || data.tone || [];
+  
   const metrics = [
     {
       label: 'Value Prop Clarity',
@@ -81,18 +100,16 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
     unit?: string;
   }>;
 
-  // Transform findings
   const findings = (data.findings || []).map(f => ({
     title: f.title,
-    description: f.description,
+    description: f.description || f.detail || '',
     severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
     data: f.data as Record<string, string | number> | undefined,
   }));
 
-  // Transform recommendations
   const recommendations = (data.recommendations || []).map(r => ({
     title: r.title,
-    description: r.description,
+    description: r.description || r.detail || '',
     priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
     category: r.category,
     impact: r.impact as 'high' | 'medium' | 'low',
@@ -113,23 +130,21 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
       className={className}
     >
       <div className="space-y-6">
-        {/* Brand Archetype Card */}
-        {data.archetype && (
+        {archetype && (
           <div>
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
               Brand Archetype
             </h3>
             <ArchetypeCard
-              primary={data.archetype}
-              secondary={data.archetype_secondary}
-              confidence={data.archetype_confidence ?? 0.7}
-              description={data.archetype_description}
+              primary={archetype.primary}
+              secondary={archetype.secondary}
+              confidence={archetype.confidence ?? 0.7}
+              description={archetype.description}
               animate={false}
             />
           </div>
         )}
 
-        {/* Value Proposition */}
         {data.value_proposition && (
           <div>
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
@@ -141,14 +156,13 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
           </div>
         )}
 
-        {/* Tone Keywords */}
-        {data.tone && data.tone.length > 0 && (
+        {toneKeywords.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
               Brand Tone
             </h3>
             <div className="flex flex-wrap gap-2">
-              {data.tone.map((keyword) => (
+              {toneKeywords.map((keyword) => (
                 <span
                   key={keyword}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm"
