@@ -135,10 +135,11 @@ This document tracks the prioritized implementation tasks for the Brand Analytic
 
 ### High
 
-- [ ] **4.1** Add score breakdown schema
-  - File: `backend/app/models/report.py`
-  - Add optional fields: `score_breakdown`, `evidence`, `confidence`, `confidence_interval`
-  - Effort: 4 hours
+- [x] **4.1** Add score breakdown schema ✅ (Partial)
+  - File: `backend/app/models/enhanced_scoring.py` (NEW)
+  - Added: `NormalizedScore`, `ConfidenceFactors`, `BenchmarkComparison`, `ProvenanceRecord`
+  - Added optional enhanced fields to `AnalysisResponse` and `ScoreCard`
+  - Remaining: Integrate into actual analyzers
 
 - [ ] **4.2** Replace hardcoded thresholds
   - Files: All analyzers in `backend/app/analyzers/`
@@ -148,11 +149,11 @@ This document tracks the prioritized implementation tasks for the Brand Analytic
     - `log_scaled_score(value, min_log, max_log)`
   - Effort: 6 hours
 
-- [ ] **4.3** Add confidence scoring
-  - File: `backend/app/utils/scoring.py`
-  - Function: `compute_confidence(signals: dict) -> float`
-  - Populate in each analyzer
-  - Effort: 8 hours
+- [x] **4.3** Add confidence scoring ✅ (Partial)
+  - File: `backend/app/models/enhanced_scoring.py`
+  - Added: `ConfidenceLevel`, `ConfidenceFactors`, `BaseScorer.calculate_confidence()`
+  - Remaining: Populate in each analyzer
+  - Effort: 6 hours remaining
 
 ### Medium
 
@@ -177,6 +178,14 @@ This document tracks the prioritized implementation tasks for the Brand Analytic
 
 ### December 2025
 
+- [x] **API Test Fixes** - Fixed all 85 backend tests
+  - Fixed TrustedHostMiddleware blocking test requests (ALLOWED_HOSTS)
+  - Fixed SQLite in-memory database isolation (shared-cache)
+  - Fixed mock paths and status code assertions in test_analysis.py
+- [x] **Phase 4 Groundwork: Enhanced Scoring Models**
+  - Added `enhanced_scoring.py` with NormalizedScore, ConfidenceFactors, etc.
+  - Added optional enhanced scoring fields to AnalysisResponse and ScoreCard
+  - Maintains backward compatibility (all new fields optional)
 - [x] **Phase 0 Foundation Tests (PR #16)** - 72 tests total
   - `test_scoring.py`: 42 tests for scoring utilities
   - `test_report_shape.py`: 30 tests for report validation
