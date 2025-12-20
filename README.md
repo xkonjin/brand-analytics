@@ -93,12 +93,20 @@ npm run dev
 | `GOOGLE_SEARCH_ENGINE_ID` | SERP & indexing checks | [Programmable Search](https://programmablesearchengine.google.com/) |
 | `TWITTER_BEARER_TOKEN` | Social media metrics | [Twitter Developer](https://developer.twitter.com/) |
 
-### Optional API Keys
+### Optional API Keys (Enhanced Analysis)
 
-| Key | Purpose |
-|-----|---------|
-| `APIFY_API_TOKEN` | Advanced social scraping |
-| `CLEARBIT_API_KEY` | Company logo fetching |
+| Key | Purpose | Get It At |
+|-----|---------|-----------|
+| `APIFY_API_TOKEN` | Instagram, YouTube, Reddit scraping | [Apify Console](https://console.apify.com/) |
+| `MOZ_API_KEY` | Domain Authority, backlinks | [Moz API](https://moz.com/products/api) |
+| `CLEARBIT_API_KEY` | Company logo fetching | [Clearbit](https://clearbit.com/) |
+
+### Planned API Keys (Coming Soon)
+
+| Key | Purpose | Status |
+|-----|---------|--------|
+| `FIRECRAWL_API_KEY` | JavaScript-capable scraping | Planned |
+| `SERPER_API_KEY` | Google Search, News, Knowledge Graph | Planned |
 
 > **Note:** All API-dependent features have fallback behavior. Without API keys, the tool will use mock data or heuristic analysis.
 
@@ -261,6 +269,38 @@ The tool generates a **0-100 Brand Health Score** using weighted analysis:
 3. Commit your changes: `git commit -m 'Add amazing feature'`
 4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
+
+---
+
+## 🔌 Current Integrations
+
+| Service | Purpose | Status |
+|---------|---------|--------|
+| **OpenAI GPT-4o** | Brand archetype, tone analysis | ✅ Active |
+| **Google PageSpeed** | Core Web Vitals, performance | ✅ Active |
+| **Moz Links API** | Domain Authority, backlinks, spam score | ✅ Active |
+| **Twitter API v2** | Social metrics, engagement | ✅ Active |
+| **Apify** | Instagram, YouTube, Reddit scraping | ✅ Active |
+| **Wikipedia REST API** | AI discoverability, notability | ✅ Active |
+
+---
+
+## 🗺️ Roadmap
+
+See [ENHANCEMENT_PLAN.md](./ENHANCEMENT_PLAN.md) for the full technical roadmap.
+
+### Coming Soon
+
+- **Phase 1:** JavaScript-capable scraping (Firecrawl)
+- **Phase 2:** Comprehensive Google Search via Serper
+- **Phase 3:** Review aggregation (G2, Trustpilot)
+- **Phase 4:** Professional scoring with confidence intervals
+
+### Recently Completed
+
+- ✅ Apify integration for social media scraping
+- ✅ Moz Links API for SEO authority metrics
+- ✅ Reddit brand mention monitoring
 
 ---
 
