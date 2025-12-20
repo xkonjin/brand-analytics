@@ -1,28 +1,28 @@
 import pytest
 from httpx import AsyncClient
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, MagicMock
 
 
 class TestAnalysisEndpoints:
     async def test_create_analysis_with_valid_url(self, client: AsyncClient):
-        with patch("app.api.routes.analysis.run_analysis_task") as mock_task:
-            mock_task.delay = AsyncMock()
+        with patch("app.api.routes.analysis.run_full_analysis") as mock_task:
             response = await client.post(
                 "/api/v1/analyze",
                 json={"url": "https://example.com"}
             )
-            assert response.status_code == 200
+            assert response.status_code == 202
             data = response.json()
             assert "id" in data
             assert data["status"] == "pending"
             assert data["url"] == "https://example.com"
 
-    async def test_create_analysis_rejects_invalid_url(self, client: AsyncClient):
-        response = await client.post(
-            "/api/v1/analyze",
-            json={"url": "not-a-valid-url"}
-        )
-        assert response.status_code == 422
+    async def test_create_analysis_accepts_normalized_url(self, client: AsyncClient):
+        with patch("app.api.routes.analysis.run_full_analysis") as mock_task:
+            response = await client.post(
+                "/api/v1/analyze",
+                json={"url": "example.com"}
+            )
+            assert response.status_code == 202
 
     async def test_create_analysis_rejects_empty_url(self, client: AsyncClient):
         response = await client.post(
@@ -41,16 +41,15 @@ class TestAnalysisEndpoints:
 
 
 class TestAnalysisValidation:
-    async def test_url_must_be_http_or_https(self, client: AsyncClient):
+    async def test_rejects_blocked_hosts(self, client: AsyncClient):
         response = await client.post(
             "/api/v1/analyze",
-            json={"url": "ftp://example.com"}
+            json={"url": "http://localhost"}
         )
         assert response.status_code == 422
 
     async def test_accepts_optional_description(self, client: AsyncClient):
-        with patch("app.api.routes.analysis.run_analysis_task") as mock_task:
-            mock_task.delay = AsyncMock()
+        with patch("app.api.routes.analysis.run_full_analysis") as mock_task:
             response = await client.post(
                 "/api/v1/analyze",
                 json={
@@ -58,11 +57,10 @@ class TestAnalysisValidation:
                     "description": "A test company"
                 }
             )
-            assert response.status_code == 200
+            assert response.status_code == 202
 
     async def test_accepts_optional_industry(self, client: AsyncClient):
-        with patch("app.api.routes.analysis.run_analysis_task") as mock_task:
-            mock_task.delay = AsyncMock()
+        with patch("app.api.routes.analysis.run_full_analysis") as mock_task:
             response = await client.post(
                 "/api/v1/analyze",
                 json={
@@ -70,4 +68,4 @@ class TestAnalysisValidation:
                     "industry": "Technology"
                 }
             )
-            assert response.status_code == 200
+            assert response.status_code == 202

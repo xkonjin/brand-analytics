@@ -7,14 +7,20 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 
+# Set test environment variables BEFORE importing app
 os.environ["ENVIRONMENT"] = "test"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 os.environ["REDIS_URL"] = "redis://localhost:6379/15"
 os.environ["DEBUG"] = "true"
+os.environ["RATE_LIMIT_ENABLED"] = "false"  # Disable rate limiting in tests
+os.environ["REQUIRE_AUTH"] = "false"  # Disable auth requirement in tests
+os.environ["ALLOWED_HOSTS"] = '["test", "localhost", "127.0.0.1"]'  # Allow test host
 
 from app.main import app
 from app.database import Base, get_db
 from app.config import settings
+# Import models to register them with Base metadata (required for create_all)
+from app.models import db_models  # noqa: F401
 
 
 @pytest.fixture(scope="session")
@@ -26,9 +32,9 @@ def event_loop_policy():
 @pytest.fixture
 async def test_engine():
     engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
+        "sqlite+aiosqlite:///file:test.db?mode=memory&cache=shared&uri=true",
         echo=False,
-        poolclass=NullPool,
+        connect_args={"check_same_thread": False},
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
