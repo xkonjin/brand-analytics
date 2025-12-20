@@ -25,6 +25,7 @@
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 import re
+import logging
 
 from app.config import settings
 from app.analyzers.base import BaseAnalyzer, AnalyzerResult
@@ -33,6 +34,13 @@ from app.models.report import (
     SocialPlatformMetrics,
 )
 from app.services.twitter_service import TwitterService, extract_twitter_username
+from app.services.apify_service import (
+    ApifyService,
+    extract_instagram_username,
+    extract_youtube_channel,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class SocialMediaAnalyzer(BaseAnalyzer):
@@ -138,14 +146,13 @@ class SocialMediaAnalyzer(BaseAnalyzer):
         platform: str,
         url: str
     ) -> Optional[SocialPlatformMetrics]:
-        """
-        Analyze a specific social media platform.
-        """
-        # Twitter/X - Use real API if configured
+        """Analyze a specific social media platform."""
         if platform == "twitter" or platform == "x":
             return await self._analyze_twitter(url)
-        
-        # LinkedIn - Use estimated data (API requires OAuth)
+        elif platform == "instagram":
+            return await self._analyze_instagram(url)
+        elif platform == "youtube":
+            return await self._analyze_youtube(url)
         elif platform == "linkedin":
             return SocialPlatformMetrics(
                 platform="linkedin",
@@ -154,23 +161,124 @@ class SocialMediaAnalyzer(BaseAnalyzer):
                 posts_last_30_days=4,
                 engagement_rate=1.5,
             )
-        
-        # Instagram - Use estimated data
-        elif platform == "instagram":
-            return SocialPlatformMetrics(
-                platform="instagram",
-                url=url,
-                followers=self._estimate_followers(platform),
-                posts_last_30_days=8,
-                engagement_rate=2.0,
-            )
-        
-        # Other platforms - Basic data
         else:
             return SocialPlatformMetrics(
                 platform=platform,
                 url=url,
                 followers=self._estimate_followers(platform),
+            )
+    
+    async def _analyze_instagram(self, url: str) -> Optional[SocialPlatformMetrics]:
+        """Analyze Instagram profile using Apify."""
+        username = extract_instagram_username(url)
+        if not username:
+            return SocialPlatformMetrics(
+                platform="instagram",
+                url=url,
+                followers=self._estimate_followers("instagram"),
+            )
+        
+        apify = ApifyService()
+        if not apify.is_configured():
+            logger.warning("Apify not configured, using estimated Instagram data")
+            return SocialPlatformMetrics(
+                platform="instagram",
+                url=url,
+                handle=f"@{username}",
+                followers=self._estimate_followers("instagram"),
+                posts_last_30_days=8,
+                engagement_rate=2.0,
+            )
+        
+        profile = await apify.scrape_instagram_profile(username)
+        
+        if profile.success:
+            self._raw_data["instagram_analysis"] = {
+                "username": username,
+                "full_name": profile.full_name,
+                "biography": profile.biography,
+                "posts_count": profile.posts_count,
+                "engagement_rate": profile.engagement_rate,
+                "recent_posts": profile.recent_posts[:5],
+            }
+            
+            return SocialPlatformMetrics(
+                platform="instagram",
+                url=url,
+                handle=f"@{username}",
+                followers=profile.followers_count,
+                following=profile.following_count,
+                posts_count=profile.posts_count,
+                posts_last_30_days=min(len(profile.recent_posts), 30),
+                engagement_rate=profile.engagement_rate,
+                avg_likes=profile.avg_likes,
+                avg_comments=profile.avg_comments,
+                is_verified=profile.is_verified,
+                profile_bio=profile.biography[:200] if profile.biography else None,
+            )
+        else:
+            return SocialPlatformMetrics(
+                platform="instagram",
+                url=url,
+                handle=f"@{username}",
+                followers=self._estimate_followers("instagram"),
+                engagement_rate=2.0,
+            )
+    
+    async def _analyze_youtube(self, url: str) -> Optional[SocialPlatformMetrics]:
+        """Analyze YouTube channel using Apify."""
+        channel_id = extract_youtube_channel(url)
+        if not channel_id:
+            return SocialPlatformMetrics(
+                platform="youtube",
+                url=url,
+                followers=self._estimate_followers("youtube"),
+            )
+        
+        apify = ApifyService()
+        if not apify.is_configured():
+            logger.warning("Apify not configured, using estimated YouTube data")
+            return SocialPlatformMetrics(
+                platform="youtube",
+                url=url,
+                handle=f"@{channel_id}",
+                subscribers=self._estimate_followers("youtube"),
+                engagement_rate=3.0,
+            )
+        
+        channel = await apify.scrape_youtube_channel(channel_id)
+        
+        if channel.success:
+            self._raw_data["youtube_analysis"] = {
+                "channel_id": channel.channel_id,
+                "channel_name": channel.channel_name,
+                "description": channel.description,
+                "subscribers": channel.subscribers_count,
+                "total_views": channel.total_views,
+                "videos_count": channel.videos_count,
+                "recent_videos": channel.recent_videos[:5],
+            }
+            
+            return SocialPlatformMetrics(
+                platform="youtube",
+                url=url,
+                handle=f"@{channel.channel_name or channel_id}",
+                subscribers=channel.subscribers_count,
+                followers=channel.subscribers_count,
+                posts_count=channel.videos_count,
+                total_views=channel.total_views,
+                engagement_rate=channel.engagement_rate,
+                avg_views=channel.avg_views,
+                avg_likes=channel.avg_likes,
+                avg_comments=channel.avg_comments,
+                profile_bio=channel.description[:200] if channel.description else None,
+            )
+        else:
+            return SocialPlatformMetrics(
+                platform="youtube",
+                url=url,
+                handle=f"@{channel_id}",
+                subscribers=self._estimate_followers("youtube"),
             )
     
     async def _analyze_twitter(self, url: str) -> Optional[SocialPlatformMetrics]:
