@@ -6,7 +6,7 @@ from app.services.pagespeed_service import PageSpeedService
 
 __all__ = [
     "ApifyService",
-    "MozService", 
+    "MozService",
     "TwitterService",
     "OpenAIService",
     "PageSpeedService",

@@ -26,8 +26,12 @@ from enum import Enum
 import httpx
 import json
 import logging
-import asyncio
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from app.config import settings
 
@@ -36,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 class BrandArchetype(str, Enum):
     """The 12 Jungian brand archetypes."""
+
     HERO = "Hero"
     OUTLAW = "Outlaw"
     MAGICIAN = "Magician"
@@ -53,6 +58,7 @@ class BrandArchetype(str, Enum):
 @dataclass
 class ArchetypeAnalysis:
     """Result of brand archetype analysis."""
+
     primary_archetype: str
     secondary_archetype: Optional[str] = None
     confidence: float = 0.0
@@ -64,6 +70,7 @@ class ArchetypeAnalysis:
 @dataclass
 class ToneAnalysis:
     """Result of brand tone analysis."""
+
     primary_tone: str = ""
     tone_descriptors: List[str] = field(default_factory=list)
     formality_level: str = "neutral"  # formal, neutral, casual
@@ -75,6 +82,7 @@ class ToneAnalysis:
 @dataclass
 class ValuePropositionAnalysis:
     """Analysis of the brand's value proposition."""
+
     clarity_score: float = 0.0  # 0-100
     value_proposition: str = ""
     target_audience: str = ""
@@ -86,8 +94,11 @@ class ValuePropositionAnalysis:
 @dataclass
 class ContentThemeAnalysis:
     """Analysis of content themes."""
+
     themes: List[Dict[str, Any]] = field(default_factory=list)
-    content_mix: Dict[str, float] = field(default_factory=dict)  # promotional, educational, etc.
+    content_mix: Dict[str, float] = field(
+        default_factory=dict
+    )  # promotional, educational, etc.
     sentiment: str = "neutral"
     sentiment_score: float = 0.0
 
@@ -95,35 +106,63 @@ class ContentThemeAnalysis:
 class OpenAIService:
     """
     Comprehensive OpenAI service for brand analysis.
-    
+
     Uses Tenacity for robust retries on API failures.
     """
-    
+
     API_URL = "https://api.openai.com/v1/chat/completions"
     TIMEOUT = 60
-    
+
     # Archetype descriptions for context
     # These are passed to the frontend or used in report generation
     ARCHETYPE_INFO = {
         "Hero": {
             "description": "Courageous, bold, inspirational. Seeks to prove worth through mastery.",
             "examples": ["Nike", "FedEx", "BMW", "Duracell"],
-            "keywords": ["achieve", "win", "overcome", "strength", "courage", "mastery"],
+            "keywords": [
+                "achieve",
+                "win",
+                "overcome",
+                "strength",
+                "courage",
+                "mastery",
+            ],
         },
         "Outlaw": {
             "description": "Rebellious, disruptive, liberating. Challenges the status quo.",
             "examples": ["Harley-Davidson", "Virgin", "Diesel", "Uber"],
-            "keywords": ["revolution", "break", "disrupt", "freedom", "rebel", "change"],
+            "keywords": [
+                "revolution",
+                "break",
+                "disrupt",
+                "freedom",
+                "rebel",
+                "change",
+            ],
         },
         "Magician": {
             "description": "Visionary, transformative, innovative. Makes dreams come true.",
             "examples": ["Apple", "Disney", "Tesla", "Dyson"],
-            "keywords": ["transform", "vision", "imagine", "magic", "innovation", "future"],
+            "keywords": [
+                "transform",
+                "vision",
+                "imagine",
+                "magic",
+                "innovation",
+                "future",
+            ],
         },
         "Everyman": {
             "description": "Relatable, authentic, down-to-earth. Connects through belonging.",
             "examples": ["IKEA", "Target", "eBay", "Budweiser"],
-            "keywords": ["everyone", "together", "community", "real", "honest", "simple"],
+            "keywords": [
+                "everyone",
+                "together",
+                "community",
+                "real",
+                "honest",
+                "simple",
+            ],
         },
         "Lover": {
             "description": "Passionate, sensual, intimate. Creates emotional connections.",
@@ -143,7 +182,14 @@ class OpenAIService:
         "Ruler": {
             "description": "Authoritative, refined, successful. Provides order and stability.",
             "examples": ["Mercedes-Benz", "Rolex", "Microsoft", "American Express"],
-            "keywords": ["premium", "exclusive", "quality", "control", "power", "success"],
+            "keywords": [
+                "premium",
+                "exclusive",
+                "quality",
+                "control",
+                "power",
+                "success",
+            ],
         },
         "Creator": {
             "description": "Creative, artistic, innovative. Values self-expression.",
@@ -163,17 +209,24 @@ class OpenAIService:
         "Explorer": {
             "description": "Adventurous, independent, pioneering. Seeks discovery and freedom.",
             "examples": ["Jeep", "The North Face", "Starbucks", "GoPro"],
-            "keywords": ["discover", "explore", "freedom", "adventure", "journey", "new"],
+            "keywords": [
+                "discover",
+                "explore",
+                "freedom",
+                "adventure",
+                "journey",
+                "new",
+            ],
         },
     }
-    
+
     def __init__(self, api_key: Optional[str] = None):
         """
         Initialize the OpenAI service.
         """
         self.api_key = api_key or settings.OPENAI_API_KEY
         self.model = settings.OPENAI_MODEL
-    
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -189,12 +242,12 @@ class OpenAIService:
     ) -> Optional[Dict[str, Any]]:
         """
         Make a call to the OpenAI API with retry logic.
-        
+
         Uses Tenacity decorators to handle:
         - Network errors (httpx.RequestError)
         - HTTP 5xx errors (via raise_for_status logic inside)
         - Rate limiting (429) usually needs specific handling, but exponential backoff often helps.
-        
+
         Args:
             prompt: User prompt
             system_prompt: System instructions
@@ -205,22 +258,22 @@ class OpenAIService:
         if not self.api_key:
             logger.warning("OpenAI API key not configured")
             return None
-        
+
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
-        
+
         request_body = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        
+
         if json_mode:
             request_body["response_format"] = {"type": "json_object"}
-        
+
         async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
             response = await client.post(
                 self.API_URL,
@@ -230,18 +283,20 @@ class OpenAIService:
                 },
                 json=request_body,
             )
-            
+
             # Raise exception for 4xx/5xx to trigger retry
             # Note: We might want to avoid retrying 400 Bad Request, but 429/500/503 are good to retry
             if response.status_code in [429, 500, 502, 503, 504]:
                 response.raise_for_status()
             elif response.status_code != 200:
-                logger.error(f"OpenAI API error: {response.status_code} - {response.text}")
+                logger.error(
+                    f"OpenAI API error: {response.status_code} - {response.text}"
+                )
                 return None
-            
+
             result = response.json()
             content = result["choices"][0]["message"]["content"]
-            
+
             if json_mode:
                 try:
                     return json.loads(content)
@@ -249,7 +304,7 @@ class OpenAIService:
                     logger.error("Failed to decode JSON from OpenAI response")
                     return None
             return {"text": content}
-    
+
     async def analyze_archetype(
         self,
         content: str,
@@ -260,14 +315,14 @@ class OpenAIService:
         """
         # Truncate content to fit token limits (heuristic)
         content = content[:4000]
-        
+
         # PROMPT STRATEGY:
         # We define the 12 archetypes in the system prompt to ground the model.
         # We ask for "key indicators" to make the reasoning transparent.
         system_prompt = """You are a brand strategist expert in Jungian brand archetypes. 
 Analyze the brand content and identify the primary and secondary archetypes.
 The 12 archetypes are: Hero, Outlaw, Magician, Everyman, Lover, Jester, Caregiver, Ruler, Creator, Innocent, Sage, Explorer."""
-        
+
         prompt = f"""Analyze this brand content and identify the brand archetype.
 
 Brand Name: {brand_name or "Unknown"}
@@ -284,23 +339,23 @@ Respond with JSON:
     "key_indicators": ["word or phrase 1", "word or phrase 2", ...],
     "brand_personality_traits": ["trait1", "trait2", ...]
 }}"""
-        
+
         try:
             result = await self._call_api(prompt, system_prompt)
         except Exception as e:
             logger.error(f"Archetype analysis failed after retries: {e}")
             result = None
-        
+
         if not result:
             return ArchetypeAnalysis(
                 primary_archetype="Sage",  # Default fallback
                 confidence=0.5,
                 reasoning="Unable to analyze - using default",
             )
-        
+
         primary = result.get("primary_archetype", "Sage")
         archetype_info = self.ARCHETYPE_INFO.get(primary, {})
-        
+
         return ArchetypeAnalysis(
             primary_archetype=primary,
             secondary_archetype=result.get("secondary_archetype"),
@@ -309,15 +364,15 @@ Respond with JSON:
             archetype_description=archetype_info.get("description", ""),
             example_brands=archetype_info.get("examples", []),
         )
-    
+
     async def analyze_tone(self, content: str) -> ToneAnalysis:
         """
         Analyze the brand's tone and voice.
         """
         content = content[:4000]
-        
+
         system_prompt = """You are a brand voice and tone expert. Analyze the content and describe the brand's communication style."""
-        
+
         prompt = f"""Analyze the tone and voice of this brand content.
 
 Content:
@@ -333,19 +388,19 @@ Respond with JSON:
     "voice_characteristics": ["characteristic1", "characteristic2"],
     "issues": ["Any tone inconsistencies or problems"]
 }}"""
-        
+
         try:
             result = await self._call_api(prompt, system_prompt)
         except Exception:
             result = None
-        
+
         if not result:
             return ToneAnalysis(
                 primary_tone="Professional",
                 formality_level="neutral",
                 consistency_score=0.7,
             )
-        
+
         return ToneAnalysis(
             primary_tone=result.get("primary_tone", "Neutral"),
             tone_descriptors=result.get("tone_descriptors", []),
@@ -354,7 +409,7 @@ Respond with JSON:
             consistency_score=result.get("consistency_score", 0.7),
             issues=result.get("issues", []),
         )
-    
+
     async def analyze_value_proposition(
         self,
         content: str,
@@ -364,11 +419,11 @@ Respond with JSON:
         Analyze the clarity of the brand's value proposition.
         """
         content = content[:3000]
-        
+
         # PROMPT STRATEGY:
         # We specifically ask about "clarity in 5 seconds" because that's the web usability standard.
         system_prompt = """You are a marketing strategist. Analyze whether the brand clearly communicates what they do, for whom, and why it matters."""
-        
+
         prompt = f"""Analyze the value proposition clarity of this brand content.
 
 Brand: {brand_name or "Unknown"}
@@ -385,15 +440,15 @@ Respond with JSON:
     "is_clear_in_5_seconds": true/false,
     "issues": ["clarity issue 1", "clarity issue 2"]
 }}"""
-        
+
         try:
             result = await self._call_api(prompt, system_prompt)
         except Exception:
             result = None
-        
+
         if not result:
             return ValuePropositionAnalysis(clarity_score=60)
-        
+
         return ValuePropositionAnalysis(
             clarity_score=result.get("clarity_score", 60),
             value_proposition=result.get("value_proposition", ""),
@@ -402,7 +457,7 @@ Respond with JSON:
             differentiation=result.get("differentiation", ""),
             issues=result.get("issues", []),
         )
-    
+
     async def analyze_content_themes(
         self,
         posts: List[str],
@@ -415,9 +470,9 @@ Respond with JSON:
 
         # Join posts for analysis
         posts_text = "\n".join([f"- {p}" for p in posts[:20]])
-        
+
         system_prompt = """You are a content strategist. Analyze the themes, content mix, and sentiment of these posts."""
-        
+
         prompt = f"""Analyze these content pieces:
 
 {posts_text}
@@ -438,25 +493,25 @@ Respond with JSON:
     "sentiment_score": -1.0 to 1.0,
     "top_topics": ["topic1", "topic2"]
 }}"""
-        
+
         try:
             result = await self._call_api(prompt, system_prompt)
         except Exception:
             result = None
-        
+
         if not result:
             return ContentThemeAnalysis(
                 sentiment="neutral",
                 sentiment_score=0.0,
             )
-        
+
         return ContentThemeAnalysis(
             themes=result.get("themes", []),
             content_mix=result.get("content_mix", {}),
             sentiment=result.get("sentiment", "neutral"),
             sentiment_score=result.get("sentiment_score", 0.0),
         )
-    
+
     async def generate_recommendations(
         self,
         findings: List[Dict[str, Any]],
@@ -467,16 +522,15 @@ Respond with JSON:
         Generate personalized recommendations based on findings.
         """
         # Filter and format findings for context
-        findings_text = "\n".join([
-            f"- {f.get('title', '')}: {f.get('detail', '')}"
-            for f in findings[:10]
-        ])
-        
+        findings_text = "\n".join(
+            [f"- {f.get('title', '')}: {f.get('detail', '')}" for f in findings[:10]]
+        )
+
         system_prompt = """You are a marketing consultant. Generate specific, actionable recommendations based on the analysis findings."""
-        
+
         prompt = f"""Based on these brand analysis findings, generate 5 specific recommendations.
 
-Industry: {industry or 'General'}
+Industry: {industry or "General"}
 Context: {context}
 
 Findings:
@@ -495,21 +549,21 @@ Respond with JSON:
         }}
     ]
 }}"""
-        
+
         try:
             result = await self._call_api(prompt, system_prompt, temperature=0.5)
         except Exception:
             result = None
-        
+
         if not result:
             return []
-        
+
         return result.get("recommendations", [])
-    
+
     async def analyze_readability(self, content: str) -> Dict[str, Any]:
         """
         Analyze content readability and complexity.
-        
+
         Uses heuristic algorithms (Flesch-Kincaid style) instead of LLM to save costs and latency.
         """
         # Calculate basic metrics without API
@@ -517,17 +571,21 @@ Respond with JSON:
         word_count = len(words)
         sentences = content.replace("!", ".").replace("?", ".").split(".")
         sentence_count = len([s for s in sentences if s.strip()])
-        
+
         avg_words_per_sentence = word_count / max(sentence_count, 1)
-        
+
         # Estimate grade level (simplified Flesch-Kincaid)
         syllables = sum(self._count_syllables(word) for word in words)
         if word_count > 0 and sentence_count > 0:
-            grade_level = 0.39 * (word_count / sentence_count) + 11.8 * (syllables / word_count) - 15.59
+            grade_level = (
+                0.39 * (word_count / sentence_count)
+                + 11.8 * (syllables / word_count)
+                - 15.59
+            )
             grade_level = max(0, min(18, grade_level))
         else:
             grade_level = 8
-        
+
         # Determine readability rating
         if grade_level <= 6:
             rating = "very_easy"
@@ -539,7 +597,7 @@ Respond with JSON:
             rating = "difficult"
         else:
             rating = "very_difficult"
-        
+
         return {
             "grade_level": round(grade_level, 1),
             "rating": rating,
@@ -549,26 +607,26 @@ Respond with JSON:
             "is_optimal": 6 <= grade_level <= 10,
             "suggestion": self._get_readability_suggestion(grade_level),
         }
-    
+
     def _count_syllables(self, word: str) -> int:
         """Count syllables in a word (simplified)."""
         word = word.lower()
         count = 0
         vowels = "aeiouy"
         prev_vowel = False
-        
+
         for char in word:
             is_vowel = char in vowels
             if is_vowel and not prev_vowel:
                 count += 1
             prev_vowel = is_vowel
-        
+
         # Adjust for silent e
         if word.endswith("e"):
             count -= 1
-        
+
         return max(1, count)
-    
+
     def _get_readability_suggestion(self, grade_level: float) -> str:
         """Get suggestion based on grade level."""
         if grade_level > 12:

@@ -33,11 +33,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
-    
+
     All settings can be overridden via environment variables or .env file.
     The .env file should be placed in the backend directory.
     """
-    
+
     # -------------------------------------------------------------------------
     # Application Settings
     # -------------------------------------------------------------------------
@@ -45,12 +45,12 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
     ENVIRONMENT: str = "development"  # development, staging, production
-    
+
     # -------------------------------------------------------------------------
     # API Settings
     # -------------------------------------------------------------------------
     API_V1_PREFIX: str = "/api/v1"
-    
+
     # -------------------------------------------------------------------------
     # CORS Configuration (Security Critical)
     # -------------------------------------------------------------------------
@@ -62,11 +62,11 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "https://brandanalytics.vercel.app",
     ]
-    
+
     # CORS regex pattern for Vercel preview deployments
     # Matches: https://brandanalytics-*.vercel.app (preview URLs)
     CORS_ORIGIN_REGEX: Optional[str] = r"https://brandanalytics-[a-z0-9-]+\.vercel\.app"
-    
+
     # Allowed hosts for Host header validation (prevents host header attacks)
     # Set via ALLOWED_HOSTS env var as comma-separated list
     # Use "*" only for development, never in production
@@ -76,18 +76,18 @@ class Settings(BaseSettings):
         "brandanalytics.fly.dev",
         "brandanalytics-api.fly.dev",
     ]
-    
+
     # -------------------------------------------------------------------------
     # Debug & Documentation Settings
     # -------------------------------------------------------------------------
     # Enable OpenAPI documentation endpoints (/docs, /redoc, /openapi.json)
     # Should be False in production unless explicitly needed
     ENABLE_DOCS: bool = True
-    
+
     # Enable detailed error messages in API responses
     # Should be False in production to prevent information leakage
     ENABLE_DEBUG_ERRORS: bool = True
-    
+
     # -------------------------------------------------------------------------
     # Authentication Settings
     # -------------------------------------------------------------------------
@@ -95,69 +95,73 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
-    
+
     # API Key Authentication
     REQUIRE_AUTH: bool = False  # Set True in production to require API keys
-    
+
     # Rate Limiting
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_AUTHENTICATED: int = 100  # requests per minute for authenticated users
-    RATE_LIMIT_UNAUTHENTICATED: int = 10  # requests per minute for unauthenticated users
-    
+    RATE_LIMIT_UNAUTHENTICATED: int = (
+        10  # requests per minute for unauthenticated users
+    )
+
     # -------------------------------------------------------------------------
     # Database Settings (PostgreSQL)
     # -------------------------------------------------------------------------
     # Database connection string format: postgresql+asyncpg://user:pass@host:port/db
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/brand_analytics"
+    DATABASE_URL: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/brand_analytics"
+    )
     DATABASE_POOL_SIZE: int = 5
     DATABASE_MAX_OVERFLOW: int = 10
-    
+
     # -------------------------------------------------------------------------
     # Redis Settings (Cache & Celery Broker)
     # -------------------------------------------------------------------------
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_CACHE_TTL: int = 3600  # Default cache TTL in seconds (1 hour)
-    
+
     # -------------------------------------------------------------------------
     # Celery Settings (Task Queue)
     # -------------------------------------------------------------------------
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
-    
+
     # -------------------------------------------------------------------------
     # External API Keys
     # -------------------------------------------------------------------------
     # OpenAI API key for GPT-4 analysis (brand archetype, content analysis)
     OPENAI_API_KEY: Optional[str] = None
     # Updated to gpt-4o for better performance and lower latency
-    OPENAI_MODEL: str = "gpt-4o"  
-    
+    OPENAI_MODEL: str = "gpt-4o"
+
     # Google APIs
     GOOGLE_API_KEY: Optional[str] = None  # For PageSpeed and Custom Search
     GOOGLE_SEARCH_ENGINE_ID: Optional[str] = None  # Custom Search Engine ID
-    
+
     # Apify for social media scraping (Instagram, YouTube, Reddit)
     APIFY_API_TOKEN: Optional[str] = None
-    
+
     # Moz Links API for Domain Authority, backlinks, spam score
     # Base64-encoded "accessId:secretKey" string
     MOZ_API_KEY: Optional[str] = None
-    
+
     # Twitter/X API v2 (get from developer.twitter.com)
     TWITTER_BEARER_TOKEN: Optional[str] = None
-    
+
     # Clearbit for company logos (free tier)
     CLEARBIT_API_KEY: Optional[str] = None
-    
+
     # Sentry for error tracking (get from sentry.io)
     SENTRY_DSN: Optional[str] = None
-    
+
     # -------------------------------------------------------------------------
     # Logging Settings
     # -------------------------------------------------------------------------
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-    LOG_JSON: bool = True    # True for production (JSON), False for dev (colored)
-    
+    LOG_JSON: bool = True  # True for production (JSON), False for dev (colored)
+
     # -------------------------------------------------------------------------
     # Storage Settings (S3/R2 for PDF storage)
     # -------------------------------------------------------------------------
@@ -166,22 +170,22 @@ class Settings(BaseSettings):
     S3_SECRET_KEY: Optional[str] = None
     S3_ENDPOINT_URL: Optional[str] = None  # For Cloudflare R2 or MinIO
     S3_REGION: str = "auto"
-    
+
     # -------------------------------------------------------------------------
     # Analysis Settings
     # -------------------------------------------------------------------------
     # Maximum time allowed for a single analysis (in seconds)
     ANALYSIS_TIMEOUT: int = 300  # 5 minutes
-    
+
     # Number of recent tweets to analyze
     TWITTER_POSTS_LIMIT: int = 10
-    
+
     # Number of recent blog posts to analyze
     BLOG_POSTS_LIMIT: int = 5
-    
+
     # Max concurrent analyzers per wave (for parallel execution)
     ANALYZER_CONCURRENCY: int = 3
-    
+
     # -------------------------------------------------------------------------
     # Scoring Weights (configurable per deployment)
     # -------------------------------------------------------------------------
@@ -195,7 +199,7 @@ class Settings(BaseSettings):
     WEIGHT_CONTENT: float = 0.10
     WEIGHT_TEAM_PRESENCE: float = 0.10
     WEIGHT_CHANNEL_FIT: float = 0.05
-    
+
     # -------------------------------------------------------------------------
     # Pydantic Settings Configuration
     # -------------------------------------------------------------------------
@@ -211,10 +215,10 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """
     Get cached application settings.
-    
+
     Uses lru_cache to ensure settings are only loaded once and reused.
     This is important for performance as reading from environment is slow.
-    
+
     Returns:
         Settings: Application settings instance
     """

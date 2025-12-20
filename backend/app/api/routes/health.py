@@ -26,10 +26,10 @@ router = APIRouter()
 async def health_check() -> Dict[str, Any]:
     """
     Basic health check endpoint.
-    
+
     Returns:
         dict: Health status with version and timestamp
-    
+
     Example Response:
         {
             "status": "healthy",
@@ -45,20 +45,18 @@ async def health_check() -> Dict[str, Any]:
 
 
 @router.get("/health/detailed")
-async def detailed_health_check(
-    db: AsyncSession = Depends(get_db)
-) -> Dict[str, Any]:
+async def detailed_health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     """
     Detailed health check that verifies all dependencies.
-    
+
     Checks:
         - Database connectivity (PostgreSQL)
         - Cache connectivity (Redis)
         - Required API keys presence
-    
+
     Returns:
         dict: Detailed health status of all components
-    
+
     Example Response:
         {
             "status": "healthy",
@@ -74,7 +72,7 @@ async def detailed_health_check(
     """
     checks = {}
     overall_status = "healthy"
-    
+
     # -------------------------------------------------------------------------
     # Check Database Connection
     # -------------------------------------------------------------------------
@@ -92,7 +90,7 @@ async def detailed_health_check(
             "error": str(e),
         }
         overall_status = "unhealthy"
-    
+
     # -------------------------------------------------------------------------
     # Check Redis Connection
     # -------------------------------------------------------------------------
@@ -112,7 +110,7 @@ async def detailed_health_check(
             "error": str(e),
         }
         overall_status = "degraded"  # Redis failure is not critical
-    
+
     # -------------------------------------------------------------------------
     # Check Required API Keys
     # -------------------------------------------------------------------------
@@ -122,12 +120,12 @@ async def detailed_health_check(
     }
     if not settings.OPENAI_API_KEY:
         overall_status = "degraded"
-    
+
     # Google API key (required for PageSpeed and Search)
     checks["google_key"] = {
         "status": "configured" if settings.GOOGLE_API_KEY else "missing",
     }
-    
+
     # -------------------------------------------------------------------------
     # Return Health Report
     # -------------------------------------------------------------------------
@@ -141,18 +139,16 @@ async def detailed_health_check(
 
 
 @router.get("/health/ready")
-async def readiness_check(
-    db: AsyncSession = Depends(get_db)
-) -> Dict[str, str]:
+async def readiness_check(db: AsyncSession = Depends(get_db)) -> Dict[str, str]:
     """
     Readiness check for Kubernetes/load balancer probes.
-    
+
     This endpoint returns 200 only if the service is ready to accept traffic.
     Used by orchestrators to determine if the service should receive requests.
-    
+
     Returns:
         dict: Ready status
-    
+
     Raises:
         HTTPException: 503 if service is not ready
     """
@@ -161,7 +157,7 @@ async def readiness_check(
         await db.execute(text("SELECT 1"))
     except Exception:
         return {"status": "not_ready", "reason": "database_unavailable"}
-    
+
     return {"status": "ready"}
 
 
@@ -169,10 +165,10 @@ async def readiness_check(
 async def liveness_check() -> Dict[str, str]:
     """
     Liveness check for Kubernetes probes.
-    
+
     This endpoint returns 200 as long as the service is running.
     Used by orchestrators to determine if the service needs to be restarted.
-    
+
     Returns:
         dict: Alive status
     """
@@ -196,4 +192,3 @@ async def get_circuit_status() -> Dict[str, Any]:
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "circuits": get_all_circuit_states(),
     }
-

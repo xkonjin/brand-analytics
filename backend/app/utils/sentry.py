@@ -33,17 +33,17 @@ def init_sentry(
 ) -> bool:
     """
     Initialize Sentry error tracking.
-    
+
     Args:
         dsn: Sentry DSN (Data Source Name). If None/empty, Sentry is disabled.
         environment: Environment name (development, staging, production)
         release: Release/version string for tracking which deploy introduced bugs
         traces_sample_rate: Percentage of requests to trace (0.0 to 1.0)
         profiles_sample_rate: Percentage of requests to profile (0.0 to 1.0)
-    
+
     Returns:
         True if Sentry was initialized, False if skipped
-    
+
     Example:
         init_sentry(
             dsn="https://xxx@sentry.io/123",
@@ -54,13 +54,12 @@ def init_sentry(
     if not dsn:
         logger.info("Sentry DSN not configured, error tracking disabled")
         return False
-    
+
     try:
         sentry_sdk.init(
             dsn=dsn,
             environment=environment,
             release=release,
-            
             # Integrations for various frameworks/libraries
             integrations=[
                 FastApiIntegration(
@@ -73,24 +72,19 @@ def init_sentry(
                 RedisIntegration(),
                 HttpxIntegration(),
             ],
-            
             # Performance monitoring
             traces_sample_rate=traces_sample_rate,
             profiles_sample_rate=profiles_sample_rate,
-            
             # Don't send PII (emails, usernames) by default
             send_default_pii=False,
-            
             # Attach stack traces to log messages
             attach_stacktrace=True,
-            
             # Filter out health check endpoints from transactions
             before_send_transaction=_filter_health_checks,
-            
             # Scrub sensitive data from events
             before_send=_scrub_sensitive_data,
         )
-        
+
         logger.info(
             "Sentry initialized",
             environment=environment,
@@ -98,7 +92,7 @@ def init_sentry(
             traces_sample_rate=traces_sample_rate,
         )
         return True
-        
+
     except Exception as e:
         logger.error("Failed to initialize Sentry", error=str(e))
         return False
@@ -107,7 +101,7 @@ def init_sentry(
 def _filter_health_checks(event, hint):
     """
     Filter out health check endpoints from performance monitoring.
-    
+
     Health checks are called frequently by load balancers and would
     dominate our performance data if not filtered.
     """
@@ -121,7 +115,7 @@ def _filter_health_checks(event, hint):
 def _scrub_sensitive_data(event, hint):
     """
     Scrub sensitive data from Sentry events before sending.
-    
+
     Removes:
         - API keys from request headers
         - Passwords from request bodies
@@ -133,7 +127,7 @@ def _scrub_sensitive_data(event, hint):
         for header in sensitive_headers:
             if header in event["request"]["headers"]:
                 event["request"]["headers"][header] = "[REDACTED]"
-    
+
     # Scrub request body
     if "request" in event and "data" in event["request"]:
         data = event["request"]["data"]
@@ -142,21 +136,21 @@ def _scrub_sensitive_data(event, hint):
             for field in sensitive_fields:
                 if field in data:
                     data[field] = "[REDACTED]"
-    
+
     return event
 
 
 def capture_exception(error: Exception, **extra_context) -> Optional[str]:
     """
     Capture an exception and send it to Sentry.
-    
+
     Args:
         error: The exception to capture
         **extra_context: Additional context to attach to the event
-    
+
     Returns:
         Event ID if captured, None if Sentry is not initialized
-    
+
     Example:
         try:
             risky_operation()
@@ -166,35 +160,39 @@ def capture_exception(error: Exception, **extra_context) -> Optional[str]:
     with sentry_sdk.push_scope() as scope:
         for key, value in extra_context.items():
             scope.set_extra(key, value)
-        
+
         return sentry_sdk.capture_exception(error)
 
 
-def capture_message(message: str, level: str = "info", **extra_context) -> Optional[str]:
+def capture_message(
+    message: str, level: str = "info", **extra_context
+) -> Optional[str]:
     """
     Send a message to Sentry (for non-exception events).
-    
+
     Args:
         message: The message to send
         level: Severity level (debug, info, warning, error, fatal)
         **extra_context: Additional context to attach to the event
-    
+
     Returns:
         Event ID if captured, None if Sentry is not initialized
     """
     with sentry_sdk.push_scope() as scope:
         for key, value in extra_context.items():
             scope.set_extra(key, value)
-        
+
         return sentry_sdk.capture_message(message, level=level)
 
 
-def set_user_context(user_id: Optional[str] = None, email: Optional[str] = None) -> None:
+def set_user_context(
+    user_id: Optional[str] = None, email: Optional[str] = None
+) -> None:
     """
     Set user context for Sentry events.
-    
+
     This helps identify which users are affected by errors.
-    
+
     Args:
         user_id: Unique user identifier
         email: User's email (will be partially redacted in Sentry)
@@ -205,13 +203,16 @@ def set_user_context(user_id: Optional[str] = None, email: Optional[str] = None)
 def set_analysis_context(analysis_id: str, url: str) -> None:
     """
     Set analysis-specific context for Sentry events.
-    
+
     Args:
         analysis_id: The analysis job ID
         url: The URL being analyzed
     """
     sentry_sdk.set_tag("analysis_id", analysis_id)
-    sentry_sdk.set_context("analysis", {
-        "analysis_id": analysis_id,
-        "target_url": url,
-    })
+    sentry_sdk.set_context(
+        "analysis",
+        {
+            "analysis_id": analysis_id,
+            "target_url": url,
+        },
+    )

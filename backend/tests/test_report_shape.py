@@ -10,7 +10,6 @@
 
 import pytest
 from datetime import datetime
-from typing import Dict, Any, List, Set
 
 from pydantic import ValidationError
 
@@ -42,6 +41,7 @@ from app.models.report import (
 # =============================================================================
 # Fixtures - Sample Valid Data
 # =============================================================================
+
 
 @pytest.fixture
 def valid_seo_report() -> SEOReport:
@@ -353,6 +353,7 @@ def valid_full_report(
 # Test Report Structure
 # =============================================================================
 
+
 class TestReportStructure:
     """Tests for validating report structure and required fields."""
 
@@ -369,9 +370,9 @@ class TestReportStructure:
             "channel_fit",
             "scorecard",
         ]
-        
+
         report_dict = valid_full_report.model_dump()
-        
+
         for section in required_sections:
             assert section in report_dict, f"Missing section: {section}"
             assert report_dict[section] is not None, f"Section {section} is None"
@@ -394,9 +395,11 @@ class TestReportStructure:
             valid_full_report.team_presence,
             valid_full_report.channel_fit,
         ]
-        
+
         for section in sections:
-            assert hasattr(section, "score"), f"Section {type(section).__name__} missing score"
+            assert hasattr(section, "score"), (
+                f"Section {type(section).__name__} missing score"
+            )
             assert section.score is not None
 
     def test_scorecard_has_all_module_scores(self, valid_scorecard: ScoreCard):
@@ -411,7 +414,7 @@ class TestReportStructure:
             "team_presence",
             "channel_fit",
         ]
-        
+
         for module in required_modules:
             assert module in valid_scorecard.scores, f"Missing module score: {module}"
 
@@ -420,13 +423,14 @@ class TestReportStructure:
 # Test Score Ranges
 # =============================================================================
 
+
 class TestScoreRanges:
     """Tests to validate all scores are within valid ranges (0-100)."""
 
     def test_seo_score_in_range(self, valid_seo_report: SEOReport):
         """Test SEO scores are within 0-100."""
         assert 0 <= valid_seo_report.score <= 100
-        
+
         if valid_seo_report.performance_score is not None:
             assert 0 <= valid_seo_report.performance_score <= 100
         if valid_seo_report.accessibility_score is not None:
@@ -443,8 +447,11 @@ class TestScoreRanges:
     def test_brand_score_in_range(self, valid_brand_report: BrandMessagingReport):
         """Test brand messaging scores are within 0-100."""
         assert 0 <= valid_brand_report.score <= 100
-        
-        if valid_brand_report.archetype and valid_brand_report.archetype.confidence is not None:
+
+        if (
+            valid_brand_report.archetype
+            and valid_brand_report.archetype.confidence is not None
+        ):
             assert 0 <= valid_brand_report.archetype.confidence <= 1
 
     def test_ux_score_in_range(self, valid_ux_report: UXReport):
@@ -466,7 +473,7 @@ class TestScoreRanges:
     def test_channel_score_in_range(self, valid_channel_report: ChannelFitReport):
         """Test channel fit scores are within 0-100."""
         assert 0 <= valid_channel_report.score <= 100
-        
+
         for channel in valid_channel_report.channels:
             assert 0 <= channel.score <= 10  # Channel scores are 0-10
 
@@ -483,6 +490,7 @@ class TestScoreRanges:
 # =============================================================================
 # Test Model Validation
 # =============================================================================
+
 
 class TestModelValidation:
     """Tests for Pydantic model validation behavior."""
@@ -514,7 +522,7 @@ class TestModelValidation:
     def test_severity_level_enum_values(self):
         """Test that severity levels are valid enum values."""
         valid_severities = {"critical", "high", "medium", "low", "info"}
-        
+
         for level in SeverityLevel:
             assert level.value in valid_severities
 
@@ -531,7 +539,7 @@ class TestModelValidation:
     def test_recommendation_accepts_valid_impact_effort(self):
         """Test recommendation accepts valid impact/effort values."""
         valid_values = ["high", "medium", "low"]
-        
+
         for impact in valid_values:
             for effort in valid_values:
                 rec = Recommendation(
@@ -548,6 +556,7 @@ class TestModelValidation:
 # =============================================================================
 # Test Report Serialization
 # =============================================================================
+
 
 class TestReportSerialization:
     """Tests for report JSON serialization."""
@@ -568,7 +577,7 @@ class TestReportSerialization:
     def test_report_json_contains_all_scores(self, valid_full_report: FullReport):
         """Test that serialized report contains all section scores."""
         report_dict = valid_full_report.model_dump()
-        
+
         assert report_dict["seo"]["score"] == 75.0
         assert report_dict["social_media"]["score"] == 68.0
         assert report_dict["brand_messaging"]["score"] == 73.0
@@ -583,6 +592,7 @@ class TestReportSerialization:
 # =============================================================================
 # Test Edge Cases
 # =============================================================================
+
 
 class TestReportEdgeCases:
     """Tests for edge cases and boundary conditions."""
@@ -667,11 +677,11 @@ class TestReportEdgeCases:
         # Test 0
         report_0 = SEOReport(score=0.0)
         assert report_0.score == 0.0
-        
+
         # Test 100
         report_100 = SEOReport(score=100.0)
         assert report_100.score == 100.0
-        
+
         # Test midpoint
         report_50 = SEOReport(score=50.0)
         assert report_50.score == 50.0

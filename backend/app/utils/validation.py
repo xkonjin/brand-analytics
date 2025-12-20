@@ -4,20 +4,20 @@ from urllib.parse import urlparse
 from typing import Optional
 
 
-BLOCKED_HOSTS = frozenset([
-    "localhost",
-    "127.0.0.1",
-    "0.0.0.0",
-    "::1",
-    "metadata.google.internal",
-    "169.254.169.254",
-])
+BLOCKED_HOSTS = frozenset(
+    [
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0",  # nosec B104 - This is a blocklist, not a binding address
+        "::1",
+        "metadata.google.internal",
+        "169.254.169.254",
+    ]
+)
 
 BLOCKED_SCHEMES = frozenset(["file", "ftp", "data", "javascript"])
 
-EMAIL_REGEX = re.compile(
-    r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-)
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 XSS_PATTERN = re.compile(r"<[^>]*script|javascript:|on\w+\s*=", re.IGNORECASE)
 

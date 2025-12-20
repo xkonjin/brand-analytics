@@ -7,7 +7,7 @@
 
 import asyncio
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import traceback
 
 from sqlalchemy import select
@@ -25,16 +25,16 @@ from app.tasks.celery_app import celery_app
 def get_task_db_session():
     """
     Create a database session for use in Celery tasks.
-    
+
     Since Celery workers run in separate processes, they need their own
     database connections.
-    
+
     Returns:
         async_sessionmaker: Session factory for creating sessions
     """
     # Check if using SQLite (no connection pooling needed)
     is_sqlite = "sqlite" in settings.DATABASE_URL
-    
+
     if is_sqlite:
         engine = create_async_engine(
             settings.DATABASE_URL,
@@ -48,7 +48,7 @@ def get_task_db_session():
             pool_size=5,
             max_overflow=10,
         )
-    
+
     return async_sessionmaker(
         bind=engine,
         class_=AsyncSession,
@@ -60,17 +60,14 @@ def get_task_db_session():
 # Progress Update Helper
 # =============================================================================
 async def update_progress(
-    session_factory,
-    analysis_id: str,
-    module: str,
-    status: str
+    session_factory, analysis_id: str, module: str, status: str
 ) -> None:
     """
     Update the progress of a specific analysis module using its own session.
-    
+
     Uses a separate session to avoid conflicts with the main analysis session
     when committing progress updates mid-operation.
-    
+
     Args:
         session_factory: Factory to create new database sessions
         analysis_id: UUID of the analysis
@@ -78,13 +75,13 @@ async def update_progress(
         status: New status ('pending', 'running', 'completed', 'failed')
     """
     from uuid import UUID
-    
+
     async with session_factory() as progress_session:
         result = await progress_session.execute(
             select(Analysis).where(Analysis.id == UUID(analysis_id))
         )
         analysis = result.scalar_one_or_none()
-        
+
         if analysis:
             progress = analysis.progress or {}
             progress[module] = status
@@ -99,25 +96,26 @@ async def update_progress(
 def run_full_analysis(analysis_id: str) -> Dict[str, Any]:
     """
     Run the complete brand analysis.
-    
+
     This is the main entry point for the analysis pipeline. It orchestrates
     all analysis modules and aggregates results into the final report.
-    
+
     Args:
         analysis_id: UUID of the analysis to run
-    
+
     Returns:
         dict: Analysis results summary
-    
+
     Note:
         This function handles both sync (Celery) and async (FastAPI) contexts.
     """
     # Try to get existing event loop (when called from async context like FastAPI)
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
         # We're in an async context - create a task and run it
         # This happens when called from FastAPI background tasks
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor() as pool:
             future = pool.submit(asyncio.run, _run_analysis_async(analysis_id))
             return future.result()
@@ -129,29 +127,29 @@ def run_full_analysis(analysis_id: str) -> Dict[str, Any]:
 async def _run_analysis_async(analysis_id: str) -> Dict[str, Any]:
     """
     Async implementation of the full analysis pipeline.
-    
+
     This function:
     1. Fetches the analysis record
     2. Scrapes the website
     3. Runs all analysis modules (some in parallel)
     4. Aggregates scores and generates recommendations
     5. Saves the complete report
-    
+
     Args:
         analysis_id: UUID of the analysis
-    
+
     Returns:
         dict: Analysis results summary
     """
     from uuid import UUID
     from app.analyzers.orchestrator import AnalysisOrchestrator
-    
+
     # Get database session
     session_factory = get_task_db_session()
-    
+
     async with session_factory() as session:
         start_time = datetime.utcnow()
-        
+
         try:
             # -----------------------------------------------------------------
             # Fetch Analysis Record
@@ -160,21 +158,24 @@ async def _run_analysis_async(analysis_id: str) -> Dict[str, Any]:
                 select(Analysis).where(Analysis.id == UUID(analysis_id))
             )
             analysis = result.scalar_one_or_none()
-            
+
             if not analysis:
                 return {"error": f"Analysis {analysis_id} not found"}
-            
+
             # Check if already completed or cancelled
-            if analysis.status in (AnalysisStatusEnum.COMPLETED, AnalysisStatusEnum.FAILED):
+            if analysis.status in (
+                AnalysisStatusEnum.COMPLETED,
+                AnalysisStatusEnum.FAILED,
+            ):
                 return {"status": "already_finished", "id": analysis_id}
-            
+
             # -----------------------------------------------------------------
             # Update Status to Processing
             # -----------------------------------------------------------------
             analysis.status = AnalysisStatusEnum.PROCESSING
             analysis.updated_at = datetime.utcnow()
             await session.commit()
-            
+
             # -----------------------------------------------------------------
             # Run Analysis Orchestrator
             # -----------------------------------------------------------------
@@ -183,19 +184,21 @@ async def _run_analysis_async(analysis_id: str) -> Dict[str, Any]:
                 description=analysis.description,
                 industry=analysis.industry,
             )
-            
+
             async def progress_callback(module: str, module_status: str):
-                await update_progress(session_factory, analysis_id, module, module_status)
-            
+                await update_progress(
+                    session_factory, analysis_id, module, module_status
+                )
+
             # Run the analysis
             report = await orchestrator.run(progress_callback=progress_callback)
-            
+
             # -----------------------------------------------------------------
             # Calculate Processing Time
             # -----------------------------------------------------------------
             end_time = datetime.utcnow()
             processing_time = (end_time - start_time).total_seconds()
-            
+
             # -----------------------------------------------------------------
             # Save Results
             # -----------------------------------------------------------------
@@ -214,52 +217,52 @@ async def _run_analysis_async(analysis_id: str) -> Dict[str, Any]:
             analysis.overall_score = report.scorecard.overall_score
             analysis.completed_at = end_time
             analysis.processing_time_seconds = processing_time
-            
+
             # Update all module progress to completed
             analysis.progress = {
                 module: "completed" for module in analysis.progress.keys()
             }
-            
+
             await session.commit()
-            
+
             return {
                 "status": "completed",
                 "id": analysis_id,
                 "overall_score": report.scorecard.overall_score,
                 "processing_time_seconds": processing_time,
             }
-            
+
         except Exception as e:
             # -----------------------------------------------------------------
             # Handle Failure
             # -----------------------------------------------------------------
             error_message = f"{type(e).__name__}: {str(e)}"
             error_traceback = traceback.format_exc()
-            
+
             # Update analysis record
             result = await session.execute(
                 select(Analysis).where(Analysis.id == UUID(analysis_id))
             )
             analysis = result.scalar_one_or_none()
-            
+
             if analysis:
                 analysis.status = AnalysisStatusEnum.FAILED
                 analysis.error_message = error_message
                 analysis.updated_at = datetime.utcnow()
-                
+
                 # Mark current running module as failed
                 progress = analysis.progress or {}
                 for module, status in progress.items():
                     if status == "running":
                         progress[module] = "failed"
                 analysis.progress = progress
-                
+
                 await session.commit()
-            
+
             # Log the full traceback
             print(f"Analysis {analysis_id} failed: {error_message}")
             print(error_traceback)
-            
+
             return {
                 "status": "failed",
                 "id": analysis_id,
@@ -280,15 +283,15 @@ async def _run_analysis_async(analysis_id: str) -> Dict[str, Any]:
 def celery_run_full_analysis(self, analysis_id: str) -> Dict[str, Any]:
     """
     Celery task wrapper for run_full_analysis.
-    
+
     This wrapper adds:
     - Automatic retries on failure
     - Task state tracking
     - Progress updates
-    
+
     Args:
         analysis_id: UUID of the analysis
-    
+
     Returns:
         dict: Analysis results
     """
@@ -306,17 +309,16 @@ def celery_run_full_analysis(self, analysis_id: str) -> Dict[str, Any]:
 def cleanup_old_analyses(days: int = 30) -> Dict[str, int]:
     """
     Clean up old analysis records and cached data.
-    
+
     This task removes analyses older than the specified number of days
     to prevent database bloat.
-    
+
     Args:
         days: Number of days to keep analyses (default 30)
-    
+
     Returns:
         dict: Number of records cleaned up
     """
     # Implementation would go here
     # For now, just return a placeholder
     return {"deleted_analyses": 0, "deleted_cache_entries": 0}
-

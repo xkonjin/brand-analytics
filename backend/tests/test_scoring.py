@@ -7,7 +7,6 @@
 # Run with: pytest tests/test_scoring.py -v
 # =============================================================================
 
-import pytest
 from typing import Dict
 
 from app.utils.scoring import weighted_average, score_to_grade, normalize_score
@@ -18,6 +17,7 @@ from app.analyzers.base import BaseAnalyzer
 # Test weighted_average()
 # =============================================================================
 
+
 class TestWeightedAverage:
     """Tests for the weighted_average scoring function."""
 
@@ -25,9 +25,9 @@ class TestWeightedAverage:
         """Test basic weighted average calculation."""
         scores = {"seo": 80.0, "social": 60.0, "brand": 70.0}
         weights = {"seo": 0.4, "social": 0.3, "brand": 0.3}
-        
+
         result = weighted_average(scores, weights)
-        
+
         # Expected: (80*0.4 + 60*0.3 + 70*0.3) = 32 + 18 + 21 = 71
         assert result == 71.0
 
@@ -35,9 +35,9 @@ class TestWeightedAverage:
         """Test with equal weights (should be regular average)."""
         scores = {"a": 100.0, "b": 50.0, "c": 50.0}
         weights = {"a": 1.0, "b": 1.0, "c": 1.0}
-        
+
         result = weighted_average(scores, weights)
-        
+
         # Expected: (100 + 50 + 50) / 3 = 66.67
         assert abs(result - 66.67) < 0.01
 
@@ -45,9 +45,9 @@ class TestWeightedAverage:
         """Test that scores without corresponding weights are ignored."""
         scores = {"seo": 80.0, "social": 60.0, "orphan": 100.0}
         weights = {"seo": 0.5, "social": 0.5}  # orphan has no weight
-        
+
         result = weighted_average(scores, weights)
-        
+
         # Expected: (80*0.5 + 60*0.5) / (0.5 + 0.5) = 70
         assert result == 70.0
 
@@ -55,9 +55,9 @@ class TestWeightedAverage:
         """Test that extra weights without scores don't affect result."""
         scores = {"seo": 80.0}
         weights = {"seo": 0.5, "social": 0.5}  # social has no score
-        
+
         result = weighted_average(scores, weights)
-        
+
         # Only seo is counted: 80*0.5 / 0.5 = 80
         assert result == 80.0
 
@@ -65,45 +65,45 @@ class TestWeightedAverage:
         """Test with empty scores returns 0."""
         scores: Dict[str, float] = {}
         weights = {"seo": 0.5, "social": 0.5}
-        
+
         result = weighted_average(scores, weights)
-        
+
         assert result == 0
 
     def test_empty_weights(self):
         """Test with empty weights returns 0."""
         scores = {"seo": 80.0, "social": 60.0}
         weights: Dict[str, float] = {}
-        
+
         result = weighted_average(scores, weights)
-        
+
         assert result == 0
 
     def test_zero_weights(self):
         """Test with all zero weights returns 0."""
         scores = {"seo": 80.0, "social": 60.0}
         weights = {"seo": 0.0, "social": 0.0}
-        
+
         result = weighted_average(scores, weights)
-        
+
         assert result == 0
 
     def test_single_category(self):
         """Test with single category returns that score."""
         scores = {"seo": 85.0}
         weights = {"seo": 1.0}
-        
+
         result = weighted_average(scores, weights)
-        
+
         assert result == 85.0
 
     def test_zero_score(self):
         """Test that zero scores are properly weighted."""
         scores = {"seo": 0.0, "social": 100.0}
         weights = {"seo": 0.5, "social": 0.5}
-        
+
         result = weighted_average(scores, weights)
-        
+
         # Expected: (0*0.5 + 100*0.5) = 50
         assert result == 50.0
 
@@ -111,9 +111,9 @@ class TestWeightedAverage:
         """Test with fractional score values."""
         scores = {"seo": 75.5, "social": 82.3}
         weights = {"seo": 0.6, "social": 0.4}
-        
+
         result = weighted_average(scores, weights)
-        
+
         # Expected: (75.5*0.6 + 82.3*0.4) / 1.0 = 45.3 + 32.92 = 78.22
         assert abs(result - 78.22) < 0.01
 
@@ -121,6 +121,7 @@ class TestWeightedAverage:
 # =============================================================================
 # Test score_to_grade()
 # =============================================================================
+
 
 class TestScoreToGrade:
     """Tests for the score_to_grade conversion function."""
@@ -167,6 +168,7 @@ class TestScoreToGrade:
 # =============================================================================
 # Test normalize_score()
 # =============================================================================
+
 
 class TestNormalizeScore:
     """Tests for the normalize_score function."""
@@ -230,6 +232,7 @@ class TestNormalizeScore:
 # Test BaseAnalyzer.clamp_score()
 # =============================================================================
 
+
 class TestClampScore:
     """Tests for BaseAnalyzer.clamp_score static method."""
 
@@ -256,6 +259,7 @@ class TestClampScore:
 # =============================================================================
 # Test BaseAnalyzer.score_to_rating()
 # =============================================================================
+
 
 class TestScoreToRating:
     """Tests for BaseAnalyzer.score_to_rating static method."""
@@ -295,10 +299,11 @@ class TestScoreToRating:
 # Regression Tests - Known Score Scenarios
 # =============================================================================
 
+
 class TestScoringRegression:
     """
     Regression tests for specific scoring scenarios.
-    
+
     These tests lock in expected behavior for real-world scoring scenarios
     to prevent unintended changes during refactoring.
     """
@@ -316,7 +321,7 @@ class TestScoringRegression:
             "team_presence": 0.10,
             "channel_fit": 0.05,
         }
-        
+
         # Sample scores (similar to linear.app test result)
         scores = {
             "social_media": 68.7,
@@ -328,9 +333,9 @@ class TestScoringRegression:
             "team_presence": 55.0,
             "channel_fit": 50.0,
         }
-        
+
         result = weighted_average(scores, weights)
-        
+
         # Lock in the expected result
         # 68.7*0.20 + 81*0.15 + 73.5*0.15 + 77*0.15 + 10*0.10 + 100*0.10 + 55*0.10 + 50*0.05
         # = 13.74 + 12.15 + 11.025 + 11.55 + 1.0 + 10.0 + 5.5 + 2.5 = 67.465
@@ -348,11 +353,11 @@ class TestScoringRegression:
             "team_presence": 0.10,
             "channel_fit": 0.05,
         }
-        
+
         scores = {key: 100.0 for key in weights.keys()}
-        
+
         result = weighted_average(scores, weights)
-        
+
         assert result == 100.0
 
     def test_worst_case_scores(self):
@@ -367,11 +372,11 @@ class TestScoringRegression:
             "team_presence": 0.10,
             "channel_fit": 0.05,
         }
-        
+
         scores = {key: 0.0 for key in weights.keys()}
-        
+
         result = weighted_average(scores, weights)
-        
+
         assert result == 0.0
 
     def test_grade_boundaries_comprehensive(self):
@@ -389,15 +394,18 @@ class TestScoringRegression:
             (59.99, "F"),
             (0, "F"),
         ]
-        
+
         for score, expected_grade in test_cases:
             result = score_to_grade(score)
-            assert result == expected_grade, f"Score {score} expected {expected_grade}, got {result}"
+            assert result == expected_grade, (
+                f"Score {score} expected {expected_grade}, got {result}"
+            )
 
 
 # =============================================================================
 # Edge Case Tests
 # =============================================================================
+
 
 class TestEdgeCases:
     """Tests for edge cases and unusual inputs."""
@@ -406,18 +414,18 @@ class TestEdgeCases:
         """Test weighted average with large score values."""
         scores = {"a": 1000000.0, "b": 2000000.0}
         weights = {"a": 0.5, "b": 0.5}
-        
+
         result = weighted_average(scores, weights)
-        
+
         assert result == 1500000.0
 
     def test_weighted_average_with_tiny_weights(self):
         """Test weighted average with very small weights."""
         scores = {"a": 100.0, "b": 0.0}
         weights = {"a": 0.0001, "b": 0.9999}
-        
+
         result = weighted_average(scores, weights)
-        
+
         # Should be approximately 0.01 (100 * 0.0001 / 1.0)
         assert abs(result - 0.01) < 0.001
 

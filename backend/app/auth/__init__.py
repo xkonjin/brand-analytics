@@ -11,7 +11,7 @@
 #
 # Usage:
 #     from app.auth.dependencies import require_api_key, get_optional_auth
-#     
+#
 #     @router.post("/analyze")
 #     async def analyze(api_key: APIKey = Depends(require_api_key)):
 #         ...
@@ -27,7 +27,7 @@ from app.auth.dependencies import (
 __all__ = [
     "User",
     "APIKey",
-    "APIKeyCreate", 
+    "APIKeyCreate",
     "TokenData",
     "require_api_key",
     "get_optional_auth",

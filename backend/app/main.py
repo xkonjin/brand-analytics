@@ -42,7 +42,7 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """
     Application lifespan handler for startup and shutdown events.
-    
+
     This context manager handles:
     - Database connection pool initialization on startup
     - Playwright browser initialization (if needed)
@@ -54,20 +54,20 @@ async def lifespan(app: FastAPI):
         version=settings.APP_VERSION,
         environment=settings.ENVIRONMENT,
     )
-    
+
     init_sentry(
         dsn=settings.SENTRY_DSN,
         environment=settings.ENVIRONMENT,
         release=settings.APP_VERSION,
     )
-    
+
     await init_db()
     logger.info("Database connection pool initialized")
-    
+
     # Yield control to the application
     # This is where the application actually runs and accepts requests
     yield
-    
+
     logger.info("Application shutting down")
     await close_db()
     logger.info("Database connections closed")
@@ -143,29 +143,13 @@ app.add_middleware(RequestLoggingMiddleware)
 # Register API Routes
 # =============================================================================
 # All routes are prefixed with /api/v1 for versioning
-app.include_router(
-    health.router,
-    prefix=settings.API_V1_PREFIX,
-    tags=["Health"]
-)
+app.include_router(health.router, prefix=settings.API_V1_PREFIX, tags=["Health"])
 
-app.include_router(
-    analysis.router,
-    prefix=settings.API_V1_PREFIX,
-    tags=["Analysis"]
-)
+app.include_router(analysis.router, prefix=settings.API_V1_PREFIX, tags=["Analysis"])
 
-app.include_router(
-    reports.router,
-    prefix=settings.API_V1_PREFIX,
-    tags=["Reports"]
-)
+app.include_router(reports.router, prefix=settings.API_V1_PREFIX, tags=["Reports"])
 
-app.include_router(
-    auth_router,
-    prefix=settings.API_V1_PREFIX,
-    tags=["Authentication"]
-)
+app.include_router(auth_router, prefix=settings.API_V1_PREFIX, tags=["Authentication"])
 
 
 # =============================================================================
@@ -200,7 +184,7 @@ async def global_exception_handler(request, exc):
         error=str(exc),
     )
     capture_exception(exc, path=str(request.url.path), method=request.method)
-    
+
     if settings.ENABLE_DEBUG_ERRORS:
         return JSONResponse(
             status_code=500,
@@ -208,7 +192,7 @@ async def global_exception_handler(request, exc):
                 "error": "Internal Server Error",
                 "detail": str(exc),
                 "type": type(exc).__name__,
-            }
+            },
         )
     else:
         return JSONResponse(
@@ -216,7 +200,7 @@ async def global_exception_handler(request, exc):
             content={
                 "error": "Internal Server Error",
                 "detail": "An unexpected error occurred. Please try again later.",
-            }
+            },
         )
 
 
@@ -225,12 +209,12 @@ async def global_exception_handler(request, exc):
 # =============================================================================
 if __name__ == "__main__":
     import uvicorn
-    
+
     # Run the development server
     # For production, use: uvicorn app.main:app --host 0.0.0.0 --port 8000
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec B104 - Binding to all interfaces is intentional for containerized deployment
         port=8000,
         reload=settings.DEBUG,
         log_level="info" if settings.DEBUG else "warning",

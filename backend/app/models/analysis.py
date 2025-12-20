@@ -7,10 +7,10 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 from app.utils.validation import (
     sanitize_string,
@@ -28,13 +28,14 @@ from app.models.enhanced_scoring import (
 class AnalysisStatus(str, Enum):
     """
     Enum representing the status of an analysis job.
-    
+
     Statuses:
         pending: Analysis queued, waiting to start
         processing: Analysis is actively running
         completed: Analysis finished successfully
         failed: Analysis encountered an error
     """
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -44,7 +45,7 @@ class AnalysisStatus(str, Enum):
 class ModuleStatus(str, Enum):
     """
     Enum representing the status of an individual analysis module.
-    
+
     Statuses:
         pending: Module hasn't started yet
         running: Module is currently executing
@@ -52,6 +53,7 @@ class ModuleStatus(str, Enum):
         failed: Module encountered an error
         skipped: Module was skipped (e.g., no social media found)
     """
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -62,10 +64,10 @@ class ModuleStatus(str, Enum):
 class AnalysisProgress(BaseModel):
     """
     Progress tracking for each analysis module.
-    
+
     Each field represents the status of one analysis module.
     This is used for real-time progress updates to the frontend.
-    
+
     Attributes:
         seo: SEO Performance analysis status
         social_media: Social Media Presence analysis status
@@ -77,6 +79,7 @@ class AnalysisProgress(BaseModel):
         channel_fit: Channel Fit Scoring status
         scorecard: Overall Scorecard generation status
     """
+
     seo: str = "pending"
     social_media: str = "pending"
     brand_messaging: str = "pending"
@@ -86,7 +89,7 @@ class AnalysisProgress(BaseModel):
     team_presence: str = "pending"
     channel_fit: str = "pending"
     scorecard: str = "pending"
-    
+
     class Config:
         # Allow extra fields for flexibility
         extra = "allow"
@@ -95,16 +98,16 @@ class AnalysisProgress(BaseModel):
 class AnalysisRequest(BaseModel):
     """
     Request model for starting a new brand analysis.
-    
+
     The only required field is the URL. All other fields are optional
     but can improve the accuracy of the analysis.
-    
+
     Attributes:
         url: Website URL to analyze (required)
         description: Brief description of the business/product
         industry: Industry category (helps with channel fit scoring)
         email: Email to send the completed report to
-    
+
     Example:
         {
             "url": "https://example.com",
@@ -113,33 +116,34 @@ class AnalysisRequest(BaseModel):
             "email": "founder@example.com"
         }
     """
+
     url: HttpUrl = Field(
         ...,
         description="Website URL to analyze",
-        examples=["https://example.com", "https://www.company.io"]
+        examples=["https://example.com", "https://www.company.io"],
     )
-    
+
     description: Optional[str] = Field(
         None,
         max_length=1000,
         description="Brief description of the business or product",
-        examples=["A DeFi lending protocol for institutional investors"]
+        examples=["A DeFi lending protocol for institutional investors"],
     )
-    
+
     industry: Optional[str] = Field(
         None,
         max_length=100,
         description="Industry or category (e.g., 'crypto', 'fintech', 'saas')",
-        examples=["crypto", "fintech", "saas", "ecommerce"]
+        examples=["crypto", "fintech", "saas", "ecommerce"],
     )
-    
+
     email: Optional[str] = Field(
         None,
         max_length=255,
         description="Email address to send the report to",
-        examples=["founder@example.com"]
+        examples=["founder@example.com"],
     )
-    
+
     @field_validator("url", mode="before")
     @classmethod
     def normalize_url_field(cls, v: str) -> str:
@@ -172,12 +176,12 @@ class AnalysisRequest(BaseModel):
 class AnalysisResponse(BaseModel):
     """
     Response model for analysis status and results.
-    
+
     This model is used for:
     - Initial response after starting an analysis
     - Status/progress polling responses
     - Final completed analysis response
-    
+
     Attributes:
         id: Unique identifier for the analysis
         url: The URL being analyzed
@@ -190,7 +194,7 @@ class AnalysisResponse(BaseModel):
         processing_time_seconds: Total processing time (if completed)
         pdf_url: URL to download the PDF report (if completed)
         message: Human-readable status message
-    
+
     Example (in progress):
         {
             "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -205,7 +209,7 @@ class AnalysisResponse(BaseModel):
             "created_at": "2024-01-15T10:30:00Z",
             "message": "Analysis in progress..."
         }
-    
+
     Example (completed):
         {
             "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -224,77 +228,51 @@ class AnalysisResponse(BaseModel):
             "message": "Analysis completed successfully"
         }
     """
-    id: UUID = Field(
-        ...,
-        description="Unique identifier for the analysis"
-    )
-    
-    url: str = Field(
-        ...,
-        description="The URL being analyzed"
-    )
-    
-    status: AnalysisStatus = Field(
-        ...,
-        description="Current status of the analysis"
-    )
-    
+
+    id: UUID = Field(..., description="Unique identifier for the analysis")
+
+    url: str = Field(..., description="The URL being analyzed")
+
+    status: AnalysisStatus = Field(..., description="Current status of the analysis")
+
     progress: Optional[AnalysisProgress] = Field(
-        None,
-        description="Progress of each analysis module"
+        None, description="Progress of each analysis module"
     )
-    
+
     scores: Optional[Dict[str, float]] = Field(
-        None,
-        description="Individual scores for each module (0-100)"
+        None, description="Individual scores for each module (0-100)"
     )
-    
+
     overall_score: Optional[float] = Field(
-        None,
-        ge=0,
-        le=100,
-        description="Weighted overall brand score (0-100)"
+        None, ge=0, le=100, description="Weighted overall brand score (0-100)"
     )
-    
-    created_at: datetime = Field(
-        ...,
-        description="When the analysis was started"
-    )
-    
+
+    created_at: datetime = Field(..., description="When the analysis was started")
+
     completed_at: Optional[datetime] = Field(
-        None,
-        description="When the analysis finished"
+        None, description="When the analysis finished"
     )
-    
+
     processing_time_seconds: Optional[float] = Field(
-        None,
-        description="Total time taken to complete the analysis"
+        None, description="Total time taken to complete the analysis"
     )
-    
-    pdf_url: Optional[str] = Field(
-        None,
-        description="URL to download the PDF report"
-    )
-    
-    message: Optional[str] = Field(
-        None,
-        description="Human-readable status message"
-    )
+
+    pdf_url: Optional[str] = Field(None, description="URL to download the PDF report")
+
+    message: Optional[str] = Field(None, description="Human-readable status message")
 
     # Enhanced scoring fields (optional for backward compatibility)
     enhanced_scores: Optional[Dict[str, NormalizedScore]] = Field(
         None,
-        description="Enhanced scores with confidence, benchmarking, and provenance"
+        description="Enhanced scores with confidence, benchmarking, and provenance",
     )
 
     enhanced_overall_score: Optional[NormalizedScore] = Field(
-        None,
-        description="Enhanced overall score with metadata"
+        None, description="Enhanced overall score with metadata"
     )
 
     enhanced_scorecard: Optional[EnhancedScoreCard] = Field(
-        None,
-        description="Complete enhanced scorecard with all metadata"
+        None, description="Complete enhanced scorecard with all metadata"
     )
 
     class Config:
@@ -315,10 +293,10 @@ class AnalysisResponse(BaseModel):
                     "content": "pending",
                     "team_presence": "pending",
                     "channel_fit": "pending",
-                    "scorecard": "pending"
+                    "scorecard": "pending",
                 },
                 "created_at": "2024-01-15T10:30:00Z",
-                "message": "Analysis in progress..."
+                "message": "Analysis in progress...",
             }
         }
 
@@ -326,9 +304,9 @@ class AnalysisResponse(BaseModel):
 class AnalysisError(BaseModel):
     """
     Model for analysis error responses.
-    
+
     Used when an analysis fails to provide structured error information.
-    
+
     Attributes:
         id: Analysis ID
         status: Always 'failed'
@@ -337,22 +315,14 @@ class AnalysisError(BaseModel):
         failed_at: When the failure occurred
         failed_module: Which module failed (if applicable)
     """
+
     id: UUID
     status: AnalysisStatus = AnalysisStatus.FAILED
-    error_code: str = Field(
-        ...,
-        description="Machine-readable error code"
-    )
-    error_message: str = Field(
-        ...,
-        description="Human-readable error description"
-    )
+    error_code: str = Field(..., description="Machine-readable error code")
+    error_message: str = Field(..., description="Human-readable error description")
     failed_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="When the failure occurred"
+        default_factory=datetime.utcnow, description="When the failure occurred"
     )
     failed_module: Optional[str] = Field(
-        None,
-        description="Which analysis module failed"
+        None, description="Which analysis module failed"
     )
-

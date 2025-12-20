@@ -57,20 +57,20 @@ async def start_analysis(
     request: AnalysisRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    _auth = Depends(get_optional_auth),
-    _rate_limit = Depends(check_rate_limit),
+    _auth=Depends(get_optional_auth),
+    _rate_limit=Depends(check_rate_limit),
 ) -> AnalysisResponse:
     """
     Start a new brand analysis for the provided URL.
-    
+
     Args:
         request: Analysis request containing URL and optional metadata
         background_tasks: FastAPI background tasks for async processing
         db: Database session
-    
+
     Returns:
         AnalysisResponse: Analysis ID and initial status
-    
+
     Raises:
         HTTPException: 400 if URL is invalid
     """
@@ -78,14 +78,14 @@ async def start_analysis(
     # Validate URL
     # -------------------------------------------------------------------------
     url = str(request.url).strip().rstrip("/")
-    
+
     # Basic URL validation (more thorough validation in the task)
     if not url.startswith(("http://", "https://")):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="URL must start with http:// or https://",
         )
-    
+
     # -------------------------------------------------------------------------
     # Create Analysis Record
     # -------------------------------------------------------------------------
@@ -101,7 +101,7 @@ async def start_analysis(
         "channel_fit": "pending",
         "scorecard": "pending",
     }
-    
+
     analysis = Analysis(
         url=url,
         description=request.description,
@@ -110,11 +110,11 @@ async def start_analysis(
         status=AnalysisStatusEnum.PENDING,
         progress=initial_progress,
     )
-    
+
     db.add(analysis)
     await db.commit()
     await db.refresh(analysis)
-    
+
     # -------------------------------------------------------------------------
     # Queue Analysis Task
     # -------------------------------------------------------------------------
@@ -128,11 +128,12 @@ async def start_analysis(
     else:
         # In production, use Celery
         from app.tasks.celery_app import celery_app
+
         celery_app.send_task(
             "run_full_analysis",
             args=[str(analysis.id)],
         )
-    
+
     # -------------------------------------------------------------------------
     # Return Response
     # -------------------------------------------------------------------------
@@ -158,31 +159,29 @@ async def get_analysis_status(
 ) -> AnalysisResponse:
     """
     Get the current status and progress of an analysis.
-    
+
     Args:
         analysis_id: UUID of the analysis
         db: Database session
-    
+
     Returns:
         AnalysisResponse: Current status, progress, and scores if available
-    
+
     Raises:
         HTTPException: 404 if analysis not found
     """
     # -------------------------------------------------------------------------
     # Fetch Analysis
     # -------------------------------------------------------------------------
-    result = await db.execute(
-        select(Analysis).where(Analysis.id == analysis_id)
-    )
+    result = await db.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found",
         )
-    
+
     # -------------------------------------------------------------------------
     # Build Response
     # -------------------------------------------------------------------------
@@ -197,16 +196,16 @@ async def get_analysis_status(
         completed_at=analysis.completed_at,
         processing_time_seconds=analysis.processing_time_seconds,
     )
-    
+
     # Add error message if failed
     if analysis.status == AnalysisStatusEnum.FAILED:
         response.message = analysis.error_message or "Analysis failed"
-    
+
     # Add success message if completed
     if analysis.status == AnalysisStatusEnum.COMPLETED:
         response.message = "Analysis completed successfully"
         response.pdf_url = analysis.pdf_url
-    
+
     return response
 
 
@@ -221,38 +220,35 @@ async def get_analysis_progress(
 ) -> Dict[str, Any]:
     """
     Get detailed progress for each analysis module.
-    
+
     This endpoint is optimized for polling to show real-time progress.
-    
+
     Args:
         analysis_id: UUID of the analysis
         db: Database session
-    
+
     Returns:
         dict: Detailed progress information
     """
-    result = await db.execute(
-        select(Analysis).where(Analysis.id == analysis_id)
-    )
+    result = await db.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found",
         )
-    
+
     # Calculate completion percentage
     progress = analysis.progress or {}
     total_modules = len(progress)
     completed_modules = sum(
-        1 for status in progress.values() 
-        if status in ("completed", "failed")
+        1 for status in progress.values() if status in ("completed", "failed")
     )
     completion_percentage = (
         (completed_modules / total_modules * 100) if total_modules > 0 else 0
     )
-    
+
     return {
         "id": str(analysis.id),
         "status": analysis.status.value,
@@ -273,39 +269,37 @@ async def stream_analysis_progress(
 ) -> StreamingResponse:
     """
     Stream real-time progress updates via Server-Sent Events.
-    
+
     The stream sends JSON-formatted events with progress updates until
     the analysis completes or fails.
     """
-    result = await db.execute(
-        select(Analysis).where(Analysis.id == analysis_id)
-    )
+    result = await db.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found",
         )
-    
+
     async def event_generator():
         last_progress = None
         poll_interval = 1.0
         max_iterations = 600
         iteration = 0
         session_factory = get_session_factory()
-        
+
         while iteration < max_iterations:
             async with session_factory() as session:
                 result = await session.execute(
                     select(Analysis).where(Analysis.id == analysis_id)
                 )
                 current = result.scalar_one_or_none()
-                
+
                 if not current:
                     yield f"data: {json.dumps({'error': 'Analysis not found'})}\n\n"
                     break
-                
+
                 current_progress = current.progress or {}
                 progress_data = {
                     "status": current.status.value,
@@ -313,12 +307,15 @@ async def stream_analysis_progress(
                     "overall_score": current.overall_score,
                     "completion_percentage": _calculate_completion(current_progress),
                 }
-                
+
                 if progress_data != last_progress:
                     yield f"data: {json.dumps(progress_data)}\n\n"
                     last_progress = progress_data.copy()
-                
-                if current.status in (AnalysisStatusEnum.COMPLETED, AnalysisStatusEnum.FAILED):
+
+                if current.status in (
+                    AnalysisStatusEnum.COMPLETED,
+                    AnalysisStatusEnum.FAILED,
+                ):
                     final_data = {
                         "status": current.status.value,
                         "overall_score": current.overall_score,
@@ -326,10 +323,10 @@ async def stream_analysis_progress(
                     }
                     yield f"data: {json.dumps(final_data)}\n\n"
                     break
-            
+
             await asyncio.sleep(poll_interval)
             iteration += 1
-    
+
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
@@ -361,36 +358,34 @@ async def cancel_analysis(
 ) -> None:
     """
     Cancel an ongoing analysis.
-    
+
     Args:
         analysis_id: UUID of the analysis to cancel
         db: Database session
-    
+
     Raises:
         HTTPException: 404 if not found, 409 if already completed
     """
-    result = await db.execute(
-        select(Analysis).where(Analysis.id == analysis_id)
-    )
+    result = await db.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found",
         )
-    
+
     if analysis.status in (AnalysisStatusEnum.COMPLETED, AnalysisStatusEnum.FAILED):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Cannot cancel a completed or failed analysis",
         )
-    
+
     # Mark as failed with cancellation message
     analysis.status = AnalysisStatusEnum.FAILED
     analysis.error_message = "Analysis cancelled by user"
     analysis.updated_at = datetime.utcnow()
-    
+
     await db.commit()
 
 
@@ -407,30 +402,30 @@ async def list_analyses(
 ) -> Dict[str, Any]:
     """
     List recent analyses with optional filtering.
-    
+
     Args:
         status_filter: Optional status to filter by
         limit: Maximum number of results (default 20, max 100)
         offset: Offset for pagination
         db: Database session
-    
+
     Returns:
         dict: List of analyses with pagination info
     """
     # Validate and cap limit
     limit = min(limit, 100)
-    
+
     # Build query
     query = select(Analysis).order_by(Analysis.created_at.desc())
-    
+
     if status_filter:
         query = query.where(Analysis.status == AnalysisStatusEnum(status_filter.value))
-    
+
     query = query.limit(limit).offset(offset)
-    
+
     result = await db.execute(query)
     analyses = result.scalars().all()
-    
+
     return {
         "items": [
             {
@@ -439,11 +434,12 @@ async def list_analyses(
                 "status": a.status.value,
                 "overall_score": a.overall_score,
                 "created_at": a.created_at.isoformat() + "Z",
-                "completed_at": a.completed_at.isoformat() + "Z" if a.completed_at else None,
+                "completed_at": a.completed_at.isoformat() + "Z"
+                if a.completed_at
+                else None,
             }
             for a in analyses
         ],
         "limit": limit,
         "offset": offset,
     }
-

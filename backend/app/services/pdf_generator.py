@@ -7,7 +7,6 @@
 
 from typing import Dict, Any, Optional
 from datetime import datetime
-import io
 
 from jinja2 import Environment, BaseLoader
 
@@ -409,29 +408,29 @@ async def generate_pdf_report(
 ) -> bytes:
     """
     Generate a PDF report from analysis data.
-    
+
     This function:
     1. Prepares the data for the template
     2. Renders the HTML template
     3. Converts HTML to PDF using WeasyPrint
-    
+
     Args:
         analysis_id: UUID of the analysis
         url: The analyzed URL
         report: Complete report data dictionary
         scores: Individual module scores
         overall_score: Overall weighted score
-    
+
     Returns:
         bytes: PDF file content
     """
     try:
-        from weasyprint import HTML, CSS
+        from weasyprint import HTML  # noqa: F401
     except ImportError:
         raise RuntimeError(
             "WeasyPrint is not installed. Install it with: pip install weasyprint"
         )
-    
+
     # -------------------------------------------------------------------------
     # Calculate Grade
     # -------------------------------------------------------------------------
@@ -446,23 +445,29 @@ async def generate_pdf_report(
             return "D"
         else:
             return "F"
-    
+
     # -------------------------------------------------------------------------
     # Prepare Template Data
     # -------------------------------------------------------------------------
     scorecard = report.get("scorecard", {})
-    
+
     # Prepare sections data
     sections = {}
     section_keys = [
-        "seo", "social_media", "brand_messaging", "website_ux",
-        "ai_discoverability", "content", "team_presence", "channel_fit"
+        "seo",
+        "social_media",
+        "brand_messaging",
+        "website_ux",
+        "ai_discoverability",
+        "content",
+        "team_presence",
+        "channel_fit",
     ]
-    
+
     for key in section_keys:
         if key in report:
             sections[key] = report[key]
-    
+
     template_data = {
         "analysis_id": analysis_id,
         "url": url,
@@ -476,20 +481,20 @@ async def generate_pdf_report(
         "top_recommendations": scorecard.get("top_recommendations", []),
         "sections": sections,
     }
-    
+
     # -------------------------------------------------------------------------
     # Render Template
     # -------------------------------------------------------------------------
-    env = Environment(loader=BaseLoader())
+    env = Environment(loader=BaseLoader(), autoescape=True)
     template = env.from_string(REPORT_TEMPLATE)
     html_content = template.render(**template_data)
-    
+
     # -------------------------------------------------------------------------
     # Generate PDF
     # -------------------------------------------------------------------------
     html = HTML(string=html_content)
     pdf_bytes = html.write_pdf()
-    
+
     return pdf_bytes
 
 
@@ -502,29 +507,29 @@ async def upload_pdf_to_storage(
 ) -> Optional[str]:
     """
     Upload the generated PDF to cloud storage.
-    
+
     Args:
         pdf_bytes: PDF file content
         analysis_id: UUID of the analysis
-    
+
     Returns:
         Optional[str]: URL of the uploaded PDF, or None if storage not configured
     """
     from app.config import settings
-    
+
     if not settings.S3_BUCKET_NAME:
         return None
-    
+
     try:
         import boto3
         from botocore.config import Config
-        
+
         # Configure S3 client
         s3_config = Config(
             signature_version="s3v4",
             s3={"addressing_style": "path"},
         )
-        
+
         s3_client = boto3.client(
             "s3",
             endpoint_url=settings.S3_ENDPOINT_URL,
@@ -533,7 +538,7 @@ async def upload_pdf_to_storage(
             region_name=settings.S3_REGION,
             config=s3_config,
         )
-        
+
         # Upload file
         key = f"reports/{analysis_id}.pdf"
         s3_client.put_object(
@@ -542,16 +547,15 @@ async def upload_pdf_to_storage(
             Body=pdf_bytes,
             ContentType="application/pdf",
         )
-        
+
         # Generate URL
         if settings.S3_ENDPOINT_URL:
             url = f"{settings.S3_ENDPOINT_URL}/{settings.S3_BUCKET_NAME}/{key}"
         else:
             url = f"https://{settings.S3_BUCKET_NAME}.s3.amazonaws.com/{key}"
-        
+
         return url
-        
+
     except Exception as e:
         print(f"Failed to upload PDF to storage: {e}")
         return None
-

@@ -1,11 +1,10 @@
 import os
 import pytest
 from typing import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import NullPool
 
 # Set test environment variables BEFORE importing app
 os.environ["ENVIRONMENT"] = "test"
@@ -18,7 +17,7 @@ os.environ["ALLOWED_HOSTS"] = '["test", "localhost", "127.0.0.1"]'  # Allow test
 
 from app.main import app
 from app.database import Base, get_db
-from app.config import settings
+
 # Import models to register them with Base metadata (required for create_all)
 from app.models import db_models  # noqa: F401
 
@@ -26,6 +25,7 @@ from app.models import db_models  # noqa: F401
 @pytest.fixture(scope="session")
 def event_loop_policy():
     import asyncio
+
     return asyncio.DefaultEventLoopPolicy()
 
 

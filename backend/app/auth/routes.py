@@ -7,17 +7,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.config import settings
 from app.models.db_models import UserRecord, APIKeyRecord, UserRoleEnum
 from app.auth.models import (
     User,
-    UserCreate, 
+    UserCreate,
     APIKey,
     APIKeyCreate,
     APIKeyWithSecret,
 )
-from app.auth.jwt import hash_password, verify_password, generate_api_key
-from app.auth.dependencies import require_api_key, require_admin, get_current_user
+from app.auth.jwt import hash_password, generate_api_key
+from app.auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -36,7 +35,7 @@ async def register_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
-    
+
     user = UserRecord(
         email=user_data.email,
         hashed_password=hash_password(user_data.password),
@@ -45,7 +44,7 @@ async def register_user(
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    
+
     return User(
         id=user.id,
         email=user.email,
@@ -56,7 +55,9 @@ async def register_user(
     )
 
 
-@router.post("/api-keys", response_model=APIKeyWithSecret, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/api-keys", response_model=APIKeyWithSecret, status_code=status.HTTP_201_CREATED
+)
 async def create_api_key(
     key_data: APIKeyCreate,
     current_user: UserRecord = Depends(get_current_user),
@@ -64,7 +65,7 @@ async def create_api_key(
 ) -> APIKeyWithSecret:
     """
     Create a new API key.
-    
+
     IMPORTANT: The full key is only shown once. Store it securely.
     """
     if current_user is None:
@@ -72,13 +73,13 @@ async def create_api_key(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required to create API keys",
         )
-    
+
     full_key, key_prefix, hashed_key = generate_api_key()
-    
+
     expires_at = None
     if key_data.expires_days:
         expires_at = datetime.now(timezone.utc) + timedelta(days=key_data.expires_days)
-    
+
     api_key = APIKeyRecord(
         user_id=current_user.id,
         name=key_data.name,
@@ -89,7 +90,7 @@ async def create_api_key(
     db.add(api_key)
     await db.commit()
     await db.refresh(api_key)
-    
+
     return APIKeyWithSecret(
         id=api_key.id,
         name=api_key.name,
@@ -113,12 +114,12 @@ async def list_api_keys(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
         )
-    
+
     result = await db.execute(
         select(APIKeyRecord).where(APIKeyRecord.user_id == current_user.id)
     )
     keys = result.scalars().all()
-    
+
     return [
         APIKey(
             id=k.id,
@@ -145,7 +146,7 @@ async def revoke_api_key(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
         )
-    
+
     result = await db.execute(
         select(APIKeyRecord).where(
             APIKeyRecord.id == key_id,
@@ -153,13 +154,13 @@ async def revoke_api_key(
         )
     )
     api_key = result.scalar_one_or_none()
-    
+
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found",
         )
-    
+
     api_key.is_active = False
     await db.commit()
 
@@ -175,12 +176,12 @@ async def get_current_user_info(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
         )
-    
+
     result = await db.execute(
         select(APIKeyRecord).where(APIKeyRecord.user_id == current_user.id)
     )
     keys = result.scalars().all()
-    
+
     return User(
         id=current_user.id,
         email=current_user.email,
@@ -216,7 +217,7 @@ async def bootstrap_admin(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Bootstrap only available when no users exist",
         )
-    
+
     admin = UserRecord(
         email="admin@brandanalytics.local",
         hashed_password=hash_password("change-me-immediately"),
@@ -224,7 +225,7 @@ async def bootstrap_admin(
     )
     db.add(admin)
     await db.flush()
-    
+
     full_key, key_prefix, hashed_key = generate_api_key()
     api_key = APIKeyRecord(
         user_id=admin.id,
@@ -235,7 +236,7 @@ async def bootstrap_admin(
     db.add(api_key)
     await db.commit()
     await db.refresh(api_key)
-    
+
     return APIKeyWithSecret(
         id=api_key.id,
         name=api_key.name,

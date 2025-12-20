@@ -21,8 +21,10 @@ from app.models.enhanced_scoring import (
 # Common Types
 # =============================================================================
 
+
 class SeverityLevel(str, Enum):
     """Severity level for issues and recommendations."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -33,7 +35,7 @@ class SeverityLevel(str, Enum):
 class Recommendation(BaseModel):
     """
     A single actionable recommendation from the analysis.
-    
+
     Attributes:
         title: Short title for the recommendation
         description: Detailed explanation of what to do and why
@@ -42,6 +44,7 @@ class Recommendation(BaseModel):
         impact: Expected impact if implemented (high/medium/low)
         effort: Estimated effort to implement (high/medium/low)
     """
+
     title: str = Field(..., max_length=200)
     description: str
     priority: SeverityLevel = SeverityLevel.MEDIUM
@@ -53,13 +56,14 @@ class Recommendation(BaseModel):
 class Finding(BaseModel):
     """
     A single finding/observation from the analysis.
-    
+
     Attributes:
         title: Short description of the finding
         detail: Detailed explanation
         severity: How significant this finding is
         data: Optional associated data (metrics, values, etc.)
     """
+
     title: str
     detail: str
     severity: SeverityLevel = SeverityLevel.INFO
@@ -70,8 +74,10 @@ class Finding(BaseModel):
 # SEO Report
 # =============================================================================
 
+
 class CoreWebVitals(BaseModel):
     """Core Web Vitals metrics from PageSpeed Insights."""
+
     lcp: Optional[float] = Field(None, description="Largest Contentful Paint (seconds)")
     fid: Optional[float] = Field(None, description="First Input Delay (milliseconds)")
     cls: Optional[float] = Field(None, description="Cumulative Layout Shift (score)")
@@ -81,6 +87,7 @@ class CoreWebVitals(BaseModel):
 
 class MetaTagAnalysis(BaseModel):
     """Analysis of page meta tags."""
+
     title: Optional[str] = None
     title_length: Optional[int] = None
     title_quality: Optional[str] = None  # good, too_short, too_long, missing
@@ -95,44 +102,49 @@ class MetaTagAnalysis(BaseModel):
 class SEOReport(BaseModel):
     """
     Complete SEO Performance Analysis report section.
-    
+
     Analyzes technical SEO health including page speed, meta tags,
     indexing status, and search visibility.
     """
+
     score: float = Field(..., ge=0, le=100)
-    
+
     # Performance Metrics
     performance_score: Optional[float] = Field(None, ge=0, le=100)
     accessibility_score: Optional[float] = Field(None, ge=0, le=100)
     best_practices_score: Optional[float] = Field(None, ge=0, le=100)
     seo_score: Optional[float] = Field(None, ge=0, le=100)
-    
+
     # Core Web Vitals
     core_web_vitals: Optional[CoreWebVitals] = None
-    
+
     # Page Load Time
-    page_load_time: Optional[float] = Field(None, description="Page load time in seconds")
+    page_load_time: Optional[float] = Field(
+        None, description="Page load time in seconds"
+    )
     mobile_friendly: Optional[bool] = None
-    
+
     # Meta Tag Analysis
     meta_tags: Optional[MetaTagAnalysis] = None
-    
+
     # Indexing Status
-    pages_indexed: Optional[int] = Field(None, description="Number of pages indexed by Google")
+    pages_indexed: Optional[int] = Field(
+        None, description="Number of pages indexed by Google"
+    )
     ranks_for_brand_name: Optional[bool] = None
     has_knowledge_panel: Optional[bool] = None
-    
+
     # Schema.org
     has_schema_markup: bool = False
     schema_types_found: List[str] = Field(default_factory=list)
-    
+
     # Domain Authority (Moz)
     domain_authority: Optional[float] = Field(None, ge=0, le=100)
     page_authority: Optional[float] = Field(None, ge=0, le=100)
     spam_score: Optional[float] = Field(None, ge=0, le=100)
     linking_domains: Optional[int] = None
     total_backlinks: Optional[int] = None
-    
+
     # Findings and Recommendations
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
@@ -142,8 +154,10 @@ class SEOReport(BaseModel):
 # Social Media Report
 # =============================================================================
 
+
 class SocialPlatformMetrics(BaseModel):
     """Metrics for a single social media platform."""
+
     platform: str
     url: Optional[str] = None
     handle: Optional[str] = None
@@ -166,29 +180,30 @@ class SocialPlatformMetrics(BaseModel):
 class SocialMediaReport(BaseModel):
     """
     Complete Social Media Presence & Engagement Analysis report section.
-    
+
     Analyzes presence across major platforms, engagement metrics,
     and consistency of activity.
     """
+
     score: float = Field(..., ge=0, le=100)
-    
+
     # Platform-specific metrics
     platforms: List[SocialPlatformMetrics] = Field(default_factory=list)
-    
+
     # Summary metrics
     total_followers: int = 0
     platforms_active: int = 0
     platforms_dormant: int = 0  # No posts in 30+ days
     platforms_missing: List[str] = Field(default_factory=list)
-    
+
     # Engagement Analysis
     overall_engagement_rate: Optional[float] = None
     engagement_trend: Optional[str] = None  # improving, stable, declining
-    
+
     # Posting Consistency
     average_posts_per_week: Optional[float] = None
     posting_consistency: Optional[str] = None  # consistent, irregular, dormant
-    
+
     # Community Channels
     has_discord: bool = False
     discord_members: Optional[int] = None
@@ -196,7 +211,7 @@ class SocialMediaReport(BaseModel):
     has_telegram: bool = False
     telegram_members: Optional[int] = None
     telegram_url: Optional[str] = None
-    
+
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
 
@@ -205,10 +220,14 @@ class SocialMediaReport(BaseModel):
 # Brand Messaging Report
 # =============================================================================
 
+
 class BrandArchetype(BaseModel):
     """Brand archetype identification result."""
+
     primary: str = Field(..., description="Primary brand archetype")
-    secondary: Optional[str] = Field(None, description="Secondary archetype if applicable")
+    secondary: Optional[str] = Field(
+        None, description="Secondary archetype if applicable"
+    )
     confidence: float = Field(..., ge=0, le=1, description="Confidence score")
     description: str = Field(..., description="Description of the archetype")
     example_brands: List[str] = Field(default_factory=list)
@@ -217,35 +236,36 @@ class BrandArchetype(BaseModel):
 class BrandMessagingReport(BaseModel):
     """
     Complete Brand Messaging & Archetype Analysis report section.
-    
+
     Analyzes brand voice, messaging clarity, archetype identification,
     and copy quality.
     """
+
     score: float = Field(..., ge=0, le=100)
-    
+
     # Brand Archetype
     archetype: Optional[BrandArchetype] = None
-    
+
     # Value Proposition
     value_proposition: Optional[str] = None
     value_proposition_clarity: Optional[float] = Field(None, ge=0, le=10)
     tagline: Optional[str] = None
-    
+
     # Tone & Voice
     tone_keywords: List[str] = Field(default_factory=list)
     tone_description: Optional[str] = None
     tone_consistency: Optional[float] = Field(None, ge=0, le=10)
-    
+
     # Readability
     readability_score: Optional[float] = None  # Flesch Reading Ease
     reading_grade_level: Optional[float] = None  # Flesch-Kincaid Grade
     is_jargon_heavy: bool = False
     jargon_examples: List[str] = Field(default_factory=list)
-    
+
     # Key Messages
     key_themes: List[str] = Field(default_factory=list)
     emotional_hooks: List[str] = Field(default_factory=list)
-    
+
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
 
@@ -254,8 +274,10 @@ class BrandMessagingReport(BaseModel):
 # Website UX Report
 # =============================================================================
 
+
 class CTAAnalysis(BaseModel):
     """Call-to-action analysis."""
+
     cta_text: Optional[str] = None
     is_visible_above_fold: bool = False
     has_contrast: bool = False
@@ -266,28 +288,29 @@ class CTAAnalysis(BaseModel):
 class UXReport(BaseModel):
     """
     Complete Website UX & Conversion Optimization Assessment.
-    
+
     Analyzes user experience elements, CTAs, navigation,
     trust signals, and conversion readiness.
     """
+
     score: float = Field(..., ge=0, le=100)
-    
+
     # First Impression
     first_impression_clarity: Optional[float] = Field(None, ge=0, le=10)
     answers_what: bool = False  # Does it say what the product is?
-    answers_who: bool = False   # Does it say who it's for?
-    answers_why: bool = False   # Does it say why to choose them?
-    
+    answers_who: bool = False  # Does it say who it's for?
+    answers_why: bool = False  # Does it say why to choose them?
+
     # CTA Analysis
     cta_analysis: Optional[CTAAnalysis] = None
-    
+
     # Navigation
     menu_items_count: Optional[int] = None
     has_clear_navigation: bool = False
     has_search: bool = False
     clicks_to_pricing: Optional[int] = None
     clicks_to_contact: Optional[int] = None
-    
+
     # Trust Signals
     has_testimonials: bool = False
     has_client_logos: bool = False
@@ -295,15 +318,15 @@ class UXReport(BaseModel):
     has_security_badges: bool = False
     has_social_proof_numbers: bool = False  # e.g., "10,000+ users"
     trust_signals_count: int = 0
-    
+
     # Mobile & Accessibility
     mobile_responsive: bool = False
     accessibility_issues: List[str] = Field(default_factory=list)
-    
+
     # Legal/Compliance
     has_privacy_policy: bool = False
     has_terms_of_service: bool = False
-    
+
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
 
@@ -312,44 +335,46 @@ class UXReport(BaseModel):
 # AI Discoverability Report
 # =============================================================================
 
+
 class AIDiscoverabilityReport(BaseModel):
     """
     Complete AI Discoverability Analysis report section.
-    
+
     Evaluates how well the brand can be discovered by AI assistants
     like ChatGPT, Bing Chat, and Perplexity.
     """
+
     score: float = Field(..., ge=0, le=100)
-    
+
     # Wikipedia & Knowledge Graph
     has_wikipedia_page: bool = False
     wikipedia_url: Optional[str] = None
     wikipedia_quality: Optional[str] = None  # stub, good, comprehensive
     has_knowledge_panel: bool = False
-    
+
     # Search Presence
     appears_in_top_10: bool = False
     brand_search_position: Optional[int] = None
-    
+
     # Authoritative Mentions
     mentioned_in_major_publications: bool = False
     publication_mentions: List[str] = Field(default_factory=list)
-    
+
     # Structured Data
     has_faq_schema: bool = False
     has_organization_schema: bool = False
     has_product_schema: bool = False
     schema_types: List[str] = Field(default_factory=list)
-    
+
     # Content Depth
     blog_post_count: Optional[int] = None
     has_documentation: bool = False
     has_help_center: bool = False
     content_depth_score: Optional[float] = Field(None, ge=0, le=10)
-    
+
     # AI Readiness Assessment
     ai_readiness_level: str = Field("low", pattern="^(high|medium|low)$")
-    
+
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
 
@@ -358,8 +383,10 @@ class AIDiscoverabilityReport(BaseModel):
 # Content Analysis Report
 # =============================================================================
 
+
 class PostAnalysis(BaseModel):
     """Analysis of a single social media post."""
+
     platform: str
     date: Optional[datetime] = None
     content_preview: Optional[str] = None
@@ -373,39 +400,40 @@ class PostAnalysis(BaseModel):
 class ContentReport(BaseModel):
     """
     Complete Recent Content & Social Posts Analysis report section.
-    
+
     Analyzes the content strategy based on recent posts across platforms.
     """
+
     score: float = Field(..., ge=0, le=100)
-    
+
     # Recent Posts
     recent_posts: List[PostAnalysis] = Field(default_factory=list)
-    
+
     # Content Mix
     content_mix: Dict[str, float] = Field(
         default_factory=dict,
-        description="Percentage breakdown: promotional, educational, community, etc."
+        description="Percentage breakdown: promotional, educational, community, etc.",
     )
-    
+
     # Sentiment Analysis
     overall_sentiment: Optional[str] = None  # positive, neutral, negative
     sentiment_breakdown: Dict[str, float] = Field(default_factory=dict)
-    
+
     # Engagement Patterns
     best_performing_post: Optional[PostAnalysis] = None
     worst_performing_post: Optional[PostAnalysis] = None
     avg_engagement_per_post: Optional[float] = None
-    
+
     # Content Format
     uses_images: bool = False
     uses_videos: bool = False
     uses_threads: bool = False
     multimedia_percentage: Optional[float] = None
-    
+
     # Topics & Themes
     common_topics: List[str] = Field(default_factory=list)
     hashtags_used: List[str] = Field(default_factory=list)
-    
+
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
 
@@ -414,8 +442,10 @@ class ContentReport(BaseModel):
 # Team Presence Report
 # =============================================================================
 
+
 class TeamMember(BaseModel):
     """Information about a team member."""
+
     name: str
     role: Optional[str] = None
     linkedin_url: Optional[str] = None
@@ -427,36 +457,37 @@ class TeamMember(BaseModel):
 class TeamPresenceReport(BaseModel):
     """
     Complete Team & Community Presence Evaluation report section.
-    
+
     Analyzes the visibility and credibility of the team behind the brand.
     """
+
     score: float = Field(..., ge=0, le=100)
-    
+
     # Team Information
     team_size_estimate: Optional[str] = None  # "1-10", "11-50", etc.
     team_members: List[TeamMember] = Field(default_factory=list)
     has_team_page: bool = False
     team_page_url: Optional[str] = None
-    
+
     # LinkedIn Company Page
     linkedin_followers: Optional[int] = None
     linkedin_url: Optional[str] = None
     linkedin_active: bool = False
-    
+
     # Founder Visibility
     founders_identified: int = 0
     founder_twitter_presence: bool = False
     founder_combined_following: Optional[int] = None
-    
+
     # Credibility Signals
     has_notable_background: bool = False  # ex-FAANG, known companies
     has_advisors_listed: bool = False
     has_investors_listed: bool = False
-    
+
     # Team Identity
     uses_real_identities: bool = True  # vs pseudonymous
     photos_on_website: bool = False
-    
+
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
 
@@ -465,8 +496,10 @@ class TeamPresenceReport(BaseModel):
 # Channel Fit Report
 # =============================================================================
 
+
 class ChannelScore(BaseModel):
     """Suitability score for a single marketing channel."""
+
     channel: str
     score: float = Field(..., ge=0, le=10)
     suitability: str  # high, medium, low
@@ -478,24 +511,25 @@ class ChannelScore(BaseModel):
 class ChannelFitReport(BaseModel):
     """
     Complete Channel & Market Fit Scoring report section.
-    
+
     Assesses which marketing channels are best suited for the brand.
     """
+
     score: float = Field(..., ge=0, le=100)
-    
+
     # Channel Scores
     channels: List[ChannelScore] = Field(default_factory=list)
-    
+
     # Top Recommendations
     top_channels: List[str] = Field(default_factory=list)
     underutilized_channels: List[str] = Field(default_factory=list)
     low_priority_channels: List[str] = Field(default_factory=list)
-    
+
     # Analysis Inputs
     product_type: Optional[str] = None  # B2B, B2C, Developer, etc.
     target_audience: Optional[str] = None
     industry: Optional[str] = None
-    
+
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
 
@@ -504,58 +538,56 @@ class ChannelFitReport(BaseModel):
 # Overall Scorecard
 # =============================================================================
 
+
 class ScoreCard(BaseModel):
     """
     Overall Scorecard & Recommendations Summary.
-    
+
     Aggregates all module scores and provides a final assessment.
     Uses A+ to F grading scale based on marketing industry standards.
     """
+
     overall_score: float = Field(..., ge=0, le=100)
-    
+
     # Individual Module Scores
     scores: Dict[str, float] = Field(
-        default_factory=dict,
-        description="Scores for each module (0-100)"
+        default_factory=dict, description="Scores for each module (0-100)"
     )
-    
+
     # Score Interpretation (A+ to F scale)
     grade: str = Field(
-        ..., 
-        description="Letter grade: A+, A, B, C, D, F based on industry standards"
+        ..., description="Letter grade: A+, A, B, C, D, F based on industry standards"
     )
     summary: str = Field(..., description="One-paragraph overall assessment")
-    
+
     # Key Insights
     strengths: List[str] = Field(default_factory=list)
     weaknesses: List[str] = Field(default_factory=list)
     opportunities: List[str] = Field(default_factory=list)
-    
+
     # Benchmark Comparison (compares scores to industry averages)
     benchmark_comparison: Dict[str, Dict[str, Any]] = Field(
         default_factory=dict,
-        description="Comparison of each module score against industry benchmarks"
+        description="Comparison of each module score against industry benchmarks",
     )
-    
+
     # Top Recommendations (prioritized from all modules)
     top_recommendations: List[Recommendation] = Field(default_factory=list)
-    
+
     # Quick Wins (low effort, high impact)
     quick_wins: List[Recommendation] = Field(default_factory=list)
     # Enhanced scoring fields (optional for backward compatibility)
     enhanced_overall_score: Optional[NormalizedScore] = Field(
-        None,
-        description="Enhanced overall score with confidence and benchmarking"
+        None, description="Enhanced overall score with confidence and benchmarking"
     )
 
     enhanced_module_scores: Optional[Dict[str, NormalizedScore]] = Field(
         default_factory=dict,
-        description="Enhanced scores for each module with metadata"
+        description="Enhanced scores for each module with metadata",
     )
 
     enhanced_scorecard: Optional[EnhancedScoreCard] = Field(
-        None,
-        description="Complete enhanced scorecard with all metadata"
+        None, description="Complete enhanced scorecard with all metadata"
     )
 
 
@@ -563,18 +595,20 @@ class ScoreCard(BaseModel):
 # Full Report
 # =============================================================================
 
+
 class FullReport(BaseModel):
     """
     Complete Brand Analysis Report containing all sections.
-    
+
     This is the top-level model that aggregates all analysis modules.
     """
+
     # Metadata
     generated_at: datetime = Field(default_factory=datetime.utcnow)
     url: str
     brand_name: Optional[str] = None
     brand_logo_url: Optional[str] = None
-    
+
     # Analysis Sections
     seo: SEOReport
     social_media: SocialMediaReport
@@ -585,7 +619,7 @@ class FullReport(BaseModel):
     team_presence: TeamPresenceReport
     channel_fit: ChannelFitReport
     scorecard: ScoreCard
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -594,8 +628,7 @@ class FullReport(BaseModel):
                 "scorecard": {
                     "overall_score": 75,
                     "grade": "B",
-                    "summary": "Strong brand with good fundamentals..."
-                }
+                    "summary": "Strong brand with good fundamentals...",
+                },
             }
         }
-

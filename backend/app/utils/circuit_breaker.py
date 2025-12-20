@@ -29,13 +29,13 @@ class CircuitBreaker:
     failure_threshold: int = 5
     recovery_timeout: float = 30.0
     half_open_max_calls: int = 3
-    
+
     _state: CircuitState = field(default=CircuitState.CLOSED, init=False)
     _failure_count: int = field(default=0, init=False)
     _last_failure_time: float = field(default=0.0, init=False)
     _half_open_calls: int = field(default=0, init=False)
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
-    
+
     @property
     def state(self) -> CircuitState:
         if self._state == CircuitState.OPEN:
@@ -43,7 +43,7 @@ class CircuitBreaker:
                 self._state = CircuitState.HALF_OPEN
                 self._half_open_calls = 0
         return self._state
-    
+
     @property
     def is_available(self) -> bool:
         state = self.state
@@ -52,7 +52,7 @@ class CircuitBreaker:
         if state == CircuitState.HALF_OPEN:
             return self._half_open_calls < self.half_open_max_calls
         return False
-    
+
     async def record_success(self) -> None:
         async with self._lock:
             if self._state == CircuitState.HALF_OPEN:
@@ -62,17 +62,17 @@ class CircuitBreaker:
                     self._failure_count = 0
             elif self._state == CircuitState.CLOSED:
                 self._failure_count = 0
-    
+
     async def record_failure(self) -> None:
         async with self._lock:
             self._failure_count += 1
             self._last_failure_time = time.time()
-            
+
             if self._state == CircuitState.HALF_OPEN:
                 self._state = CircuitState.OPEN
             elif self._failure_count >= self.failure_threshold:
                 self._state = CircuitState.OPEN
-    
+
     def reset(self) -> None:
         self._state = CircuitState.CLOSED
         self._failure_count = 0
@@ -101,12 +101,13 @@ def with_circuit_breaker(
 ):
     """
     Decorator to wrap async functions with circuit breaker protection.
-    
+
     Usage:
         @with_circuit_breaker("openai_api")
         async def call_openai(prompt: str) -> str:
             ...
     """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -115,19 +116,20 @@ def with_circuit_breaker(
                 failure_threshold=failure_threshold,
                 recovery_timeout=recovery_timeout,
             )
-            
+
             if not circuit.is_available:
                 raise CircuitOpenError(circuit_name)
-            
+
             try:
                 result = await func(*args, **kwargs)
                 await circuit.record_success()
                 return result
-            except Exception as e:
+            except Exception:
                 await circuit.record_failure()
                 raise
-        
+
         return wrapper
+
     return decorator
 
 

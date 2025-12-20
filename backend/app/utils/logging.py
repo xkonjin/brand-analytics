@@ -22,7 +22,9 @@ import structlog
 from typing import List as TypingList
 
 # Context variable for request correlation ID
-correlation_id_ctx: ContextVar[Optional[str]] = ContextVar("correlation_id", default=None)
+correlation_id_ctx: ContextVar[Optional[str]] = ContextVar(
+    "correlation_id", default=None
+)
 # Context variable for analysis ID (when processing an analysis)
 analysis_id_ctx: ContextVar[Optional[str]] = ContextVar("analysis_id", default=None)
 
@@ -51,7 +53,7 @@ def add_context_info(
 ) -> Dict[str, Any]:
     """
     Structlog processor that adds context information to every log entry.
-    
+
     Adds:
         - correlation_id: Request tracing ID
         - analysis_id: Current analysis being processed (if any)
@@ -59,14 +61,14 @@ def add_context_info(
         - service: Service name for multi-service setups
     """
     event_dict["correlation_id"] = correlation_id_ctx.get()
-    
+
     analysis_id = analysis_id_ctx.get()
     if analysis_id:
         event_dict["analysis_id"] = analysis_id
-    
+
     event_dict["timestamp"] = datetime.utcnow().isoformat() + "Z"
     event_dict["service"] = "brand-analytics-api"
-    
+
     return event_dict
 
 
@@ -85,12 +87,12 @@ def configure_logging(
 ) -> None:
     """
     Configure structured logging for the application.
-    
+
     Args:
         log_level: Minimum log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         json_logs: If True, output JSON logs (production). If False, colored console logs (dev).
         log_to_stdout: If True, log to stdout. If False, logs go to stderr.
-    
+
     Example output (JSON mode):
         {
             "event": "Analysis started",
@@ -113,7 +115,7 @@ def configure_logging(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.UnicodeDecoder(),
     ]
-    
+
     if json_logs:
         # Production: JSON output
         shared_processors.append(structlog.processors.format_exc_info)
@@ -121,7 +123,7 @@ def configure_logging(
     else:
         # Development: Colored console output
         renderer = structlog.dev.ConsoleRenderer(colors=True)
-    
+
     structlog.configure(
         processors=shared_processors + [renderer],
         wrapper_class=structlog.stdlib.BoundLogger,
@@ -129,16 +131,16 @@ def configure_logging(
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
-    
+
     # Configure standard library logging
     handler = logging.StreamHandler(sys.stdout if log_to_stdout else sys.stderr)
     handler.setFormatter(logging.Formatter("%(message)s"))
-    
+
     root_logger = logging.getLogger()
     root_logger.handlers = []
     root_logger.addHandler(handler)
     root_logger.setLevel(getattr(logging, log_level.upper()))
-    
+
     # Reduce noise from third-party libraries
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -149,13 +151,13 @@ def configure_logging(
 def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
     """
     Get a structured logger instance.
-    
+
     Args:
         name: Logger name (typically __name__ of the module)
-    
+
     Returns:
         A bound structlog logger
-    
+
     Example:
         logger = get_logger(__name__)
         logger.info("Processing started", url="https://example.com", module="seo")

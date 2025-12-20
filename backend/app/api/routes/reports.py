@@ -46,31 +46,29 @@ async def get_report(
 ) -> Dict[str, Any]:
     """
     Get the full analysis report.
-    
+
     Args:
         analysis_id: UUID of the analysis
         db: Database session
-    
+
     Returns:
         dict: Complete analysis report
-    
+
     Raises:
         HTTPException: 404 if not found, 400 if not yet completed
     """
     # -------------------------------------------------------------------------
     # Fetch Analysis
     # -------------------------------------------------------------------------
-    result = await db.execute(
-        select(Analysis).where(Analysis.id == analysis_id)
-    )
+    result = await db.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found",
         )
-    
+
     # -------------------------------------------------------------------------
     # Check Status
     # -------------------------------------------------------------------------
@@ -79,19 +77,19 @@ async def get_report(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Analysis has not started yet. Please wait.",
         )
-    
+
     if analysis.status == AnalysisStatusEnum.PROCESSING:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Analysis is still in progress. Please check back soon.",
         )
-    
+
     if analysis.status == AnalysisStatusEnum.FAILED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Analysis failed: {analysis.error_message or 'Unknown error'}",
         )
-    
+
     # -------------------------------------------------------------------------
     # Return Report
     # -------------------------------------------------------------------------
@@ -100,7 +98,7 @@ async def get_report(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Report data is missing. Please contact support.",
         )
-    
+
     return {
         "id": str(analysis.id),
         "url": analysis.url,
@@ -108,7 +106,9 @@ async def get_report(
         "scores": analysis.scores,
         "report": analysis.report,
         "created_at": analysis.created_at.isoformat() + "Z",
-        "completed_at": analysis.completed_at.isoformat() + "Z" if analysis.completed_at else None,
+        "completed_at": analysis.completed_at.isoformat() + "Z"
+        if analysis.completed_at
+        else None,
         "processing_time_seconds": analysis.processing_time_seconds,
     }
 
@@ -124,34 +124,32 @@ async def download_pdf(
 ):
     """
     Download the analysis report as a PDF.
-    
+
     If the PDF has already been generated, redirects to the stored file.
     Otherwise, generates the PDF on-demand.
-    
+
     Args:
         analysis_id: UUID of the analysis
         db: Database session
-    
+
     Returns:
         StreamingResponse or RedirectResponse: PDF file
-    
+
     Raises:
         HTTPException: 404 if not found, 400 if not completed
     """
     # -------------------------------------------------------------------------
     # Fetch Analysis
     # -------------------------------------------------------------------------
-    result = await db.execute(
-        select(Analysis).where(Analysis.id == analysis_id)
-    )
+    result = await db.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found",
         )
-    
+
     # -------------------------------------------------------------------------
     # Check Status
     # -------------------------------------------------------------------------
@@ -160,21 +158,21 @@ async def download_pdf(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Report is not yet available. Analysis must be completed first.",
         )
-    
+
     # -------------------------------------------------------------------------
     # Return Existing PDF or Generate New One
     # -------------------------------------------------------------------------
     if analysis.pdf_url:
         # Redirect to stored PDF
         return RedirectResponse(url=analysis.pdf_url)
-    
+
     # Generate PDF on-demand
     if not analysis.report:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Report data is missing. Cannot generate PDF.",
         )
-    
+
     try:
         # Generate PDF from report data
         pdf_bytes = await generate_pdf_report(
@@ -184,7 +182,7 @@ async def download_pdf(
             scores=analysis.scores,
             overall_score=analysis.overall_score,
         )
-        
+
         # Return as streaming response
         return StreamingResponse(
             iter([pdf_bytes]),
@@ -212,37 +210,35 @@ async def get_report_summary(
 ) -> Dict[str, Any]:
     """
     Get a condensed summary of the analysis.
-    
+
     Returns only the key scores, strengths, weaknesses, and top recommendations.
     Suitable for sharing or preview purposes.
-    
+
     Args:
         analysis_id: UUID of the analysis
         db: Database session
-    
+
     Returns:
         dict: Condensed report summary
     """
-    result = await db.execute(
-        select(Analysis).where(Analysis.id == analysis_id)
-    )
+    result = await db.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found",
         )
-    
+
     if analysis.status != AnalysisStatusEnum.COMPLETED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Summary not available until analysis is complete.",
         )
-    
+
     report = analysis.report or {}
     scorecard = report.get("scorecard", {})
-    
+
     return {
         "id": str(analysis.id),
         "url": analysis.url,
@@ -252,7 +248,9 @@ async def get_report_summary(
         "weaknesses": scorecard.get("weaknesses", [])[:3],
         "top_recommendations": scorecard.get("top_recommendations", [])[:5],
         "brand_archetype": report.get("brand_messaging", {}).get("archetype"),
-        "completed_at": analysis.completed_at.isoformat() + "Z" if analysis.completed_at else None,
+        "completed_at": analysis.completed_at.isoformat() + "Z"
+        if analysis.completed_at
+        else None,
     }
 
 
@@ -267,40 +265,39 @@ async def get_shareable_link(
 ) -> Dict[str, str]:
     """
     Get a shareable link for the report.
-    
+
     Returns a public URL that can be shared to view the report.
-    
+
     Args:
         analysis_id: UUID of the analysis
         db: Database session
-    
+
     Returns:
         dict: Shareable URL
     """
-    result = await db.execute(
-        select(Analysis).where(Analysis.id == analysis_id)
-    )
+    result = await db.execute(select(Analysis).where(Analysis.id == analysis_id))
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found",
         )
-    
+
     if analysis.status != AnalysisStatusEnum.COMPLETED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot share an incomplete analysis.",
         )
-    
+
     # Generate shareable URL (frontend will handle rendering)
     # In production, this would use the actual frontend domain
-    frontend_url = settings.CORS_ORIGINS[0] if settings.CORS_ORIGINS else "http://localhost:3000"
+    frontend_url = (
+        settings.CORS_ORIGINS[0] if settings.CORS_ORIGINS else "http://localhost:3000"
+    )
     share_url = f"{frontend_url}/report/{analysis_id}"
-    
+
     return {
         "share_url": share_url,
         "analysis_id": str(analysis_id),
     }
-
