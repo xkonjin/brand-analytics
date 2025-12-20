@@ -19,6 +19,11 @@ from app.utils.validation import (
     normalize_url,
 )
 
+from app.models.enhanced_scoring import (
+    NormalizedScore,
+    EnhancedScoreCard,
+)
+
 
 class AnalysisStatus(str, Enum):
     """
@@ -275,7 +280,23 @@ class AnalysisResponse(BaseModel):
         None,
         description="Human-readable status message"
     )
-    
+
+    # Enhanced scoring fields (optional for backward compatibility)
+    enhanced_scores: Optional[Dict[str, NormalizedScore]] = Field(
+        None,
+        description="Enhanced scores with confidence, benchmarking, and provenance"
+    )
+
+    enhanced_overall_score: Optional[NormalizedScore] = Field(
+        None,
+        description="Enhanced overall score with metadata"
+    )
+
+    enhanced_scorecard: Optional[EnhancedScoreCard] = Field(
+        None,
+        description="Complete enhanced scorecard with all metadata"
+    )
+
     class Config:
         # Use enum values in JSON serialization
         use_enum_values = True

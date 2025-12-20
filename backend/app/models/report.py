@@ -11,6 +11,11 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from app.models.enhanced_scoring import (
+    NormalizedScore,
+    EnhancedScoreCard,
+)
+
 
 # =============================================================================
 # Common Types
@@ -537,6 +542,21 @@ class ScoreCard(BaseModel):
     
     # Quick Wins (low effort, high impact)
     quick_wins: List[Recommendation] = Field(default_factory=list)
+    # Enhanced scoring fields (optional for backward compatibility)
+    enhanced_overall_score: Optional[NormalizedScore] = Field(
+        None,
+        description="Enhanced overall score with confidence and benchmarking"
+    )
+
+    enhanced_module_scores: Optional[Dict[str, NormalizedScore]] = Field(
+        default_factory=dict,
+        description="Enhanced scores for each module with metadata"
+    )
+
+    enhanced_scorecard: Optional[EnhancedScoreCard] = Field(
+        None,
+        description="Complete enhanced scorecard with all metadata"
+    )
 
 
 # =============================================================================
