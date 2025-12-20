@@ -121,6 +121,13 @@ class SEOReport(BaseModel):
     has_schema_markup: bool = False
     schema_types_found: List[str] = Field(default_factory=list)
     
+    # Domain Authority (Moz)
+    domain_authority: Optional[float] = Field(None, ge=0, le=100)
+    page_authority: Optional[float] = Field(None, ge=0, le=100)
+    spam_score: Optional[float] = Field(None, ge=0, le=100)
+    linking_domains: Optional[int] = None
+    total_backlinks: Optional[int] = None
+    
     # Findings and Recommendations
     findings: List[Finding] = Field(default_factory=list)
     recommendations: List[Recommendation] = Field(default_factory=list)
@@ -132,19 +139,23 @@ class SEOReport(BaseModel):
 
 class SocialPlatformMetrics(BaseModel):
     """Metrics for a single social media platform."""
-    platform: str  # twitter, linkedin, instagram, tiktok, etc.
+    platform: str
     url: Optional[str] = None
+    handle: Optional[str] = None
     followers: Optional[int] = None
     following: Optional[int] = None
     posts_count: Optional[int] = None
     posts_last_30_days: Optional[int] = None
-    engagement_rate: Optional[float] = Field(None, description="Engagement rate as percentage")
+    engagement_rate: Optional[float] = None
     avg_likes: Optional[float] = None
     avg_comments: Optional[float] = None
     avg_shares: Optional[float] = None
-    last_post_date: Optional[datetime] = None
+    avg_views: Optional[float] = None
+    last_post_date: Optional[str] = None
     is_verified: bool = False
     profile_bio: Optional[str] = None
+    subscribers: Optional[int] = None
+    total_views: Optional[int] = None
 
 
 class SocialMediaReport(BaseModel):

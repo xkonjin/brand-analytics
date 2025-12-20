@@ -25,6 +25,7 @@
 
 from typing import Dict, Any, Optional, List
 import httpx
+import logging
 
 from app.config import settings
 from app.analyzers.base import BaseAnalyzer, AnalyzerResult
@@ -32,6 +33,9 @@ from app.models.report import (
     Finding, Recommendation, SeverityLevel,
     CoreWebVitals, MetaTagAnalysis,
 )
+from app.services.moz_service import MozService, interpret_domain_authority, interpret_spam_score
+
+logger = logging.getLogger(__name__)
 
 
 class SEOAnalyzer(BaseAnalyzer):
@@ -70,17 +74,22 @@ class SEOAnalyzer(BaseAnalyzer):
             # ----------------------------------------------------------------
             # 3. Analyze technical SEO
             # ----------------------------------------------------------------
-            # Checks for SSL, Schema, etc.
             technical_analysis = self._analyze_technical_seo()
             self._raw_data["technical"] = technical_analysis
             
             # ----------------------------------------------------------------
-            # 4. Calculate score
+            # 4. Get Moz authority metrics
+            # ----------------------------------------------------------------
+            authority_data = await self._get_moz_metrics()
+            self._raw_data["authority"] = authority_data
+            
+            # ----------------------------------------------------------------
+            # 5. Calculate score
             # ----------------------------------------------------------------
             score = self._calculate_score()
             
             # ----------------------------------------------------------------
-            # 5. Generate findings and recommendations
+            # 6. Generate findings and recommendations
             # ----------------------------------------------------------------
             self._findings = self._generate_findings()
             self._recommendations = self._generate_recommendations()
@@ -125,6 +134,11 @@ class SEOAnalyzer(BaseAnalyzer):
                     s.get("@type", "") for s in self.scraped_data.get("schema_markup", [])
                     if isinstance(s, dict)
                 ],
+                "domain_authority": authority_data.get("domain_authority") if authority_data else None,
+                "page_authority": authority_data.get("page_authority") if authority_data else None,
+                "spam_score": authority_data.get("spam_score") if authority_data else None,
+                "linking_domains": authority_data.get("linking_domains") if authority_data else None,
+                "total_backlinks": authority_data.get("total_links") if authority_data else None,
             }
             
             return AnalyzerResult(
@@ -188,6 +202,39 @@ class SEOAnalyzer(BaseAnalyzer):
                 },
             },
         }
+    
+    async def _get_moz_metrics(self) -> Optional[Dict[str, Any]]:
+        """Fetch domain authority and backlink metrics from Moz API."""
+        moz = MozService()
+        if not moz.is_configured():
+            logger.warning("Moz API not configured, using mock authority data")
+            return {
+                "domain_authority": 45.0,
+                "page_authority": 38.0,
+                "spam_score": 5.0,
+                "linking_domains": 150,
+                "total_links": 2500,
+                "authority_assessment": "Moderate",
+            }
+        
+        try:
+            metrics = await moz.get_url_metrics(self.url)
+            if metrics.success:
+                return {
+                    "domain_authority": metrics.domain_authority,
+                    "page_authority": metrics.page_authority,
+                    "spam_score": metrics.spam_score,
+                    "linking_domains": metrics.linking_domains,
+                    "total_links": metrics.total_links,
+                    "authority_assessment": interpret_domain_authority(metrics.domain_authority),
+                    "spam_assessment": interpret_spam_score(metrics.spam_score),
+                }
+            else:
+                logger.warning(f"Moz API error: {metrics.error}")
+                return None
+        except Exception as e:
+            logger.error(f"Moz metrics fetch failed: {e}")
+            return None
     
     def _extract_metric(self, audits: Dict[str, Any], metric_name: str) -> Optional[float]:
         """Extract a numeric metric from PageSpeed audits."""

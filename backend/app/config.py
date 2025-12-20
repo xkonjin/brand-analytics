@@ -123,8 +123,12 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: Optional[str] = None  # For PageSpeed and Custom Search
     GOOGLE_SEARCH_ENGINE_ID: Optional[str] = None  # Custom Search Engine ID
     
-    # Apify for social media scraping
+    # Apify for social media scraping (Instagram, YouTube, Reddit)
     APIFY_API_TOKEN: Optional[str] = None
+    
+    # Moz Links API for Domain Authority, backlinks, spam score
+    # Base64-encoded "accessId:secretKey" string
+    MOZ_API_KEY: Optional[str] = None
     
     # Twitter/X API v2 (get from developer.twitter.com)
     TWITTER_BEARER_TOKEN: Optional[str] = None
