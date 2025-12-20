@@ -42,7 +42,7 @@ jobs:
       - name: Health check
         run: |
           sleep 10
-          curl -f https://brand-analytics-api.fly.dev/api/v1/health || exit 1
+          curl -f https://brandanalytics.fly.dev/api/v1/health || exit 1
         continue-on-error: true
 
   # ===========================================================================
