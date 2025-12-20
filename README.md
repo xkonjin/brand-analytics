@@ -211,6 +211,52 @@ cd frontend && npm run build
 
 ---
 
+## 🧪 Testing
+
+The project includes comprehensive test coverage for scoring and report validation.
+
+### Backend Tests
+
+```bash
+cd backend
+
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test suites
+pytest tests/test_scoring.py -v      # 42 scoring tests
+pytest tests/test_report_shape.py -v # 30 report validation tests
+
+# Run with coverage
+pytest --cov=app --cov-report=html
+```
+
+### Test Suites
+
+| Suite | Tests | Description |
+|-------|-------|-------------|
+| `test_scoring.py` | 42 | Scoring utilities, regression tests, edge cases |
+| `test_report_shape.py` | 30 | Report structure, score ranges, model validation |
+| `test_health.py` | 2 | API health check endpoints |
+| `test_analysis.py` | 3 | Analysis API endpoints |
+
+### Frontend Tests
+
+```bash
+cd frontend
+
+# Run Playwright E2E tests
+npx playwright test
+
+# Run with UI
+npx playwright test --ui
+```
+
+---
+
 ## 🐛 Troubleshooting
 
 ### "Connection refused" errors
@@ -298,6 +344,7 @@ See [ENHANCEMENT_PLAN.md](./ENHANCEMENT_PLAN.md) for the full technical roadmap.
 
 ### Recently Completed
 
+- ✅ **Phase 0 Foundation Tests** - 72 tests for scoring & report validation
 - ✅ Apify integration for social media scraping
 - ✅ Moz Links API for SEO authority metrics
 - ✅ Reddit brand mention monitoring

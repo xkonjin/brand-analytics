@@ -177,6 +177,10 @@ This document tracks the prioritized implementation tasks for the Brand Analytic
 
 ### December 2025
 
+- [x] **Phase 0 Foundation Tests (PR #16)** - 72 tests total
+  - `test_scoring.py`: 42 tests for scoring utilities
+  - `test_report_shape.py`: 30 tests for report validation
+- [x] **Documentation (PR #15)** - ENHANCEMENT_PLAN.md, TODO.md, README updates
 - [x] **Apify Integration** - Instagram, YouTube, Reddit scraping
 - [x] **Moz Integration** - Domain Authority, backlinks, spam score
 - [x] **Reddit Analysis** - Brand mention monitoring in social analyzer
