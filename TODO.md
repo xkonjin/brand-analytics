@@ -10,17 +10,17 @@ This document tracks the prioritized implementation tasks for the Brand Analytic
 
 ### Critical (Do First)
 
-- [ ] **0.1** Add scoring regression tests
+- [x] **0.1** Add scoring regression tests ✅ PR #16
   - File: `backend/tests/test_scoring.py`
   - Test `weighted_average`, `score_to_grade`, `normalize_score`
-  - Test each analyzer's `_calculate_score()` method
-  - Effort: 4 hours
+  - Test `clamp_score`, `score_to_rating` from BaseAnalyzer
+  - 42 tests covering utilities, regression, and edge cases
 
-- [ ] **0.2** Add "golden report shape" test
+- [x] **0.2** Add "golden report shape" test ✅ PR #16
   - File: `backend/tests/test_report_shape.py`
   - Assert report JSON contains all required fields
   - Assert all scores are 0-100
-  - Effort: 2 hours
+  - 30 tests covering structure, validation, serialization
 
 - [ ] **0.3** Mock external APIs for test stability
   - Mock: PageSpeed, Moz, Twitter, Apify, OpenAI
