@@ -56,13 +56,26 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # Allowed origins for CORS - set via CORS_ORIGINS env var as comma-separated list
     # In production, this should be restricted to your actual frontend domain(s)
-    # Example: CORS_ORIGINS=https://brand-analytics.vercel.app,https://www.brand-analytics.com
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # Example: CORS_ORIGINS=https://brandanalytics.vercel.app,https://www.brandanalytics.com
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://brandanalytics.vercel.app",
+    ]
+    
+    # CORS regex pattern for Vercel preview deployments
+    # Matches: https://brandanalytics-*.vercel.app (preview URLs)
+    CORS_ORIGIN_REGEX: Optional[str] = r"https://brandanalytics-[a-z0-9-]+\.vercel\.app"
     
     # Allowed hosts for Host header validation (prevents host header attacks)
     # Set via ALLOWED_HOSTS env var as comma-separated list
     # Use "*" only for development, never in production
-    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1"]
+    ALLOWED_HOSTS: List[str] = [
+        "localhost",
+        "127.0.0.1",
+        "brandanalytics.fly.dev",
+        "brandanalytics-api.fly.dev",
+    ]
     
     # -------------------------------------------------------------------------
     # Debug & Documentation Settings

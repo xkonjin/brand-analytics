@@ -84,7 +84,7 @@ export function ContentSection({ data, className = '' }: ContentSectionProps) {
   // Transform findings
   const findings = (data.findings || []).map(f => ({
     title: f.title,
-    description: f.description || f.detail || '',
+    description: f.description || (f as any).detail || '',
     severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
     data: f.data as Record<string, string | number> | undefined,
   }));
@@ -92,7 +92,7 @@ export function ContentSection({ data, className = '' }: ContentSectionProps) {
   // Transform recommendations
   const recommendations = (data.recommendations || []).map(r => ({
     title: r.title,
-    description: r.description || r.detail || '',
+    description: r.description || (r as any).detail || '',
     priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
     category: r.category,
     impact: r.impact as 'high' | 'medium' | 'low',

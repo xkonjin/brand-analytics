@@ -16,7 +16,6 @@ from sqlalchemy import select
 from app.config import settings
 from app.database import get_db
 from app.models.db_models import Analysis, AnalysisStatusEnum
-from app.models.report import FullReport
 from app.services.pdf_generator import generate_pdf_report
 
 

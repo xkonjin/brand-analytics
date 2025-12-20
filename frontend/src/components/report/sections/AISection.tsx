@@ -78,18 +78,18 @@ export function AISection({ data, className = '' }: AISectionProps) {
     { label: 'Structured Data', passed: (data.structured_data_score ?? 0) > 50, icon: Database },
   ];
 
-  // Transform findings
+  // Transform findings - support both 'description' and legacy 'detail' field names
   const findings = (data.findings || []).map(f => ({
     title: f.title,
-    description: f.description || f.detail || '',
+    description: f.description || (f as any).detail || '',
     severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
     data: f.data as Record<string, string | number> | undefined,
   }));
 
-  // Transform recommendations
+  // Transform recommendations - support both 'description' and legacy 'detail' field names
   const recommendations = (data.recommendations || []).map(r => ({
     title: r.title,
-    description: r.description || r.detail || '',
+    description: r.description || (r as any).detail || '',
     priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
     category: r.category,
     impact: r.impact as 'high' | 'medium' | 'low',

@@ -23,5 +23,5 @@ services:
         sync: false
       - key: TWITTER_BEARER_TOKEN
         sync: false
-    healthCheckPath: /health
+    healthCheckPath: /api/v1/health
 

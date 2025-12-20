@@ -125,13 +125,16 @@ if settings.ENVIRONMENT != "development":
 
 # CORS - allows frontend applications to make requests to this API
 # Methods are restricted to what the API actually uses
+# Supports both explicit origins and regex for Vercel preview deployments
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
-    expose_headers=["X-Request-ID"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Correlation-ID"],
+    expose_headers=["X-Request-ID", "X-Correlation-ID"],
+    max_age=86400,  # Cache preflight requests for 24 hours
 )
 
 app.add_middleware(RequestLoggingMiddleware)
