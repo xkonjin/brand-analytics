@@ -57,9 +57,16 @@ class WebsiteScraper:
     }
 
     SPA_MARKERS = [
-        'id="root"', 'id="app"', 'id="__next"', '__next_data__',
-        'data-reactroot', 'ng-app', 'ng-version', 'data-v-',
-        '_nuxt', 'data-svelte',
+        'id="root"',
+        'id="app"',
+        'id="__next"',
+        "__next_data__",
+        "data-reactroot",
+        "ng-app",
+        "ng-version",
+        "data-v-",
+        "_nuxt",
+        "data-svelte",
     ]
 
     def __init__(self, url: str, timeout: int = 30):
@@ -79,7 +86,11 @@ class WebsiteScraper:
         if html_lower.count("<script") > 20 and len(html.split()) < 500:
             return True
 
-        noscript_warnings = ["enable javascript", "javascript is required", "please enable javascript"]
+        noscript_warnings = [
+            "enable javascript",
+            "javascript is required",
+            "please enable javascript",
+        ]
         if any(warning in html_lower for warning in noscript_warnings):
             return True
 
@@ -98,7 +109,11 @@ class WebsiteScraper:
                 self._render_mode = "firecrawl"
                 logger.info(f"Firecrawl successful for {self.url}")
             elif not html:
-                return {"error": "Failed to fetch page", "html": "", "render_mode": "failed"}
+                return {
+                    "error": "Failed to fetch page",
+                    "html": "",
+                    "render_mode": "failed",
+                }
 
         self._html = html
         self._soup = BeautifulSoup(html, "lxml")
@@ -491,9 +506,23 @@ class WebsiteScraper:
 
         # Paths/segments to ignore to avoid share links, posts, etc.
         ignored_segments = [
-            "/intent/", "/share", "/search", "/home", "/explore", "/hashtag",
-            "/login", "/signup", "/status/", "/privacy", "/tos", "/i/",
-            "sharer.php", "youtube.com/watch", "youtu.be/", "/p/", "/reel/"
+            "/intent/",
+            "/share",
+            "/search",
+            "/home",
+            "/explore",
+            "/hashtag",
+            "/login",
+            "/signup",
+            "/status/",
+            "/privacy",
+            "/tos",
+            "/i/",
+            "sharer.php",
+            "youtube.com/watch",
+            "youtu.be/",
+            "/p/",
+            "/reel/",
         ]
 
         # Order matters: we prefer the first "clean" link we find (usually header/footer)
@@ -510,7 +539,7 @@ class WebsiteScraper:
                     # Check for ignored segments
                     if any(segment in href_lower for segment in ignored_segments):
                         continue
-                    
+
                     # For Twitter/X, exclude if it's just the home page or query
                     if platform == "twitter":
                         path = urlparse(href).path
@@ -528,8 +557,8 @@ class WebsiteScraper:
                         current_path = urlparse(social_links[platform]).path
                         new_path = urlparse(href).path
                         if len(new_path) < len(current_path) and len(new_path) > 1:
-                             social_links[platform] = href
-                    
+                            social_links[platform] = href
+
                     break
 
         return social_links
