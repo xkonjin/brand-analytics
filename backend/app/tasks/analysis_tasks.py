@@ -24,26 +24,20 @@ from app.tasks.celery_app import celery_app
 # Tasks run in separate processes, so we need to create a new engine
 def get_task_db_session():
     """
-    Create a database session for use in Celery tasks.
-
-    Since Celery workers run in separate processes, they need their own
-    database connections.
-
-    Returns:
-        async_sessionmaker: Session factory for creating sessions
+    Create a database session for use in background tasks.
     """
-    # Check if using SQLite (no connection pooling needed)
-    is_sqlite = "sqlite" in settings.DATABASE_URL
+    db_url = settings.get_async_database_url()
+    is_sqlite = "sqlite" in db_url
 
     if is_sqlite:
         engine = create_async_engine(
-            settings.DATABASE_URL,
+            db_url,
             echo=settings.DEBUG,
             connect_args={"check_same_thread": False},
         )
     else:
         engine = create_async_engine(
-            settings.DATABASE_URL,
+            db_url,
             echo=settings.DEBUG,
             pool_size=5,
             max_overflow=10,
