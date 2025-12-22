@@ -489,13 +489,47 @@ class WebsiteScraper:
 
         social_links = {}
 
+        # Paths/segments to ignore to avoid share links, posts, etc.
+        ignored_segments = [
+            "/intent/", "/share", "/search", "/home", "/explore", "/hashtag",
+            "/login", "/signup", "/status/", "/privacy", "/tos", "/i/",
+            "sharer.php", "youtube.com/watch", "youtu.be/", "/p/", "/reel/"
+        ]
+
+        # Order matters: we prefer the first "clean" link we find (usually header/footer)
+        # over later ones which might be in content
         for link in self._soup.find_all("a", href=True):
-            href = link["href"].lower()
+            href = link["href"].strip()
+            if not href:
+                continue
+
+            href_lower = href.lower()
 
             for platform, domains in self.SOCIAL_PLATFORMS.items():
-                if any(domain in href for domain in domains):
-                    # Store the full URL
-                    social_links[platform] = link["href"]
+                if any(domain in href_lower for domain in domains):
+                    # Check for ignored segments
+                    if any(segment in href_lower for segment in ignored_segments):
+                        continue
+                    
+                    # For Twitter/X, exclude if it's just the home page or query
+                    if platform == "twitter":
+                        path = urlparse(href).path
+                        if path in ["", "/"]:
+                            continue
+
+                    # If we don't have a link for this platform yet, take it.
+                    # We prioritize the first one we find as it's likely the profile link
+                    if platform not in social_links:
+                        social_links[platform] = href
+                    else:
+                        # If we already have one, check if the new one is "better"
+                        # E.g. "twitter.com/brand" vs "twitter.com/brand/likes"
+                        # Prefer shorter paths for profiles
+                        current_path = urlparse(social_links[platform]).path
+                        new_path = urlparse(href).path
+                        if len(new_path) < len(current_path) and len(new_path) > 1:
+                             social_links[platform] = href
+                    
                     break
 
         return social_links
