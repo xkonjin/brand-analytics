@@ -327,6 +327,7 @@ class AnalysisContext:
     description: Optional[str] = None
     industry: Optional[str] = None
     scraped_data: Dict[str, Any] = field(default_factory=dict)
+    research_data: Optional[Any] = None
     progress_callback: Optional[Callable[[str, str], Awaitable[None]]] = None
     results: Dict[str, AnalyzerResult] = field(default_factory=dict)
 

@@ -187,6 +187,10 @@ class Settings(BaseSettings):
     # Get at: https://www.firecrawl.dev/
     FIRECRAWL_API_KEY: Optional[str] = None
 
+    # Perplexity API for pre-analysis research (discover social profiles, company info)
+    # Get at: https://www.perplexity.ai/settings/api
+    PERPLEXITY_API_KEY: Optional[str] = None
+
     # -------------------------------------------------------------------------
     # Logging Settings
     # -------------------------------------------------------------------------
