@@ -135,7 +135,7 @@ class Settings(BaseSettings):
         if self.CELERY_BROKER_URL:
             return self.CELERY_BROKER_URL
         # Use REDIS_URL with database 1 for Celery broker
-        base_url = self.REDIS_URL.rstrip('/').rsplit('/', 1)[0]  # Remove db number
+        base_url = self.REDIS_URL.rstrip("/").rsplit("/", 1)[0]  # Remove db number
         return f"{base_url}/1"
 
     def get_celery_result_backend(self) -> str:
@@ -143,7 +143,7 @@ class Settings(BaseSettings):
         if self.CELERY_RESULT_BACKEND:
             return self.CELERY_RESULT_BACKEND
         # Use REDIS_URL with database 2 for Celery results
-        base_url = self.REDIS_URL.rstrip('/').rsplit('/', 1)[0]  # Remove db number
+        base_url = self.REDIS_URL.rstrip("/").rsplit("/", 1)[0]  # Remove db number
         return f"{base_url}/2"
 
     def get_async_database_url(self) -> str:

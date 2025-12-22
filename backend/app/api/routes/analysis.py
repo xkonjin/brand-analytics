@@ -122,6 +122,7 @@ async def start_analysis(
         background_tasks.add_task(run_full_analysis, str(analysis.id))
     else:
         from app.tasks.celery_app import celery_app
+
         celery_app.send_task("run_full_analysis", args=[str(analysis.id)])
 
     # -------------------------------------------------------------------------
