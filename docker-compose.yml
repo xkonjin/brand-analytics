@@ -60,11 +60,11 @@ services:
   # FastAPI Backend
   # ---------------------------------------------------------------------------
   # Main API server handling analysis requests
-  # NOTE: Container runs on port 8080, mapped to host port 8000
+  # Container runs on port 8000 (set via ENV PORT in Dockerfile)
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: brand_analytics_backend
     environment:
       # Database connection
@@ -84,8 +84,8 @@ services:
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
     ports:
-      # Map host port 8000 to container port 8080 (where uvicorn runs)
-      - "8000:8080"
+      # Host port 8000 -> Container port 8000 (where uvicorn runs)
+      - "8000:8000"
     volumes:
       # Mount source code for hot reloading in development
       - ./backend/app:/app/app
@@ -95,8 +95,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      # Health check uses internal container port 8080
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -108,8 +107,8 @@ services:
   # Background task worker for running analyses
   celery_worker:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: brand_analytics_celery
     command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4
     environment:
@@ -140,8 +139,8 @@ services:
   # Optional: Web UI for monitoring Celery tasks
   flower:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: brand_analytics_flower
     command: celery -A app.tasks.celery_app flower --port=5555
     environment:
@@ -167,8 +166,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Server-side URL for API route handlers to reach backend
-      BACKEND_API_URL: http://backend:8080
+      BACKEND_API_URL: http://backend:8000
     depends_on:
       - backend
     restart: unless-stopped
