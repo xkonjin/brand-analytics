@@ -93,9 +93,6 @@ class AnalysisOrchestrator:
         Returns:
             FullReport: Complete analysis report
         """
-        # ---------------------------------------------------------------------
-        # Initialize Context
-        # ---------------------------------------------------------------------
         self.context = AnalysisContext(
             url=self.url,
             domain=self.domain,
@@ -104,13 +101,13 @@ class AnalysisOrchestrator:
             progress_callback=progress_callback,
         )
 
-        # ---------------------------------------------------------------------
-        # Phase 1: Scrape Website
-        # ---------------------------------------------------------------------
-        await self._update_progress("seo", "running")
+        research_data = await self._run_pre_analysis_research()
+        self.context.research_data = research_data
 
+        await self._update_progress("seo", "running")
         scraper = WebsiteScraper(self.url)
         scraped_data = await scraper.scrape()
+        scraped_data = self._merge_research_with_scraped(scraped_data, research_data)
         self.context.scraped_data = scraped_data
 
         # ---------------------------------------------------------------------
@@ -270,9 +267,65 @@ class AnalysisOrchestrator:
         return results
 
     async def _update_progress(self, module: str, status: str) -> None:
-        """Update progress via callback if provided."""
         if self.context and self.context.progress_callback:
             await self.context.progress_callback(module, status)
+
+    async def _run_pre_analysis_research(self) -> Optional[Any]:
+        from app.services.perplexity_service import PerplexityService
+
+        service = PerplexityService()
+        if not service.is_configured():
+            return None
+
+        brand_name = (
+            self.context.scraped_data.get("brand_name") if self.context else None
+        )
+        research = await service.research_brand(self.domain, brand_name)
+
+        if research.success:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.info(
+                f"Pre-analysis research found: {list(research.social_profiles.keys())}"
+            )
+
+        return research
+
+    def _merge_research_with_scraped(
+        self, scraped_data: Dict[str, Any], research_data: Optional[Any]
+    ) -> Dict[str, Any]:
+        from app.services.perplexity_service import BrandResearch
+
+        if not research_data or not isinstance(research_data, BrandResearch):
+            return scraped_data
+
+        if not research_data.success:
+            return scraped_data
+
+        existing_links = scraped_data.get("social_links", {})
+        discovered_links = research_data.social_profiles
+
+        merged_links = {**existing_links}
+        for platform, url in discovered_links.items():
+            if platform not in merged_links or not merged_links[platform]:
+                merged_links[platform] = url
+
+        scraped_data["social_links"] = merged_links
+
+        scraped_data["research"] = {
+            "founders": research_data.founders,
+            "team_size": research_data.team_size,
+            "headquarters": research_data.headquarters,
+            "year_founded": research_data.year_founded,
+            "industry": research_data.industry,
+            "company_description": research_data.company_description,
+        }
+
+        if research_data.company_name and not scraped_data.get("brand_name"):
+            scraped_data["brand_name"] = research_data.company_name
+
+        return scraped_data
 
     def _generate_scorecard(
         self,
