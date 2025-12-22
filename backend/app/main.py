@@ -153,7 +153,7 @@ app.include_router(auth_router, prefix=settings.API_V1_PREFIX, tags=["Authentica
 
 
 # =============================================================================
-# Root Endpoint
+# Root Endpoints (outside API versioning for health checks)
 # =============================================================================
 @app.get("/", include_in_schema=False)
 async def root():
@@ -168,6 +168,22 @@ async def root():
             "docs": "/docs",
             "health": f"{settings.API_V1_PREFIX}/health",
         }
+    )
+
+
+@app.get("/health", include_in_schema=False)
+async def root_health():
+    """
+    Root-level health check endpoint for Railway/Kubernetes probes.
+    Returns 200 OK if the application is running.
+    """
+    return JSONResponse(
+        content={
+            "status": "healthy",
+            "service": "brand-analytics-api",
+            "version": settings.APP_VERSION,
+        },
+        status_code=200,
     )
 
 

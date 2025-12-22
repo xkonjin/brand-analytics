@@ -1,16 +1,14 @@
-# =============================================================================
-# Website Scraper
-# =============================================================================
-# This module provides comprehensive website scraping capabilities.
-# It extracts content, meta tags, social links, and structural information.
-# =============================================================================
-
 import re
 from typing import Dict, Any, Optional, List
 from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
+
+from app.services.firecrawl_service import firecrawl_service
+from app.utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class WebsiteScraper:
@@ -58,41 +56,49 @@ class WebsiteScraper:
         "Connection": "keep-alive",
     }
 
-    def __init__(self, url: str, timeout: int = 30):
-        """
-        Initialize the scraper.
+    SPA_MARKERS = [
+        'id="root"', 'id="app"', 'id="__next"', '__next_data__',
+        'data-reactroot', 'ng-app', 'ng-version', 'data-v-',
+        '_nuxt', 'data-svelte',
+    ]
 
-        Args:
-            url: Website URL to scrape
-            timeout: Request timeout in seconds
-        """
+    def __init__(self, url: str, timeout: int = 30):
         self.url = url.rstrip("/")
         self.timeout = timeout
         self._soup: Optional[BeautifulSoup] = None
         self._html: str = ""
+        self._render_mode: str = "httpx"
+
+    def _needs_js_rendering(self, html: str) -> bool:
+        html_lower = html.lower()
+
+        if len(html) < 25000:
+            if any(marker.lower() in html_lower for marker in self.SPA_MARKERS):
+                return True
+
+        if html_lower.count("<script") > 20 and len(html.split()) < 500:
+            return True
+
+        noscript_warnings = ["enable javascript", "javascript is required", "please enable javascript"]
+        if any(warning in html_lower for warning in noscript_warnings):
+            return True
+
+        return False
 
     async def scrape(self) -> Dict[str, Any]:
-        """
-        Scrape the website and extract all relevant data.
-
-        Returns:
-            dict: Extracted website data including:
-                - html: Raw HTML content
-                - title: Page title
-                - meta_description: Meta description
-                - og_tags: Open Graph tags
-                - social_links: Detected social media links
-                - text_content: Main text content
-                - headings: H1-H6 headings
-                - ctas: Detected call-to-action buttons/links
-                - images: Image information
-                - schema_markup: Schema.org data if present
-                - links: Important internal/external links
-        """
-        # Fetch the homepage
         html = await self._fetch_page(self.url)
-        if not html:
-            return {"error": "Failed to fetch page", "html": ""}
+        self._render_mode = "httpx"
+
+        if not html or self._needs_js_rendering(html):
+            logger.info(f"Attempting Firecrawl for {self.url}")
+            firecrawl_result = await firecrawl_service.scrape_url(self.url)
+
+            if firecrawl_result and firecrawl_result.get("html"):
+                html = firecrawl_result["html"]
+                self._render_mode = "firecrawl"
+                logger.info(f"Firecrawl successful for {self.url}")
+            elif not html:
+                return {"error": "Failed to fetch page", "html": "", "render_mode": "failed"}
 
         self._html = html
         self._soup = BeautifulSoup(html, "lxml")
@@ -131,6 +137,8 @@ class WebsiteScraper:
             # Derived
             "brand_name": self._infer_brand_name(),
             "word_count": len(self._extract_text_content().split()),
+            # Metadata
+            "render_mode": self._render_mode,
         }
 
     async def _fetch_page(self, url: str) -> str:
@@ -481,13 +489,47 @@ class WebsiteScraper:
 
         social_links = {}
 
+        # Paths/segments to ignore to avoid share links, posts, etc.
+        ignored_segments = [
+            "/intent/", "/share", "/search", "/home", "/explore", "/hashtag",
+            "/login", "/signup", "/status/", "/privacy", "/tos", "/i/",
+            "sharer.php", "youtube.com/watch", "youtu.be/", "/p/", "/reel/"
+        ]
+
+        # Order matters: we prefer the first "clean" link we find (usually header/footer)
+        # over later ones which might be in content
         for link in self._soup.find_all("a", href=True):
-            href = link["href"].lower()
+            href = link["href"].strip()
+            if not href:
+                continue
+
+            href_lower = href.lower()
 
             for platform, domains in self.SOCIAL_PLATFORMS.items():
-                if any(domain in href for domain in domains):
-                    # Store the full URL
-                    social_links[platform] = link["href"]
+                if any(domain in href_lower for domain in domains):
+                    # Check for ignored segments
+                    if any(segment in href_lower for segment in ignored_segments):
+                        continue
+                    
+                    # For Twitter/X, exclude if it's just the home page or query
+                    if platform == "twitter":
+                        path = urlparse(href).path
+                        if path in ["", "/"]:
+                            continue
+
+                    # If we don't have a link for this platform yet, take it.
+                    # We prioritize the first one we find as it's likely the profile link
+                    if platform not in social_links:
+                        social_links[platform] = href
+                    else:
+                        # If we already have one, check if the new one is "better"
+                        # E.g. "twitter.com/brand" vs "twitter.com/brand/likes"
+                        # Prefer shorter paths for profiles
+                        current_path = urlparse(social_links[platform]).path
+                        new_path = urlparse(href).path
+                        if len(new_path) < len(current_path) and len(new_path) > 1:
+                             social_links[platform] = href
+                    
                     break
 
         return social_links

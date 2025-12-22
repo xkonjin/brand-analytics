@@ -36,8 +36,7 @@ export default function HomePage() {
     setIsLoading(true)
 
     try {
-      // Call API to start analysis
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/analyze`, {
+      const response = await fetch('/api/v1/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: normalizedUrl }),

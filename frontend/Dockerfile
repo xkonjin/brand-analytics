@@ -2,6 +2,7 @@
 # Frontend Dockerfile - Next.js Application
 # =============================================================================
 # Multi-stage build for optimal image size
+# Build context: frontend/ directory (rootDirectory: "frontend" on Railway)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -22,6 +23,7 @@ WORKDIR /app
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+# Copy all source files (build context is frontend/)
 COPY . .
 
 # Set environment variable for build
