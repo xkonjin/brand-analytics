@@ -118,21 +118,11 @@ async def start_analysis(
     # -------------------------------------------------------------------------
     # Queue Analysis Task
     # -------------------------------------------------------------------------
-    # Use Celery for production; background tasks for development
-    if settings.ENVIRONMENT == "development":
-        # In development, use FastAPI background tasks
-        background_tasks.add_task(
-            run_full_analysis,
-            str(analysis.id),
-        )
+    if settings.ENVIRONMENT == "development" or settings.WEB_ONLY:
+        background_tasks.add_task(run_full_analysis, str(analysis.id))
     else:
-        # In production, use Celery
         from app.tasks.celery_app import celery_app
-
-        celery_app.send_task(
-            "run_full_analysis",
-            args=[str(analysis.id)],
-        )
+        celery_app.send_task("run_full_analysis", args=[str(analysis.id)])
 
     # -------------------------------------------------------------------------
     # Return Response
