@@ -70,11 +70,10 @@ class Settings(BaseSettings):
     # Allowed hosts for Host header validation (prevents host header attacks)
     # Set via ALLOWED_HOSTS env var as comma-separated list
     # Use "*" only for development, never in production
+    # Note: Railway uses internal IPs for health checks, so we allow all hosts
+    # and rely on Railway's network security instead
     ALLOWED_HOSTS: List[str] = [
-        "localhost",
-        "127.0.0.1",
-        "brandanalytics.fly.dev",
-        "brandanalytics-api.fly.dev",
+        "*",  # Allow all hosts - Railway uses internal IPs for health checks
     ]
 
     # -------------------------------------------------------------------------
@@ -110,6 +109,7 @@ class Settings(BaseSettings):
     # Database Settings (PostgreSQL)
     # -------------------------------------------------------------------------
     # Database connection string format: postgresql+asyncpg://user:pass@host:port/db
+    # Railway provides DATABASE_URL as postgresql:// - we convert it in get_async_database_url()
     DATABASE_URL: str = (
         "postgresql+asyncpg://postgres:postgres@localhost:5432/brand_analytics"
     )
@@ -125,8 +125,34 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # Celery Settings (Task Queue)
     # -------------------------------------------------------------------------
-    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+    # Note: These default to REDIS_URL if not explicitly set
+    CELERY_BROKER_URL: Optional[str] = None  # Will use REDIS_URL/1 if not set
+    CELERY_RESULT_BACKEND: Optional[str] = None  # Will use REDIS_URL/2 if not set
+
+    def get_celery_broker_url(self) -> str:
+        """Get Celery broker URL, defaulting to REDIS_URL/1 if not set."""
+        if self.CELERY_BROKER_URL:
+            return self.CELERY_BROKER_URL
+        # Use REDIS_URL with database 1 for Celery broker
+        base_url = self.REDIS_URL.rstrip('/').rsplit('/', 1)[0]  # Remove db number
+        return f"{base_url}/1"
+
+    def get_celery_result_backend(self) -> str:
+        """Get Celery result backend URL, defaulting to REDIS_URL/2 if not set."""
+        if self.CELERY_RESULT_BACKEND:
+            return self.CELERY_RESULT_BACKEND
+        # Use REDIS_URL with database 2 for Celery results
+        base_url = self.REDIS_URL.rstrip('/').rsplit('/', 1)[0]  # Remove db number
+        return f"{base_url}/2"
+
+    def get_async_database_url(self) -> str:
+        """Get database URL with asyncpg driver for SQLAlchemy async engine."""
+        url = self.DATABASE_URL
+        # Convert postgresql:// to postgresql+asyncpg://
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # Already has correct format
+        return url
 
     # -------------------------------------------------------------------------
     # External API Keys
@@ -155,6 +181,10 @@ class Settings(BaseSettings):
 
     # Sentry for error tracking (get from sentry.io)
     SENTRY_DSN: Optional[str] = None
+
+    # Firecrawl for JavaScript-capable website scraping
+    # Get at: https://www.firecrawl.dev/
+    FIRECRAWL_API_KEY: Optional[str] = None
 
     # -------------------------------------------------------------------------
     # Logging Settings

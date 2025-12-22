@@ -143,13 +143,10 @@ export default function ReportPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { id } = params;
 
-  // Fetch the full report data from the API
   const { data, isLoading, error, refetch } = useQuery<Report>({
     queryKey: ['report', id],
     queryFn: async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/analysis/${id}/report`
-      );
+      const res = await fetch(`/api/v1/analysis/${id}/report`);
       if (!res.ok) throw new Error('Failed to fetch report');
       return res.json();
     },

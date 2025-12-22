@@ -82,6 +82,7 @@ services:
       GOOGLE_SEARCH_ENGINE_ID: ${GOOGLE_SEARCH_ENGINE_ID:-}
       TWITTER_BEARER_TOKEN: ${TWITTER_BEARER_TOKEN:-}
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
     ports:
       # Map host port 8000 to container port 8080 (where uvicorn runs)
       - "8000:8080"
@@ -123,6 +124,7 @@ services:
       GOOGLE_SEARCH_ENGINE_ID: ${GOOGLE_SEARCH_ENGINE_ID:-}
       TWITTER_BEARER_TOKEN: ${TWITTER_BEARER_TOKEN:-}
       APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
     volumes:
       - ./backend/app:/app/app
     depends_on:
@@ -155,7 +157,8 @@ services:
   # ---------------------------------------------------------------------------
   # Next.js Frontend
   # ---------------------------------------------------------------------------
-  # Frontend application - uncomment to run in Docker
+  # Frontend application - uses API route handlers to proxy to backend
+  # BACKEND_API_URL is server-side only (no NEXT_PUBLIC_ prefix needed)
   frontend:
     build:
       context: ./frontend
@@ -164,7 +167,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Server-side URL for API route handlers to reach backend
+      BACKEND_API_URL: http://backend:8080
     depends_on:
       - backend
     restart: unless-stopped

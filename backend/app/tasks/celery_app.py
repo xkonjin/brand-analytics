@@ -13,10 +13,11 @@ from app.config import settings
 # =============================================================================
 # Create Celery Application
 # =============================================================================
+# Use dynamic methods to get broker/backend URLs (supports REDIS_URL fallback)
 celery_app = Celery(
     "brand_analytics",
-    broker=settings.CELERY_BROKER_URL,
-    backend=settings.CELERY_RESULT_BACKEND,
+    broker=settings.get_celery_broker_url(),
+    backend=settings.get_celery_result_backend(),
     include=["app.tasks.analysis_tasks"],
 )
 

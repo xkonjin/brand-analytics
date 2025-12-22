@@ -35,13 +35,10 @@ export default function AnalyzePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { id } = params
 
-  // Poll for progress updates
   const { data, isLoading, error } = useQuery<AnalysisProgress>({
     queryKey: ['analysis-progress', id],
     queryFn: async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/analysis/${id}/progress`
-      )
+      const res = await fetch(`/api/v1/analysis/${id}/progress`)
       if (!res.ok) throw new Error('Failed to fetch progress')
       return res.json()
     },

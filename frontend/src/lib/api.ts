@@ -1,24 +1,4 @@
-// =============================================================================
-// EXPLAINER: Frontend API Client
-// =============================================================================
-//
-// WHAT IS THIS?
-// This is the bridge between the Next.js frontend and the FastAPI backend.
-// It handles all HTTP requests, error parsing, and type definitions.
-//
-// WHY DO WE NEED IT?
-// 1. **Abstraction**: Components shouldn't know about `fetch` or headers.
-// 2. **Error Handling**: Centralized error logic (e.g., throwing helpful messages).
-// 3. **Type Safety**: Generics (`<T>`) ensure we know what the backend returns.
-//
-// HOW IT WORKS:
-// - `fetchAPI`: The core wrapper around `fetch`. Handles base URL and JSON parsing.
-// - `startAnalysis`: Triggers the long-running analysis job.
-// - `getAnalysisProgress`: Polling endpoint to check status.
-// - `getReport`: Fetches the final JSON report.
-// =============================================================================
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = ''
 
 /**
  * Generic fetch wrapper with error handling.

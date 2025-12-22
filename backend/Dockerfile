@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+# Context is from root, so we need backend/ prefix
+COPY backend/requirements.txt .
 
 # Install Python dependencies (skip playwright for now to reduce size)
 RUN pip install --no-cache-dir -r requirements.txt || \
@@ -32,20 +33,28 @@ RUN pip install --no-cache-dir -r requirements.txt || \
     pydantic pydantic-settings python-dotenv \
     redis celery tenacity aiofiles
 
-# Copy application code
-COPY . .
+# Copy application code from backend/
+COPY backend/app ./app
+COPY backend/alembic ./alembic
+COPY backend/alembic.ini .
+COPY backend/start.sh .
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 
-# Expose port
-EXPOSE 8080
+# Make start.sh executable
+RUN chmod +x start.sh
 
-# Health check
+# Expose port (Railway uses dynamic port)
+EXPOSE 8000
+
+# Environment variables
+ENV PORT=8000
+ENV WEB_ONLY=true
+
+# Health check (uses $PORT)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://localhost:8080/health')" || exit 1
+    CMD python -c "import httpx; httpx.get('http://localhost:${PORT:-8000}/health')" || exit 1
 
 # Run the application
-COPY start.sh .
-RUN chmod +x start.sh
 CMD ["./start.sh"]
