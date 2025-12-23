@@ -1,15 +1,15 @@
 /**
  * =============================================================================
- * Team Presence Section Component
+ * Team Presence Section Component - Apple Liquid Glass UI
  * =============================================================================
  * Displays team visibility analysis including founder presence,
- * team member profiles, and professional credibility.
+ * team member profiles, and professional credibility with glassmorphism.
  * =============================================================================
  */
 
 'use client';
 
-import { Users, Linkedin, Award, Building } from 'lucide-react';
+import { Users, Linkedin, Award, Building, User } from 'lucide-react';
 import { ModuleSection } from './ModuleSection';
 
 // -----------------------------------------------------------------------------
@@ -118,23 +118,25 @@ export function TeamSection({ data, className = '' }: TeamSectionProps) {
       {/* Team Members */}
       {data.team_members && data.team_members.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
             Key Team Members
           </h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.team_members.slice(0, 6).map((member, idx) => (
               <div
                 key={member.name || idx}
-                className="bg-white rounded-lg border border-slate-200 p-4 flex items-center gap-3"
+                className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4 
+                         flex items-center gap-3 hover:bg-white/[0.08] transition-all group"
               >
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                  <Users className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-full bg-white/[0.08] flex items-center justify-center text-white/50
+                              group-hover:bg-white/[0.12] transition-all">
+                  <User className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-900 truncate">
+                  <div className="font-medium text-white truncate">
                     {member.name || 'Unknown'}
                   </div>
-                  <div className="text-sm text-slate-500 truncate">
+                  <div className="text-sm text-white/50 truncate">
                     {member.role || 'Team Member'}
                   </div>
                 </div>
@@ -143,7 +145,7 @@ export function TeamSection({ data, className = '' }: TeamSectionProps) {
                     href={member.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-700"
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
                   >
                     <Linkedin className="w-4 h-4" />
                   </a>
@@ -156,11 +158,11 @@ export function TeamSection({ data, className = '' }: TeamSectionProps) {
 
       {/* LinkedIn Presence Indicator */}
       {data.linkedin_presence !== undefined && (
-        <div className="mt-4">
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+        <div className="mt-6">
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
             data.linkedin_presence
-              ? 'bg-blue-50 text-blue-700 border border-blue-100'
-              : 'bg-slate-50 text-slate-600 border border-slate-200'
+              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20'
+              : 'bg-white/[0.05] text-white/50 border border-white/[0.08] hover:bg-white/[0.08]'
           }`}>
             <Linkedin className="w-4 h-4" />
             <span className="text-sm font-medium">
@@ -174,4 +176,3 @@ export function TeamSection({ data, className = '' }: TeamSectionProps) {
 }
 
 export default TeamSection;
-

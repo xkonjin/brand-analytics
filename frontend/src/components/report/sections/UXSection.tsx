@@ -1,15 +1,15 @@
 /**
  * =============================================================================
- * Website UX Section Component
+ * Website UX Section Component - Apple Liquid Glass UI
  * =============================================================================
  * Displays website user experience analysis including performance,
- * accessibility, and conversion optimization assessment.
+ * accessibility, and conversion optimization with glassmorphism styling.
  * =============================================================================
  */
 
 'use client';
 
-import { Layout, Smartphone, Monitor, Shield, CheckCircle } from 'lucide-react';
+import { Layout, Smartphone, Monitor, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { ModuleSection } from './ModuleSection';
 
 // -----------------------------------------------------------------------------
@@ -126,23 +126,19 @@ export function UXSection({ data, className = '' }: UXSectionProps) {
       <div className="space-y-6">
         {/* UX Checklist */}
         <div>
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
             UX Essentials Checklist
           </h3>
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {uxChecks.map((check) => (
                 <div key={check.label} className="flex items-center gap-2">
-                  <span
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                      check.passed
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    {check.passed ? '✓' : '−'}
-                  </span>
-                  <span className="text-sm text-slate-700">{check.label}</span>
+                  {check.passed ? (
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  )}
+                  <span className="text-sm text-white/70">{check.label}</span>
                 </div>
               ))}
             </div>
@@ -152,14 +148,16 @@ export function UXSection({ data, className = '' }: UXSectionProps) {
         {/* Trust Signals */}
         {data.trust_signals && data.trust_signals.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
               Trust Signals Found
             </h3>
             <div className="flex flex-wrap gap-2">
               {data.trust_signals.map((signal) => (
                 <span
                   key={signal}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-sm border border-emerald-100"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 
+                           bg-emerald-500/10 text-emerald-400 rounded-lg text-sm 
+                           border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
                 >
                   <Shield className="w-3.5 h-3.5" />
                   {signal}
@@ -174,4 +172,3 @@ export function UXSection({ data, className = '' }: UXSectionProps) {
 }
 
 export default UXSection;
-

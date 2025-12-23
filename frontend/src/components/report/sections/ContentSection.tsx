@@ -1,9 +1,9 @@
 /**
  * =============================================================================
- * Content Section Component
+ * Content Section Component - Apple Liquid Glass UI
  * =============================================================================
  * Displays content quality analysis including themes, consistency,
- * and content strategy assessment.
+ * and content strategy assessment with glassmorphism styling.
  * =============================================================================
  */
 
@@ -115,19 +115,38 @@ export function ContentSection({ data, className = '' }: ContentSectionProps) {
       {/* Content Topics/Themes */}
       {uniqueTopics.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
             Content Topics
           </h3>
           <div className="flex flex-wrap gap-2">
             {uniqueTopics.map((topic) => (
               <span
                 key={topic}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 
+                         bg-white/[0.05] text-white/70 rounded-full text-sm
+                         border border-white/[0.08] hover:bg-white/[0.08] transition-all"
               >
-                <Tag className="w-3.5 h-3.5 text-slate-400" />
+                <Tag className="w-3.5 h-3.5 text-white/40" />
                 {topic}
               </span>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Word Count Average */}
+      {data.word_count_avg && data.word_count_avg > 0 && (
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+            Content Depth
+          </h3>
+          <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4
+                        inline-flex items-center gap-3">
+            <BarChart3 className="w-5 h-5 text-white/40" />
+            <div>
+              <div className="text-white font-medium">{Math.round(data.word_count_avg).toLocaleString()} words</div>
+              <div className="text-xs text-white/40">Average content length</div>
+            </div>
           </div>
         </div>
       )}
@@ -136,4 +155,3 @@ export function ContentSection({ data, className = '' }: ContentSectionProps) {
 }
 
 export default ContentSection;
-
