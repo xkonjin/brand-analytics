@@ -1,8 +1,8 @@
 /**
  * =============================================================================
- * Metric Bar Component
+ * Metric Bar Component - Apple Liquid Glass UI
  * =============================================================================
- * Horizontal bar chart for comparing scores with benchmarks.
+ * Horizontal bar chart with glassmorphism and score-based glows.
  * Shows score, benchmark line, and percentage fill with animations.
  * =============================================================================
  */
@@ -10,7 +10,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { getScoreColor, getScoreClasses } from '@/lib/scoring';
 import { getBenchmarkValue } from '@/lib/benchmarks';
 
 // -----------------------------------------------------------------------------
@@ -57,6 +56,45 @@ const SIZES = {
 };
 
 // -----------------------------------------------------------------------------
+// Score-based gradient and glow for Glass UI
+// -----------------------------------------------------------------------------
+function getScoreGradient(score: number) {
+  if (score >= 80) {
+    return {
+      gradient: 'from-emerald-400 to-emerald-500',
+      glow: 'shadow-[0_0_15px_rgba(52,211,153,0.5)]',
+      textColor: 'text-emerald-400',
+    };
+  }
+  if (score >= 70) {
+    return {
+      gradient: 'from-green-400 to-green-500',
+      glow: 'shadow-[0_0_15px_rgba(74,222,128,0.5)]',
+      textColor: 'text-green-400',
+    };
+  }
+  if (score >= 60) {
+    return {
+      gradient: 'from-yellow-400 to-yellow-500',
+      glow: 'shadow-[0_0_15px_rgba(250,204,21,0.5)]',
+      textColor: 'text-yellow-400',
+    };
+  }
+  if (score >= 50) {
+    return {
+      gradient: 'from-orange-400 to-orange-500',
+      glow: 'shadow-[0_0_15px_rgba(251,146,60,0.5)]',
+      textColor: 'text-orange-400',
+    };
+  }
+  return {
+    gradient: 'from-red-400 to-red-500',
+    glow: 'shadow-[0_0_15px_rgba(248,113,113,0.5)]',
+    textColor: 'text-red-400',
+  };
+}
+
+// -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 export function MetricBar({
@@ -76,9 +114,8 @@ export function MetricBar({
   // Get size configuration
   const config = SIZES[size];
 
-  // Get semantic colors
-  const fillColor = getScoreColor(score);
-  const scoreClasses = getScoreClasses(score);
+  // Get score-based styling
+  const scoreStyle = getScoreGradient(score);
 
   // Calculate comparison to benchmark
   const diff = benchmark ? score - benchmark : 0;
@@ -90,10 +127,10 @@ export function MetricBar({
       : 'At average';
 
   return (
-    <div className={`space-y-1.5 ${className}`}>
+    <div className={`space-y-2 ${className}`}>
       {/* Label row with score */}
       <div className="flex items-center justify-between">
-        <span className={`font-medium text-slate-700 ${config.labelSize}`}>
+        <span className={`font-medium text-white ${config.labelSize}`}>
           {label}
         </span>
         <div className="flex items-center gap-2">
@@ -102,10 +139,10 @@ export function MetricBar({
             <span
               className={`text-xs ${
                 diff > 0
-                  ? 'text-emerald-600'
+                  ? 'text-emerald-400'
                   : diff < 0
-                  ? 'text-orange-600'
-                  : 'text-slate-500'
+                  ? 'text-orange-400'
+                  : 'text-white/50'
               }`}
             >
               {comparisonLabel}
@@ -113,7 +150,7 @@ export function MetricBar({
           )}
           {/* Score value */}
           <span
-            className={`font-semibold tabular-nums ${config.scoreSize} ${scoreClasses.text}`}
+            className={`font-bold tabular-nums ${config.scoreSize} ${scoreStyle.textColor}`}
           >
             {score.toFixed(0)}
           </span>
@@ -122,14 +159,13 @@ export function MetricBar({
 
       {/* Progress bar */}
       <div className="relative">
-        {/* Background track */}
+        {/* Background track - glass style */}
         <div
-          className={`w-full bg-slate-100 rounded-full overflow-hidden ${config.height}`}
+          className={`w-full bg-white/[0.08] rounded-full overflow-hidden ${config.height}`}
         >
-          {/* Filled portion - animated */}
+          {/* Filled portion - animated with gradient and glow */}
           <motion.div
-            className={`${config.height} rounded-full`}
-            style={{ backgroundColor: fillColor }}
+            className={`${config.height} rounded-full bg-gradient-to-r ${scoreStyle.gradient} ${scoreStyle.glow}`}
             initial={{ width: animate ? '0%' : `${score}%` }}
             animate={{ width: `${score}%` }}
             transition={{
@@ -142,7 +178,7 @@ export function MetricBar({
         {/* Benchmark indicator line */}
         {showBenchmark && benchmark && (
           <motion.div
-            className="absolute top-0 w-0.5 bg-slate-400 rounded-full"
+            className="absolute top-0 w-0.5 bg-white/50 rounded-full"
             style={{
               height: '100%',
               left: `${benchmark}%`,
@@ -153,8 +189,8 @@ export function MetricBar({
             transition={{ delay: 0.5, duration: 0.3 }}
           >
             {/* Benchmark label tooltip */}
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="bg-slate-700 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap">
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="bg-white/10 backdrop-blur-sm text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap border border-white/10">
                 Avg: {benchmark}
               </div>
             </div>
@@ -216,4 +252,3 @@ export function MetricBarGroup({
 }
 
 export default MetricBar;
-

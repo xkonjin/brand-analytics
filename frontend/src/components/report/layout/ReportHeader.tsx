@@ -89,8 +89,8 @@ export function ReportHeader({
   return (
     <header
       className={`
-        sticky top-0 z-50 bg-white/95 backdrop-blur-sm
-        border-b border-slate-200 no-print
+        sticky top-0 z-50 bg-[rgb(15,15,35)]/80 backdrop-blur-xl
+        border-b border-white/[0.1] no-print
         ${className}
       `}
     >
@@ -101,16 +101,16 @@ export function ReportHeader({
             {/* Back button */}
             <button
               onClick={() => router.push('/')}
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
+              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors group"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
               <span className="text-sm font-medium hidden sm:inline">
                 New Analysis
               </span>
             </button>
 
             {/* Divider */}
-            <div className="h-5 w-px bg-slate-200" />
+            <div className="h-5 w-px bg-white/[0.1]" />
 
             {/* URL and metadata */}
             <div className="flex items-center gap-2">
@@ -118,18 +118,18 @@ export function ReportHeader({
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-slate-900 hover:text-blue-600 transition-colors"
+                className="flex items-center gap-1.5 text-white hover:text-blue-400 transition-colors"
               >
                 <span className="font-medium text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
                   {displayUrl}
                 </span>
-                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                <ExternalLink className="w-3.5 h-3.5 text-white/40" />
               </a>
 
               {formattedDate && (
                 <>
-                  <span className="text-slate-300 hidden md:inline">·</span>
-                  <span className="text-xs text-slate-500 hidden md:inline">
+                  <span className="text-white/20 hidden md:inline">·</span>
+                  <span className="text-xs text-white/50 hidden md:inline">
                     {formattedDate}
                   </span>
                 </>
@@ -142,8 +142,8 @@ export function ReportHeader({
             {/* Print button - desktop only */}
             <button
               onClick={handlePrint}
-              className="hidden lg:flex items-center gap-2 px-3 py-2 text-sm text-slate-600 
-                       hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              className="hidden lg:flex items-center gap-2 px-3 py-2 text-sm text-white/60 
+                       hover:text-white hover:bg-white/[0.08] rounded-lg transition-colors border border-transparent hover:border-white/[0.1]"
             >
               <Printer className="w-4 h-4" />
               <span>Print</span>
@@ -152,8 +152,8 @@ export function ReportHeader({
             {/* Share button */}
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 
-                       hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-white/60 
+                       hover:text-white hover:bg-white/[0.08] rounded-lg transition-colors border border-transparent hover:border-white/[0.1]"
             >
               <Share2 className="w-4 h-4" />
               <span className="hidden sm:inline">Share</span>
@@ -163,8 +163,10 @@ export function ReportHeader({
             <button
               onClick={handleDownloadPDF}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium
-                       bg-slate-900 text-white rounded-lg
-                       hover:bg-slate-800 transition-colors"
+                       bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg
+                       hover:from-blue-500 hover:to-indigo-500 transition-all duration-300
+                       shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)]
+                       border border-white/10"
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Download PDF</span>

@@ -1,8 +1,8 @@
 /**
  * =============================================================================
- * Insight Card Component
+ * Insight Card Component - Apple Liquid Glass UI
  * =============================================================================
- * Displays analysis findings with severity-coded styling.
+ * Displays analysis findings with severity-coded glass styling and glows.
  * Used for showing issues, observations, and key insights.
  * =============================================================================
  */
@@ -17,7 +17,6 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import { getPriorityClasses } from '@/lib/scoring';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -44,56 +43,68 @@ interface InsightCardProps {
 }
 
 // -----------------------------------------------------------------------------
-// Severity configurations
+// Severity configurations for Glass UI
 // -----------------------------------------------------------------------------
 const SEVERITY_CONFIG = {
   critical: {
     icon: XCircle,
-    bg: 'bg-red-50',
+    bg: 'bg-red-500/10',
     border: 'border-l-red-500',
-    iconColor: 'text-red-500',
-    titleColor: 'text-red-900',
-    textColor: 'text-red-700',
+    borderGlow: 'shadow-[inset_4px_0_20px_-10px_rgba(239,68,68,0.5)]',
+    iconColor: 'text-red-400',
+    titleColor: 'text-red-300',
+    textColor: 'text-red-200/80',
+    dataBg: 'bg-red-500/10',
   },
   high: {
     icon: AlertCircle,
-    bg: 'bg-orange-50',
+    bg: 'bg-orange-500/10',
     border: 'border-l-orange-500',
-    iconColor: 'text-orange-500',
-    titleColor: 'text-orange-900',
-    textColor: 'text-orange-700',
+    borderGlow: 'shadow-[inset_4px_0_20px_-10px_rgba(249,115,22,0.5)]',
+    iconColor: 'text-orange-400',
+    titleColor: 'text-orange-300',
+    textColor: 'text-orange-200/80',
+    dataBg: 'bg-orange-500/10',
   },
   medium: {
     icon: AlertTriangle,
-    bg: 'bg-yellow-50',
+    bg: 'bg-yellow-500/10',
     border: 'border-l-yellow-500',
-    iconColor: 'text-yellow-500',
-    titleColor: 'text-yellow-900',
-    textColor: 'text-yellow-700',
+    borderGlow: 'shadow-[inset_4px_0_20px_-10px_rgba(234,179,8,0.5)]',
+    iconColor: 'text-yellow-400',
+    titleColor: 'text-yellow-300',
+    textColor: 'text-yellow-200/80',
+    dataBg: 'bg-yellow-500/10',
   },
   low: {
     icon: Info,
-    bg: 'bg-slate-50',
-    border: 'border-l-slate-400',
-    iconColor: 'text-slate-500',
-    titleColor: 'text-slate-900',
-    textColor: 'text-slate-600',
+    bg: 'bg-white/[0.05]',
+    border: 'border-l-white/30',
+    borderGlow: '',
+    iconColor: 'text-white/50',
+    titleColor: 'text-white',
+    textColor: 'text-white/60',
+    dataBg: 'bg-white/[0.05]',
   },
   info: {
     icon: Info,
-    bg: 'bg-blue-50',
+    bg: 'bg-blue-500/10',
     border: 'border-l-blue-500',
-    iconColor: 'text-blue-500',
-    titleColor: 'text-blue-900',
-    textColor: 'text-blue-700',
+    borderGlow: 'shadow-[inset_4px_0_20px_-10px_rgba(59,130,246,0.5)]',
+    iconColor: 'text-blue-400',
+    titleColor: 'text-blue-300',
+    textColor: 'text-blue-200/80',
+    dataBg: 'bg-blue-500/10',
   },
   success: {
     icon: CheckCircle,
-    bg: 'bg-emerald-50',
+    bg: 'bg-emerald-500/10',
     border: 'border-l-emerald-500',
-    iconColor: 'text-emerald-500',
-    titleColor: 'text-emerald-900',
-    textColor: 'text-emerald-700',
+    borderGlow: 'shadow-[inset_4px_0_20px_-10px_rgba(52,211,153,0.5)]',
+    iconColor: 'text-emerald-400',
+    titleColor: 'text-emerald-300',
+    textColor: 'text-emerald-200/80',
+    dataBg: 'bg-emerald-500/10',
   },
 };
 
@@ -116,8 +127,9 @@ export function InsightCard({
   const content = (
     <div
       className={`
-        rounded-lg border-l-4 p-4
-        ${config.bg} ${config.border}
+        rounded-xl border-l-4 p-4 backdrop-blur-xl
+        border border-white/[0.08]
+        ${config.bg} ${config.border} ${config.borderGlow}
         ${className}
       `}
     >
@@ -134,9 +146,9 @@ export function InsightCard({
               {Object.entries(data).map(([key, value]) => (
                 <div
                   key={key}
-                  className="text-xs bg-white/50 rounded px-2 py-1"
+                  className={`text-xs ${config.dataBg} rounded px-2 py-1 border border-white/[0.08]`}
                 >
-                  <span className="text-slate-500">{key}:</span>{' '}
+                  <span className="text-white/50">{key}:</span>{' '}
                   <span className={`font-medium ${config.titleColor}`}>
                     {value}
                   </span>
@@ -212,4 +224,3 @@ export function InsightCardList({
 }
 
 export default InsightCard;
-

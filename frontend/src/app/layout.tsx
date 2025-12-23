@@ -1,11 +1,12 @@
 // =============================================================================
-// Root Layout Component
+// Root Layout Component - Apple Liquid Glass UI
 // =============================================================================
-// Main layout wrapper for all pages with fonts, metadata, and providers.
+// Main layout wrapper with ambient background, glass effects, and typography.
 // =============================================================================
 
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 import { Providers } from './providers'
 
@@ -14,6 +15,15 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+})
+
+// Load Cabinet Grotesk for display text (using Inter as fallback for now)
+// In production, you'd load Cabinet Grotesk locally or from a font service
+const cabinet = Inter({
+  subsets: ['latin'],
+  variable: '--font-cabinet',
+  display: 'swap',
+  weight: ['700', '800'],
 })
 
 // SEO metadata for the application
@@ -29,19 +39,44 @@ export const metadata: Metadata = {
   },
 }
 
+// Viewport configuration for mobile optimization
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0f0f23',
+}
+
+// Ambient Background Component - Creates floating gradient orbs
+function AmbientBackground() {
+  return (
+    <div className="ambient-background" aria-hidden="true">
+      <div className="ambient-orb ambient-orb-1" />
+      <div className="ambient-orb ambient-orb-2" />
+      <div className="ambient-orb ambient-orb-3" />
+      <div className="ambient-orb ambient-orb-4" />
+    </div>
+  )
+}
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <html lang="en" className={`${inter.variable} ${cabinet.variable}`}>
+      <body className="min-h-screen bg-[rgb(15,15,35)] text-white antialiased overflow-x-hidden">
+        {/* Ambient gradient background with floating orbs */}
+        <AmbientBackground />
+        
+        {/* Main content */}
         <Providers>
-          {children}
+          <div className="relative z-10">
+            {children}
+          </div>
         </Providers>
       </body>
     </html>
   )
 }
-

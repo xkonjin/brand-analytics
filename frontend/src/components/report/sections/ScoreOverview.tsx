@@ -1,33 +1,18 @@
 /**
  * =============================================================================
- * EXPLAINER: Score Overview Section
+ * Score Overview Section - Apple Liquid Glass UI
  * =============================================================================
- *
- * WHAT IS THIS?
- * The "Hero" section of the report results. It shows the high-level scores.
- *
- * VISUALIZATION LOGIC:
- * 1. **Radar Chart**: Used to show balance/skew. A perfect brand is a full circle.
- *    - Spikes indicate strengths.
- *    - Dips indicate weaknesses.
- * 2. **Benchmark Line**: Dotted line on the radar chart.
- *    - Shows "Industry Average". If you're inside the line, you're losing.
- * 3. **Bar Charts**: Break down the individual module scores for clarity.
- *
- * DATA FLOW:
- * - Takes `scores` (Record<string, number>) as input.
- * - Maps them to `MODULE_BENCHMARKS` to get labels and ordering.
- * - Computes aggregate stats (Average, Highest, Lowest).
+ * The "Hero" section showing high-level scores with glassmorphism.
+ * Features radar chart and module score bars with glow effects.
  * =============================================================================
  */
 
 'use client';
 
 import { motion } from 'framer-motion';
-import { Info, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { BrandRadarChart } from '../charts/BrandRadarChart';
 import { MetricBar } from '../charts/MetricBar';
-import { getScoreClasses, getGradeInfo } from '@/lib/scoring';
 import { MODULE_BENCHMARKS, compareToBenchmark } from '@/lib/benchmarks';
 
 // -----------------------------------------------------------------------------
@@ -74,7 +59,7 @@ export function ScoreOverview({
   ).length;
 
   return (
-    <section className={`py-12 border-t border-slate-100 ${className}`}>
+    <section className={`py-12 border-t border-white/[0.08] ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -83,10 +68,10 @@ export function ScoreOverview({
           viewport={{ once: true }}
           className="mb-8"
         >
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          <h2 className="text-2xl font-bold text-white mb-2">
             Performance Overview
           </h2>
-          <p className="text-slate-600">
+          <p className="text-white/60">
             How your brand performs across 8 key dimensions compared to industry benchmarks.
           </p>
         </motion.div>
@@ -99,14 +84,14 @@ export function ScoreOverview({
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="bg-white rounded-xl border border-slate-200 p-6"
+            className="bg-white/[0.05] backdrop-blur-xl rounded-2xl border border-white/[0.1] p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-900">Score Radar</h3>
+              <h3 className="font-semibold text-white">Score Radar</h3>
               {showBenchmarks && (
-                <div className="flex items-center gap-4 text-xs text-slate-500">
+                <div className="flex items-center gap-4 text-xs text-white/40">
                   <span className="flex items-center gap-1">
-                    <span className="w-3 h-0.5 bg-slate-400 rounded" style={{ borderStyle: 'dashed' }} />
+                    <span className="w-4 h-0.5 bg-white/30 rounded" style={{ borderStyle: 'dashed' }} />
                     Industry Benchmark
                   </span>
                 </div>
@@ -129,29 +114,27 @@ export function ScoreOverview({
           >
             {/* KPI Cards */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg border border-slate-200 p-4">
-                <div className="text-2xl font-bold text-slate-900">
+              <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.1] p-4">
+                <div className="text-2xl font-bold text-white">
                   {avgScore.toFixed(0)}
                 </div>
-                <div className="text-sm text-slate-500">Average Score</div>
+                <div className="text-sm text-white/50">Average Score</div>
               </div>
-              <div className="bg-white rounded-lg border border-slate-200 p-4">
-                <div className="text-2xl font-bold text-emerald-600">
+              <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.1] p-4">
+                <div className="text-2xl font-bold text-emerald-400">
                   {aboveBenchmark}/{moduleScores.length}
                 </div>
-                <div className="text-sm text-slate-500">Above Benchmark</div>
+                <div className="text-sm text-white/50">Above Benchmark</div>
               </div>
             </div>
 
             {/* Score Bars List */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900 mb-5">
+            <div className="bg-white/[0.05] backdrop-blur-xl rounded-2xl border border-white/[0.1] p-6">
+              <h3 className="font-semibold text-white mb-5">
                 Module Scores
               </h3>
               <div className="space-y-4">
                 {moduleScores.map((module, index) => {
-                  const comparison = compareToBenchmark(module.score, module.key);
-                  
                   return (
                     <motion.div
                       key={module.key}
@@ -184,8 +167,9 @@ export function ScoreOverview({
           className="mt-8 grid md:grid-cols-2 gap-6"
         >
           {/* Top strengths (Top 3 scores) */}
-          <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-5">
-            <h4 className="font-semibold text-emerald-800 mb-3 flex items-center gap-2">
+          <div className="bg-emerald-500/10 backdrop-blur-xl rounded-2xl border border-emerald-500/20 p-5
+                        shadow-[0_0_30px_rgba(52,211,153,0.1)]">
+            <h4 className="font-semibold text-emerald-400 mb-3 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Top Strengths
             </h4>
@@ -195,8 +179,8 @@ export function ScoreOverview({
                   key={module.key}
                   className="flex items-center justify-between text-sm"
                 >
-                  <span className="text-emerald-700">{module.label}</span>
-                  <span className="font-semibold text-emerald-800">
+                  <span className="text-emerald-300/80">{module.label}</span>
+                  <span className="font-semibold text-emerald-400">
                     {module.score.toFixed(0)}
                   </span>
                 </li>
@@ -205,8 +189,9 @@ export function ScoreOverview({
           </div>
 
           {/* Areas for improvement (Bottom 3 scores) */}
-          <div className="bg-orange-50 rounded-xl border border-orange-100 p-5">
-            <h4 className="font-semibold text-orange-800 mb-3 flex items-center gap-2">
+          <div className="bg-orange-500/10 backdrop-blur-xl rounded-2xl border border-orange-500/20 p-5
+                        shadow-[0_0_30px_rgba(251,146,60,0.1)]">
+            <h4 className="font-semibold text-orange-400 mb-3 flex items-center gap-2">
               <TrendingDown className="w-4 h-4" />
               Areas for Improvement
             </h4>
@@ -216,8 +201,8 @@ export function ScoreOverview({
                   key={module.key}
                   className="flex items-center justify-between text-sm"
                 >
-                  <span className="text-orange-700">{module.label}</span>
-                  <span className="font-semibold text-orange-800">
+                  <span className="text-orange-300/80">{module.label}</span>
+                  <span className="font-semibold text-orange-400">
                     {module.score.toFixed(0)}
                   </span>
                 </li>

@@ -1,9 +1,9 @@
 /**
  * =============================================================================
- * Recommendation Card Component
+ * Recommendation Card Component - Apple Liquid Glass UI
  * =============================================================================
- * Displays actionable recommendations with priority, impact, and effort.
- * Highlights quick wins (high impact + low effort) prominently.
+ * Displays actionable recommendations with glassmorphism styling.
+ * Highlights quick wins with special glow effects.
  * =============================================================================
  */
 
@@ -12,13 +12,10 @@
 import { motion } from 'framer-motion';
 import {
   Zap,
-  ArrowRight,
   Target,
   Clock,
-  Lightbulb,
 } from 'lucide-react';
 import { isQuickWin, getPriorityScore } from '@/lib/frameworks';
-import { getPriorityClasses, getImpactClasses, getEffortClasses } from '@/lib/scoring';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -46,6 +43,64 @@ interface RecommendationCardProps extends Recommendation {
 }
 
 // -----------------------------------------------------------------------------
+// Glass UI Priority Classes
+// -----------------------------------------------------------------------------
+const getPriorityClasses = (priority: string) => {
+  switch (priority) {
+    case 'critical':
+      return {
+        bg: 'bg-red-500/20',
+        text: 'text-red-300',
+        dot: 'bg-red-400',
+        glow: 'shadow-[0_0_10px_rgba(239,68,68,0.3)]',
+      };
+    case 'high':
+      return {
+        bg: 'bg-orange-500/20',
+        text: 'text-orange-300',
+        dot: 'bg-orange-400',
+        glow: 'shadow-[0_0_10px_rgba(249,115,22,0.3)]',
+      };
+    case 'medium':
+      return {
+        bg: 'bg-yellow-500/20',
+        text: 'text-yellow-300',
+        dot: 'bg-yellow-400',
+        glow: '',
+      };
+    default:
+      return {
+        bg: 'bg-white/10',
+        text: 'text-white/70',
+        dot: 'bg-white/50',
+        glow: '',
+      };
+  }
+};
+
+const getImpactClasses = (impact: string) => {
+  switch (impact) {
+    case 'high':
+      return 'bg-emerald-500/20 text-emerald-300';
+    case 'medium':
+      return 'bg-blue-500/20 text-blue-300';
+    default:
+      return 'bg-white/10 text-white/60';
+  }
+};
+
+const getEffortClasses = (effort: string) => {
+  switch (effort) {
+    case 'low':
+      return 'bg-emerald-500/20 text-emerald-300';
+    case 'medium':
+      return 'bg-yellow-500/20 text-yellow-300';
+    default:
+      return 'bg-orange-500/20 text-orange-300';
+  }
+};
+
+// -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 export function RecommendationCard({
@@ -67,18 +122,22 @@ export function RecommendationCard({
   const content = (
     <div
       className={`
-        relative rounded-xl border p-5 transition-all duration-200
+        relative rounded-2xl border p-5 transition-all duration-300
+        backdrop-blur-xl
         ${quickWin 
-          ? 'bg-gradient-to-br from-emerald-50 to-white border-emerald-200 ring-1 ring-emerald-100' 
-          : 'bg-white border-slate-200 hover:border-slate-300'
+          ? 'bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 border-emerald-500/30 shadow-[0_0_30px_rgba(52,211,153,0.15)]' 
+          : 'bg-white/[0.08] border-white/[0.12] hover:bg-white/[0.12] hover:border-white/[0.18]'
         }
         ${className}
       `}
     >
       {/* Quick Win Badge */}
       {quickWin && (
-        <div className="absolute -top-2.5 right-4 flex items-center gap-1 bg-emerald-500 text-white text-xs font-medium px-2.5 py-0.5 rounded-full shadow-sm">
-          <Zap className="w-3 h-3" />
+        <div className="absolute -top-3 right-4 flex items-center gap-1.5 
+                      bg-gradient-to-r from-emerald-500 to-emerald-400 
+                      text-white text-xs font-semibold px-3 py-1 rounded-full 
+                      shadow-[0_0_20px_rgba(52,211,153,0.5)]">
+          <Zap className="w-3.5 h-3.5" />
           Quick Win
         </div>
       )}
@@ -88,8 +147,11 @@ export function RecommendationCard({
         {/* Index number */}
         {index !== undefined && (
           <span className={`
-            flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold
-            ${quickWin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}
+            flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+            ${quickWin 
+              ? 'bg-emerald-500/20 text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.3)]' 
+              : 'bg-white/[0.1] text-white/70'
+            }
           `}>
             {index}
           </span>
@@ -97,34 +159,34 @@ export function RecommendationCard({
 
         <div className="flex-1 min-w-0">
           {/* Title */}
-          <h4 className="font-semibold text-slate-900 pr-16">{title}</h4>
+          <h4 className="font-semibold text-white pr-16">{title}</h4>
 
           {/* Description */}
-          <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+          <p className="mt-2 text-sm text-white/60 leading-relaxed">
             {description}
           </p>
 
           {/* Tags */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {/* Category */}
-            <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
+            <span className="inline-flex items-center gap-1 text-xs text-white/50 bg-white/[0.08] px-2.5 py-1 rounded-lg border border-white/[0.08]">
               {category}
             </span>
 
             {/* Priority */}
-            <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${priorityClasses.bg} ${priorityClasses.text}`}>
+            <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg ${priorityClasses.bg} ${priorityClasses.text} ${priorityClasses.glow}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${priorityClasses.dot}`} />
               {priority}
             </span>
 
             {/* Impact */}
-            <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${getImpactClasses(impact)}`}>
+            <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg ${getImpactClasses(impact)}`}>
               <Target className="w-3 h-3" />
               {impact} impact
             </span>
 
             {/* Effort */}
-            <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${getEffortClasses(effort)}`}>
+            <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg ${getEffortClasses(effort)}`}>
               <Clock className="w-3 h-3" />
               {effort} effort
             </span>
@@ -203,4 +265,3 @@ export function RecommendationList({
 }
 
 export default RecommendationCard;
-

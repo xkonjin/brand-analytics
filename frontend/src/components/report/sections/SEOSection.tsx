@@ -1,15 +1,15 @@
 /**
  * =============================================================================
- * SEO Section Component
+ * SEO Section Component - Apple Liquid Glass UI
  * =============================================================================
- * Displays SEO performance analysis including Core Web Vitals,
- * meta tags, technical SEO, and search visibility.
+ * Displays SEO performance analysis with glassmorphism styling.
+ * Includes Core Web Vitals and technical SEO checklist.
  * =============================================================================
  */
 
 'use client';
 
-import { Search, Globe, Zap, FileCode, Link } from 'lucide-react';
+import { Search, CheckCircle, XCircle } from 'lucide-react';
 import { ModuleSection } from './ModuleSection';
 
 // -----------------------------------------------------------------------------
@@ -154,20 +154,21 @@ export function SEOSection({ data, className = '' }: SEOSectionProps) {
       {/* Core Web Vitals grid */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
             Core Web Vitals
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {webVitals.map((vital) => (
               <div
                 key={vital.label}
-                className="bg-white rounded-lg border border-slate-200 p-4"
+                className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4
+                         hover:bg-white/[0.08] transition-all"
               >
-                <div className="text-xs text-slate-500 mb-1">{vital.label}</div>
-                <div className="text-xl font-bold text-slate-900">
+                <div className="text-xs text-white/40 mb-1">{vital.label}</div>
+                <div className="text-xl font-bold text-white">
                   {vital.value}
                 </div>
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-white/30 mt-1">
                   {vital.subtitle}
                 </div>
               </div>
@@ -177,23 +178,19 @@ export function SEOSection({ data, className = '' }: SEOSectionProps) {
 
         {/* Technical SEO Checklist */}
         <div>
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
             Technical SEO Checklist
           </h3>
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {technicalChecks.map((check) => (
                 <div key={check.label} className="flex items-center gap-2">
-                  <span
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                      check.passed
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {check.passed ? '✓' : '×'}
-                  </span>
-                  <span className="text-sm text-slate-700">{check.label}</span>
+                  {check.passed ? (
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  )}
+                  <span className="text-sm text-white/70">{check.label}</span>
                 </div>
               ))}
             </div>
@@ -205,4 +202,3 @@ export function SEOSection({ data, className = '' }: SEOSectionProps) {
 }
 
 export default SEOSection;
-
