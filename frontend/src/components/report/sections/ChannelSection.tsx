@@ -1,9 +1,9 @@
 /**
  * =============================================================================
- * Channel Fit Section Component
+ * Channel Fit Section Component - Apple Liquid Glass UI
  * =============================================================================
  * Displays marketing channel analysis including channel suitability,
- * audience alignment, and go-to-market recommendations.
+ * audience alignment, and go-to-market recommendations with glassmorphism.
  * =============================================================================
  */
 
@@ -47,6 +47,15 @@ interface ChannelData {
 interface ChannelSectionProps {
   data: ChannelData;
   className?: string;
+}
+
+// -----------------------------------------------------------------------------
+// Helper - Get score color
+// -----------------------------------------------------------------------------
+function getScoreColor(score: number) {
+  if (score >= 70) return { bg: 'bg-emerald-500', text: 'text-emerald-400' };
+  if (score >= 50) return { bg: 'bg-yellow-500', text: 'text-yellow-400' };
+  return { bg: 'bg-red-500', text: 'text-red-400' };
 }
 
 // -----------------------------------------------------------------------------
@@ -111,14 +120,16 @@ export function ChannelSection({ data, className = '' }: ChannelSectionProps) {
         {/* Recommended Channels */}
         {data.recommended_channels && data.recommended_channels.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
               Recommended Channels
             </h3>
             <div className="flex flex-wrap gap-2">
               {data.recommended_channels.map((channel) => (
                 <span
                   key={channel}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium border border-emerald-100"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 
+                           bg-emerald-500/10 text-emerald-400 rounded-lg text-sm font-medium 
+                           border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
                 >
                   <TrendingUp className="w-4 h-4" />
                   {channel}
@@ -131,49 +142,39 @@ export function ChannelSection({ data, className = '' }: ChannelSectionProps) {
         {/* Channel Scores */}
         {data.channel_scores && data.channel_scores.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
               Channel Suitability
             </h3>
             <div className="space-y-3">
-              {data.channel_scores.slice(0, 5).map((cs) => (
-                <div
-                  key={cs.channel}
-                  className="bg-white rounded-lg border border-slate-200 p-4"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-slate-900">
-                      {cs.channel}
-                    </span>
-                    <span
-                      className={`font-semibold ${
-                        cs.score >= 70
-                          ? 'text-emerald-600'
-                          : cs.score >= 50
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
-                      }`}
-                    >
-                      {cs.score}/100
-                    </span>
+              {data.channel_scores.slice(0, 5).map((cs) => {
+                const scoreColor = getScoreColor(cs.score);
+                return (
+                  <div
+                    key={cs.channel}
+                    className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4
+                             hover:bg-white/[0.08] transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-white">
+                        {cs.channel}
+                      </span>
+                      <span className={`font-semibold ${scoreColor.text}`}>
+                        {cs.score}/100
+                      </span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full h-2 bg-white/[0.08] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${scoreColor.bg} transition-all duration-500`}
+                        style={{ width: `${cs.score}%` }}
+                      />
+                    </div>
+                    {cs.reasoning && (
+                      <p className="text-sm text-white/50 mt-2">{cs.reasoning}</p>
+                    )}
                   </div>
-                  {/* Progress bar */}
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        cs.score >= 70
-                          ? 'bg-emerald-500'
-                          : cs.score >= 50
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
-                      }`}
-                      style={{ width: `${cs.score}%` }}
-                    />
-                  </div>
-                  {cs.reasoning && (
-                    <p className="text-sm text-slate-500 mt-2">{cs.reasoning}</p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -183,4 +184,3 @@ export function ChannelSection({ data, className = '' }: ChannelSectionProps) {
 }
 
 export default ChannelSection;
-

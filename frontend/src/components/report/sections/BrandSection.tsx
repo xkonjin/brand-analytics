@@ -1,15 +1,15 @@
 /**
  * =============================================================================
- * Brand Messaging Section Component
+ * Brand Messaging Section Component - Apple Liquid Glass UI
  * =============================================================================
  * Displays brand archetype analysis, value proposition, tone,
- * and messaging clarity assessment.
+ * and messaging clarity assessment with glassmorphism styling.
  * =============================================================================
  */
 
 'use client';
 
-import { MessageSquare, Sparkles } from 'lucide-react';
+import { MessageSquare, Sparkles, Quote } from 'lucide-react';
 import { ModuleSection } from './ModuleSection';
 import { ArchetypeCard } from '../cards/ArchetypeCard';
 
@@ -132,7 +132,7 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
       <div className="space-y-6">
         {archetype && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
               Brand Archetype
             </h3>
             <ArchetypeCard
@@ -147,31 +147,42 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
 
         {data.value_proposition && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
               Value Proposition
             </h3>
-            <div className="bg-white rounded-lg border border-slate-200 p-5">
-              <p className="text-slate-700 italic">"{data.value_proposition}"</p>
+            <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-5
+                          relative overflow-hidden">
+              <Quote className="absolute top-3 left-3 w-8 h-8 text-white/[0.05]" />
+              <p className="text-white/80 italic pl-6 leading-relaxed">
+                "{data.value_proposition}"
+              </p>
             </div>
           </div>
         )}
 
         {toneKeywords.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
               Brand Tone
             </h3>
             <div className="flex flex-wrap gap-2">
               {toneKeywords.map((keyword) => (
                 <span
                   key={keyword}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 
+                           bg-purple-500/10 text-purple-300 rounded-full text-sm
+                           border border-purple-500/20 hover:bg-purple-500/20 transition-all"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-slate-400" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   {keyword}
                 </span>
               ))}
             </div>
+            {data.tone_description && (
+              <p className="text-sm text-white/50 mt-3 leading-relaxed">
+                {data.tone_description}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -180,4 +191,3 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
 }
 
 export default BrandSection;
-

@@ -1,9 +1,9 @@
 /**
  * =============================================================================
- * Archetype Card Component
+ * Archetype Card Component - Apple Liquid Glass UI
  * =============================================================================
  * Displays brand archetype analysis with visual icon, description,
- * confidence score, and example brands for comparison.
+ * confidence score, and example brands with glassmorphism styling.
  * =============================================================================
  */
 
@@ -33,6 +33,18 @@ interface ArchetypeCardProps {
 }
 
 // -----------------------------------------------------------------------------
+// Helper - Get glass-compatible color values
+// -----------------------------------------------------------------------------
+function getGlassColor(hexColor: string) {
+  // Convert hex to RGB for glass styling
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return { r, g, b, rgb: `${r}, ${g}, ${b}` };
+}
+
+// -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 export function ArchetypeCard({
@@ -59,25 +71,26 @@ export function ArchetypeCard({
     color: '#6366f1',
   };
 
+  const glassColor = getGlassColor(displayPrimary.color);
+
   const content = (
     <div
-      className={`bg-white rounded-xl border border-slate-200 overflow-hidden ${className}`}
+      className={`bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] overflow-hidden ${className}`}
     >
       {/* Header with gradient based on archetype color */}
       <div
-        className="px-6 py-5"
+        className="px-6 py-5 border-b border-white/[0.08]"
         style={{
-          background: `linear-gradient(135deg, ${displayPrimary.color}10 0%, ${displayPrimary.color}05 100%)`,
-          borderBottom: `1px solid ${displayPrimary.color}20`,
+          background: `linear-gradient(135deg, rgba(${glassColor.rgb}, 0.15) 0%, rgba(${glassColor.rgb}, 0.05) 100%)`,
         }}
       >
         <div className="flex items-center gap-4">
           {/* Archetype icon */}
           <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
+            className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl backdrop-blur-xl"
             style={{
-              backgroundColor: `${displayPrimary.color}15`,
-              color: displayPrimary.color,
+              backgroundColor: `rgba(${glassColor.rgb}, 0.2)`,
+              boxShadow: `0 0 30px rgba(${glassColor.rgb}, 0.3)`,
             }}
           >
             {displayPrimary.icon}
@@ -86,20 +99,20 @@ export function ArchetypeCard({
           {/* Archetype names */}
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold text-slate-900">
+              <h3 className="text-xl font-bold text-white">
                 {displayPrimary.name}
               </h3>
               {secondaryArchetype && (
                 <>
-                  <span className="text-slate-400">+</span>
-                  <span className="text-lg font-medium text-slate-600">
+                  <span className="text-white/30">+</span>
+                  <span className="text-lg font-medium text-white/60">
                     {secondaryArchetype.name}
                   </span>
                 </>
               )}
             </div>
             {displayPrimary.tagline && (
-              <p className="text-sm text-slate-500 italic mt-0.5">
+              <p className="text-sm text-white/50 italic mt-0.5">
                 "{displayPrimary.tagline}"
               </p>
             )}
@@ -107,10 +120,10 @@ export function ArchetypeCard({
 
           {/* Confidence score */}
           <div className="ml-auto text-right">
-            <div className="text-2xl font-bold text-slate-900">
+            <div className="text-2xl font-bold text-white">
               {Math.round(confidence * 100)}%
             </div>
-            <div className="text-xs text-slate-500">confidence</div>
+            <div className="text-xs text-white/40">confidence</div>
           </div>
         </div>
       </div>
@@ -120,10 +133,10 @@ export function ArchetypeCard({
         {/* Description */}
         {description && (
           <div>
-            <h4 className="text-sm font-medium text-slate-500 mb-2">
+            <h4 className="text-sm font-medium text-white/40 mb-2">
               Analysis
             </h4>
-            <p className="text-sm text-slate-700 leading-relaxed">
+            <p className="text-sm text-white/70 leading-relaxed">
               {description}
             </p>
           </div>
@@ -132,16 +145,17 @@ export function ArchetypeCard({
         {/* Archetype traits */}
         {displayPrimary.traits && displayPrimary.traits.length > 0 && (
           <div>
-            <h4 className="text-sm font-medium text-slate-500 mb-2">
+            <h4 className="text-sm font-medium text-white/40 mb-2">
               Key Traits
             </h4>
             <div className="flex flex-wrap gap-2">
               {displayPrimary.traits.map((trait) => (
                 <span
                   key={trait}
-                  className="px-2.5 py-1 text-sm rounded-full"
+                  className="px-2.5 py-1 text-sm rounded-full border transition-all hover:scale-105"
                   style={{
-                    backgroundColor: `${displayPrimary.color}10`,
+                    backgroundColor: `rgba(${glassColor.rgb}, 0.1)`,
+                    borderColor: `rgba(${glassColor.rgb}, 0.2)`,
                     color: displayPrimary.color,
                   }}
                 >
@@ -155,7 +169,7 @@ export function ArchetypeCard({
         {/* Example brands */}
         {(exampleBrands.length > 0 || displayPrimary.exampleBrands.length > 0) && (
           <div>
-            <h4 className="text-sm font-medium text-slate-500 mb-2">
+            <h4 className="text-sm font-medium text-white/40 mb-2">
               Similar Brands
             </h4>
             <div className="flex flex-wrap gap-2">
@@ -165,7 +179,8 @@ export function ArchetypeCard({
               ).map((brand) => (
                 <span
                   key={brand}
-                  className="px-3 py-1.5 text-sm bg-slate-100 text-slate-700 rounded-lg"
+                  className="px-3 py-1.5 text-sm bg-white/[0.05] text-white/70 rounded-lg 
+                           border border-white/[0.08] hover:bg-white/[0.08] transition-all"
                 >
                   {brand}
                 </span>
@@ -207,6 +222,7 @@ export function ArchetypeBadge({
   className = '',
 }: ArchetypeBadgeProps) {
   const info = getArchetypeByName(archetype);
+  const glassColor = info ? getGlassColor(info.color) : null;
   
   const sizeStyles = {
     sm: 'px-2 py-0.5 text-xs gap-1',
@@ -215,10 +231,12 @@ export function ArchetypeBadge({
 
   return (
     <span
-      className={`inline-flex items-center rounded-full font-medium ${sizeStyles[size]} ${className}`}
+      className={`inline-flex items-center rounded-full font-medium backdrop-blur-xl 
+                border transition-all ${sizeStyles[size]} ${className}`}
       style={{
-        backgroundColor: info ? `${info.color}15` : '#f1f5f9',
-        color: info?.color || '#64748b',
+        backgroundColor: glassColor ? `rgba(${glassColor.rgb}, 0.15)` : 'rgba(255,255,255,0.05)',
+        borderColor: glassColor ? `rgba(${glassColor.rgb}, 0.2)` : 'rgba(255,255,255,0.08)',
+        color: info?.color || 'rgba(255,255,255,0.7)',
       }}
     >
       <span>{info?.icon || '✨'}</span>
@@ -228,4 +246,3 @@ export function ArchetypeBadge({
 }
 
 export default ArchetypeCard;
-

@@ -1,9 +1,9 @@
 /**
  * =============================================================================
- * AI Discoverability Section Component
+ * AI Discoverability Section Component - Apple Liquid Glass UI
  * =============================================================================
  * Displays AI readiness analysis including structured data,
- * Wikipedia presence, and visibility in AI assistants.
+ * Wikipedia presence, and visibility in AI assistants with glassmorphism.
  * =============================================================================
  */
 
@@ -112,7 +112,7 @@ export function AISection({ data, className = '' }: AISectionProps) {
       <div className="space-y-6">
         {/* AI Readiness Indicators */}
         <div>
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
             AI Readiness Indicators
           </h3>
           <div className="grid grid-cols-3 gap-4">
@@ -121,21 +121,21 @@ export function AISection({ data, className = '' }: AISectionProps) {
               return (
                 <div
                   key={check.label}
-                  className={`p-4 rounded-lg border ${
+                  className={`p-4 rounded-xl backdrop-blur-xl border transition-all ${
                     check.passed
-                      ? 'bg-emerald-50 border-emerald-200'
-                      : 'bg-slate-50 border-slate-200'
+                      ? 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/15'
+                      : 'bg-white/[0.05] border-white/[0.08] hover:bg-white/[0.08]'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <Icon className={`w-5 h-5 ${check.passed ? 'text-emerald-600' : 'text-slate-400'}`} />
+                    <Icon className={`w-5 h-5 ${check.passed ? 'text-emerald-400' : 'text-white/40'}`} />
                     {check.passed ? (
-                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <CheckCircle className="w-4 h-4 text-emerald-400" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-slate-400" />
+                      <XCircle className="w-4 h-4 text-white/30" />
                     )}
                   </div>
-                  <span className={`text-sm font-medium ${check.passed ? 'text-emerald-700' : 'text-slate-600'}`}>
+                  <span className={`text-sm font-medium ${check.passed ? 'text-emerald-400' : 'text-white/60'}`}>
                     {check.label}
                   </span>
                 </div>
@@ -147,14 +147,16 @@ export function AISection({ data, className = '' }: AISectionProps) {
         {/* Schema Types Found */}
         {data.schema_types_found && data.schema_types_found.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
               Schema.org Types Found
             </h3>
             <div className="flex flex-wrap gap-2">
               {data.schema_types_found.map((type) => (
                 <span
                   key={type}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-mono border border-blue-100"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 
+                           bg-blue-500/10 text-blue-400 rounded-lg text-sm font-mono 
+                           border border-blue-500/20 hover:bg-blue-500/20 transition-all"
                 >
                   <Database className="w-3.5 h-3.5" />
                   {type}
@@ -167,13 +169,14 @@ export function AISection({ data, className = '' }: AISectionProps) {
         {/* Wikipedia Summary */}
         {data.wikipedia_present && data.wikipedia_summary && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
               Wikipedia Summary
             </h3>
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4
+                          hover:bg-white/[0.08] transition-all">
               <div className="flex items-start gap-3">
-                <BookOpen className="w-5 h-5 text-slate-400 mt-0.5" />
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <BookOpen className="w-5 h-5 text-white/40 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-white/60 leading-relaxed">
                   {data.wikipedia_summary}
                 </p>
               </div>
@@ -186,4 +189,3 @@ export function AISection({ data, className = '' }: AISectionProps) {
 }
 
 export default AISection;
-
