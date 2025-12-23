@@ -113,7 +113,7 @@ export function ArchetypeCard({
             </div>
             {displayPrimary.tagline && (
               <p className="text-sm text-white/50 italic mt-0.5">
-                "{displayPrimary.tagline}"
+                &quot;{displayPrimary.tagline}&quot;
               </p>
             )}
           </div>

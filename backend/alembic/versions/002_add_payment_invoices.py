@@ -44,7 +44,9 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime, nullable=False, default=sa.func.now()),
     )
 
-    op.create_index("ix_payment_invoices_nonce", "payment_invoices", ["nonce"], unique=True)
+    op.create_index(
+        "ix_payment_invoices_nonce", "payment_invoices", ["nonce"], unique=True
+    )
     op.create_index("ix_payment_invoices_tx_hash", "payment_invoices", ["tx_hash"])
 
 
@@ -53,4 +55,3 @@ def downgrade() -> None:
     op.drop_index("ix_payment_invoices_nonce", table_name="payment_invoices")
     op.drop_table("payment_invoices")
     op.execute("DROP TYPE IF EXISTS paymentstatusenum")
-

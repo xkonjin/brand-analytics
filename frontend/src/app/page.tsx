@@ -50,7 +50,7 @@ export default function HomePage() {
     network: string
     merchant_address: string
   } | null>(null)
-  const { createInvoice } = usePayment()
+  usePayment()
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,15 +109,6 @@ export default function HomePage() {
     setShowPayment(open)
   }
 
-  const handleWalletConnected = async (address: string) => {
-    try {
-      const invoice = await createInvoice(address)
-      setInvoiceData(invoice)
-    } catch (e) {
-      setError("Failed to generate invoice")
-    }
-  }
-
   const handlePaymentSuccess = (invoiceId: string) => {
     setShowPayment(false)
     setIsLoading(true)
@@ -139,7 +130,6 @@ export default function HomePage() {
         open={showPayment} 
         onOpenChange={handlePaymentModalOpen}
         invoiceData={invoiceData}
-        onWalletConnected={handleWalletConnected}
         onSuccess={handlePaymentSuccess}
       />
       

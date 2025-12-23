@@ -132,7 +132,9 @@ async def test_apify():
         print("  📸 Testing Instagram scrape (@openai)...")
         insta_result = await service.scrape_instagram_profile("openai")
         if insta_result.success:
-            print(f"     ✅ Instagram: Found {insta_result.username}, {insta_result.followers_count:,} followers")
+            print(
+                f"     ✅ Instagram: Found {insta_result.username}, {insta_result.followers_count:,} followers"
+            )
         else:
             print(f"     ❌ Instagram failed: {insta_result.error}")
 
@@ -140,10 +142,12 @@ async def test_apify():
         print("  📹 Testing YouTube scrape (@openai)...")
         yt_result = await service.scrape_youtube_channel("@openai")
         if yt_result.success:
-            print(f"     ✅ YouTube: Found {yt_result.channel_name}, {yt_result.subscribers_count:,} subscribers")
+            print(
+                f"     ✅ YouTube: Found {yt_result.channel_name}, {yt_result.subscribers_count:,} subscribers"
+            )
         else:
             print(f"     ❌ YouTube failed: {yt_result.error}")
-            
+
         return insta_result.success or yt_result.success
 
     except Exception as e:
@@ -156,12 +160,12 @@ async def test_firecrawl():
     print("\n🔥 Testing Firecrawl Service...")
     try:
         from app.services.firecrawl_service import FirecrawlService
-        
+
         service = FirecrawlService()
         if not service.is_configured:
             print("  ⚠️ Firecrawl API not configured - skipping")
             return True
-            
+
         result = await service.scrape_url("https://example.com")
         if result:
             print("  ✅ Firecrawl working!")
@@ -170,7 +174,7 @@ async def test_firecrawl():
         else:
             print("  ❌ Firecrawl failed to scrape")
             return False
-            
+
     except Exception as e:
         print(f"  ❌ Firecrawl Error: {e}")
         return False
@@ -181,12 +185,12 @@ async def test_perplexity():
     print("\n🧠 Testing Perplexity Service...")
     try:
         from app.services.perplexity_service import PerplexityService
-        
+
         service = PerplexityService()
         if not service.is_configured():
             print("  ⚠️ Perplexity API not configured - skipping")
             return True
-            
+
         result = await service.research_brand("openai.com", "OpenAI")
         if result.success:
             print("  ✅ Perplexity working!")
@@ -196,7 +200,7 @@ async def test_perplexity():
         else:
             print(f"  ❌ Perplexity failed: {result.error}")
             return False
-            
+
     except Exception as e:
         print(f"  ❌ Perplexity Error: {e}")
         return False
@@ -223,7 +227,9 @@ async def test_openai():
                 "We empower developers to build the future of AI.",
                 "OpenAI",
             )
-            print(f"     Archetype: {result.primary_archetype} (confidence: {result.confidence:.0%})")
+            print(
+                f"     Archetype: {result.primary_archetype} (confidence: {result.confidence:.0%})"
+            )
             return True
         else:
             print("  ⚠️ No OPENAI_API_KEY - skipping archetype API test")

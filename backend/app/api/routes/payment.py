@@ -14,8 +14,8 @@ from sqlalchemy import select
 
 from app.database import get_db
 from app.services.x402_service import X402Service
-from app.models.db_models import PaymentInvoice, PaymentStatusEnum
-from app.auth.dependencies import get_optional_auth, check_rate_limit
+from app.models.db_models import PaymentInvoice
+from app.auth.dependencies import check_rate_limit
 
 router = APIRouter()
 x402_service = X402Service()
@@ -24,6 +24,7 @@ x402_service = X402Service()
 # -----------------------------------------------------------------------------
 # Request/Response Models
 # -----------------------------------------------------------------------------
+
 
 class InvoiceRequest(BaseModel):
     payer_address: str
@@ -40,6 +41,7 @@ class PaymentSubmission(BaseModel):
 # Endpoints
 # -----------------------------------------------------------------------------
 
+
 @router.post(
     "/payment/invoice",
     status_code=status.HTTP_201_CREATED,
@@ -55,10 +57,9 @@ async def create_invoice(
     # Basic validation of address
     if not request.payer_address.startswith("0x") or len(request.payer_address) != 42:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid wallet address"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid wallet address"
         )
-        
+
     return await x402_service.create_invoice(request.payer_address, db)
 
 
@@ -79,24 +80,18 @@ async def submit_payment(
     client_ip = request.headers.get("x-forwarded-for") or request.client.host
     if client_ip and "," in client_ip:
         client_ip = client_ip.split(",")[0].strip()
-        
+
     try:
         return await x402_service.process_payment(
-            submission.invoiceId,
-            submission.signature,
-            str(client_ip),
-            db
+            submission.invoiceId, submission.signature, str(client_ip), db
         )
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception:
         # Log generic error
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Payment processing failed"
+            detail="Payment processing failed",
         )
 
 
@@ -109,15 +104,16 @@ async def get_invoice_status(
     db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:
     """Check status of an invoice."""
-    result = await db.execute(select(PaymentInvoice).where(PaymentInvoice.id == invoice_id))
+    result = await db.execute(
+        select(PaymentInvoice).where(PaymentInvoice.id == invoice_id)
+    )
     invoice = result.scalar_one_or_none()
-    
+
     if not invoice:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invoice not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found"
         )
-        
+
     return {
         "id": str(invoice.id),
         "status": invoice.status.value,
@@ -125,4 +121,3 @@ async def get_invoice_status(
         "created_at": invoice.created_at.isoformat() + "Z",
         "deadline": invoice.deadline.isoformat() + "Z",
     }
-

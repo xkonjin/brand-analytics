@@ -161,7 +161,7 @@ export default function AnalyzePage({ params }: { params: { id: string } }) {
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Analysis Not Found</h1>
             <p className="text-white/60 mb-8 max-w-md">
-              The analysis you're looking for doesn't exist or has expired.
+              The analysis you&apos;re looking for doesn&apos;t exist or has expired.
             </p>
             <Button onClick={() => router.push('/')} variant="default">
               Start New Analysis

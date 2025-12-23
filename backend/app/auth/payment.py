@@ -7,7 +7,7 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status, Header, Body
+from fastapi import Depends, HTTPException, status, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -22,14 +22,14 @@ async def require_payment(
 ) -> PaymentInvoice:
     """
     Require a completed payment for the request.
-    
+
     Args:
         x_invoice_id: The ID of the paid invoice (from header)
         db: Database session
-        
+
     Returns:
         PaymentInvoice: The validated invoice record
-        
+
     Raises:
         HTTPException: 402 Payment Required if no valid payment found
     """
@@ -50,7 +50,9 @@ async def require_payment(
             detail="Invalid invoice ID format",
         )
 
-    result = await db.execute(select(PaymentInvoice).where(PaymentInvoice.id == invoice_uuid))
+    result = await db.execute(
+        select(PaymentInvoice).where(PaymentInvoice.id == invoice_uuid)
+    )
     invoice = result.scalar_one_or_none()
 
     if not invoice:
@@ -67,4 +69,3 @@ async def require_payment(
         )
 
     return invoice
-

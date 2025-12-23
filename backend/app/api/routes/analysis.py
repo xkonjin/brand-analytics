@@ -58,7 +58,7 @@ async def start_analysis(
     request: AnalysisRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    _payment = Depends(require_payment),
+    _payment=Depends(require_payment),
     _auth=Depends(get_optional_auth),
     _rate_limit=Depends(check_rate_limit),
 ) -> AnalysisResponse:

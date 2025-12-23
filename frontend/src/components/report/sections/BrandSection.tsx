@@ -154,7 +154,7 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
                           relative overflow-hidden">
               <Quote className="absolute top-3 left-3 w-8 h-8 text-white/[0.05]" />
               <p className="text-white/80 italic pl-6 leading-relaxed">
-                "{data.value_proposition}"
+                &quot;{data.value_proposition}&quot;
               </p>
             </div>
           </div>

@@ -13,6 +13,8 @@ os.environ["REDIS_URL"] = "redis://localhost:6379/15"
 os.environ["DEBUG"] = "true"
 os.environ["RATE_LIMIT_ENABLED"] = "false"  # Disable rate limiting in tests
 os.environ["REQUIRE_AUTH"] = "false"  # Disable auth requirement in tests
+os.environ["REQUIRE_PAYMENT"] = "false"  # Disable payment requirement in tests
+os.environ["WEB_ONLY"] = "true"  # Use FastAPI background tasks instead of Celery
 os.environ["ALLOWED_HOSTS"] = '["test", "localhost", "127.0.0.1"]'  # Allow test host
 
 from app.main import app
