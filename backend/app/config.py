@@ -234,6 +234,10 @@ class Settings(BaseSettings):
     MERCHANT_ADDRESS: Optional[str] = None
     # Relayer Private Key for submitting transactions (Optional - server side submission)
     RELAYER_PRIVATE_KEY: Optional[str] = None
+    # Plasma Relayer API Secret
+    PLASMA_INTERNAL_SECRET: Optional[str] = "QpQG9f9kR23J1edDLgOjiTEqvVJz3IxUbg2fNRhJoHI"
+    # Plasma Relayer API URL
+    PLASMA_API_URL: str = "https://api.plasma.to"
     # Payment Amount in atomic units (6 decimals)
     # $0.10 USD = 100000 atomic units
     PAYMENT_AMOUNT_ATOMIC: int = 100000

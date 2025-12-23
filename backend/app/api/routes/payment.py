@@ -8,7 +8,7 @@ from uuid import UUID
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -70,14 +70,21 @@ async def create_invoice(
 )
 async def submit_payment(
     submission: PaymentSubmission,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     _rate_limit=Depends(check_rate_limit),
 ) -> Dict[str, Any]:
     """Process a signed payment."""
+    # Get client IP for rate limiting on Relayer API
+    client_ip = request.headers.get("x-forwarded-for") or request.client.host
+    if client_ip and "," in client_ip:
+        client_ip = client_ip.split(",")[0].strip()
+        
     try:
         return await x402_service.process_payment(
             submission.invoiceId,
             submission.signature,
+            str(client_ip),
             db
         )
     except ValueError as e:
