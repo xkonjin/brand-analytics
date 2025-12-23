@@ -1,10 +1,9 @@
 /**
  * =============================================================================
- * Brand Radar Chart
+ * Brand Radar Chart - Apple Liquid Glass UI
  * =============================================================================
- * 8-axis radar visualization showing scores across all analysis modules.
- * Includes benchmark overlay for industry comparison.
- * Uses Recharts for rendering with custom styling.
+ * 8-axis radar visualization with glassmorphism tooltip and glass container.
+ * Uses Recharts for rendering with custom glass-themed styling.
  * =============================================================================
  */
 
@@ -21,7 +20,6 @@ import {
   Tooltip,
 } from 'recharts';
 import { MODULE_BENCHMARKS } from '@/lib/benchmarks';
-import { getScoreColor } from '@/lib/scoring';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -45,6 +43,17 @@ interface DataPoint {
 }
 
 // -----------------------------------------------------------------------------
+// Score-based color for Glass UI
+// -----------------------------------------------------------------------------
+function getScoreColor(score: number) {
+  if (score >= 80) return '#34d399'; // emerald-400
+  if (score >= 70) return '#4ade80'; // green-400
+  if (score >= 60) return '#facc15'; // yellow-400
+  if (score >= 50) return '#fb923c'; // orange-400
+  return '#f87171'; // red-400
+}
+
+// -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 export function BrandRadarChart({
@@ -54,7 +63,6 @@ export function BrandRadarChart({
   className = '',
 }: BrandRadarChartProps) {
   // Transform scores into chart data format
-  // Each point has: module label, actual score, and benchmark value
   const data: DataPoint[] = MODULE_BENCHMARKS.map((benchmark) => ({
     module: benchmark.shortLabel,
     fullName: benchmark.label,
@@ -65,7 +73,7 @@ export function BrandRadarChart({
   // Calculate average score for color theming
   const avgScore =
     Object.values(scores).reduce((sum, s) => sum + s, 0) /
-    Object.keys(scores).length;
+    (Object.keys(scores).length || 1);
   const primaryColor = getScoreColor(avgScore);
 
   return (
@@ -78,9 +86,9 @@ export function BrandRadarChart({
           data={data}
           margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
         >
-          {/* Grid lines - subtle styling */}
+          {/* Grid lines - glass style */}
           <PolarGrid
-            stroke="#e2e8f0"
+            stroke="rgba(255, 255, 255, 0.1)"
             strokeDasharray="3 3"
             gridType="polygon"
           />
@@ -94,7 +102,7 @@ export function BrandRadarChart({
                 x={x}
                 y={y}
                 textAnchor={textAnchor}
-                className="fill-slate-600 text-xs font-medium"
+                className="fill-white/60 text-xs font-medium"
               >
                 {payload.value}
               </text>
@@ -106,7 +114,7 @@ export function BrandRadarChart({
           <PolarRadiusAxis
             angle={90}
             domain={[0, 100]}
-            tick={{ fill: '#94a3b8', fontSize: 10 }}
+            tick={{ fill: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}
             tickCount={5}
             axisLine={false}
           />
@@ -116,27 +124,27 @@ export function BrandRadarChart({
             <Radar
               name="Industry Benchmark"
               dataKey="benchmark"
-              stroke="#94a3b8"
+              stroke="rgba(255, 255, 255, 0.3)"
               strokeWidth={1.5}
               strokeDasharray="4 4"
-              fill="#94a3b8"
-              fillOpacity={0.1}
+              fill="rgba(255, 255, 255, 0.05)"
+              fillOpacity={1}
               dot={false}
             />
           )}
 
-          {/* Actual scores area */}
+          {/* Actual scores area with glow effect */}
           <Radar
             name="Your Score"
             dataKey="score"
             stroke={primaryColor}
             strokeWidth={2}
             fill={primaryColor}
-            fillOpacity={0.25}
+            fillOpacity={0.2}
             dot={{
               r: 4,
               fill: primaryColor,
-              stroke: '#fff',
+              stroke: 'rgba(255, 255, 255, 0.8)',
               strokeWidth: 2,
             }}
             activeDot={{
@@ -145,9 +153,12 @@ export function BrandRadarChart({
               stroke: '#fff',
               strokeWidth: 2,
             }}
+            style={{
+              filter: `drop-shadow(0 0 8px ${primaryColor}80)`,
+            }}
           />
 
-          {/* Custom tooltip */}
+          {/* Custom glass tooltip */}
           <Tooltip
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null;
@@ -159,32 +170,26 @@ export function BrandRadarChart({
                   : diff < 0
                   ? `${diff.toFixed(0)} below`
                   : 'At benchmark';
+              const diffColor =
+                diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-orange-400' : 'text-white/50';
 
               return (
-                <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-3 text-sm">
-                  <p className="font-semibold text-slate-900 mb-1">
+                <div className="bg-[rgb(30,30,50)]/90 backdrop-blur-xl border border-white/[0.15] rounded-xl shadow-2xl p-4 text-sm">
+                  <p className="font-semibold text-white mb-2">
                     {dataPoint.fullName}
                   </p>
                   <div className="space-y-1">
-                    <p className="text-slate-700">
+                    <p className="text-white/80">
                       Score:{' '}
-                      <span className="font-medium">
+                      <span className="font-bold text-white">
                         {dataPoint.score.toFixed(0)}
                       </span>
                     </p>
-                    <p className="text-slate-500">
+                    <p className="text-white/50">
                       Benchmark:{' '}
-                      <span className="font-medium">{dataPoint.benchmark}</span>
+                      <span className="font-medium text-white/70">{dataPoint.benchmark}</span>
                     </p>
-                    <p
-                      className={`text-xs ${
-                        diff > 0
-                          ? 'text-emerald-600'
-                          : diff < 0
-                          ? 'text-orange-600'
-                          : 'text-slate-500'
-                      }`}
-                    >
+                    <p className={`text-xs font-medium ${diffColor}`}>
                       {diffLabel}
                     </p>
                   </div>
@@ -197,7 +202,7 @@ export function BrandRadarChart({
           <Legend
             wrapperStyle={{ paddingTop: 16 }}
             formatter={(value) => (
-              <span className="text-sm text-slate-600">{value}</span>
+              <span className="text-sm text-white/60">{value}</span>
             )}
           />
         </RadarChart>
@@ -207,4 +212,3 @@ export function BrandRadarChart({
 }
 
 export default BrandRadarChart;
-

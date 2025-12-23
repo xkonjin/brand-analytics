@@ -1,8 +1,8 @@
 /**
  * =============================================================================
- * Metric Card Component
+ * Metric Card Component - Apple Liquid Glass UI
  * =============================================================================
- * Displays a single KPI with value, label, and optional trend indicator.
+ * Displays a single KPI with glassmorphism styling and optional glow effects.
  * Used for showing key metrics in a grid layout.
  * =============================================================================
  */
@@ -77,35 +77,41 @@ export function MetricCard({
 
   const styles = sizeStyles[size];
 
-  // Trend icon and color
+  // Trend icon and color for glass UI
   const TrendIcon =
     trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendColor =
     trend === 'up'
-      ? 'text-emerald-600'
+      ? 'text-emerald-400'
       : trend === 'down'
-      ? 'text-red-600'
-      : 'text-slate-400';
+      ? 'text-red-400'
+      : 'text-white/40';
 
   const content = (
     <div
-      className={`bg-white rounded-xl border border-slate-200 ${styles.padding} ${className}`}
+      className={`
+        bg-white/[0.08] backdrop-blur-xl rounded-xl border border-white/[0.12]
+        ${styles.padding}
+        hover:bg-white/[0.12] transition-all duration-300
+        group
+        ${className}
+      `}
     >
       {/* Header with icon and label */}
       <div className="flex items-center justify-between mb-2">
-        <span className={`text-slate-500 font-medium ${styles.labelSize}`}>
+        <span className={`text-white/50 font-medium ${styles.labelSize}`}>
           {label}
         </span>
-        {icon && <span className="text-slate-400">{icon}</span>}
+        {icon && <span className="text-white/40 group-hover:text-white/60 transition-colors">{icon}</span>}
       </div>
 
       {/* Value */}
       <div className="flex items-baseline gap-1">
-        <span className={`font-bold text-slate-900 tabular-nums ${styles.valueSize}`}>
+        <span className={`font-bold text-white tabular-nums ${styles.valueSize}`}>
           {value}
         </span>
         {unit && (
-          <span className="text-slate-500 text-sm font-medium">{unit}</span>
+          <span className="text-white/50 text-sm font-medium">{unit}</span>
         )}
       </div>
 
@@ -118,7 +124,7 @@ export function MetricCard({
           </div>
         )}
         {subtitle && (
-          <span className="text-xs text-slate-500">{subtitle}</span>
+          <span className="text-xs text-white/40">{subtitle}</span>
         )}
       </div>
     </div>
@@ -188,4 +194,3 @@ export function MetricCardGrid({
 }
 
 export default MetricCard;
-

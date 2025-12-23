@@ -1,8 +1,8 @@
 /**
  * =============================================================================
- * Score Gauge Component
+ * Score Gauge Component - Apple Liquid Glass UI
  * =============================================================================
- * Animated circular gauge for displaying scores with grade interpretation.
+ * Animated circular gauge with glassmorphism and score-based glow effects.
  * Uses SVG for precise rendering and Framer Motion for animations.
  * =============================================================================
  */
@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { getGradeInfo, getScoreColor, formatScore } from '@/lib/scoring';
+import { getGradeInfo, formatScore } from '@/lib/scoring';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -68,6 +68,45 @@ const SIZES = {
 };
 
 // -----------------------------------------------------------------------------
+// Score-based colors with glow for Glass UI
+// -----------------------------------------------------------------------------
+function getScoreColorConfig(score: number) {
+  if (score >= 80) {
+    return {
+      color: '#34d399', // emerald-400
+      glow: 'drop-shadow(0 0 20px rgba(52, 211, 153, 0.6))',
+      textColor: 'text-emerald-400',
+    };
+  }
+  if (score >= 70) {
+    return {
+      color: '#4ade80', // green-400
+      glow: 'drop-shadow(0 0 20px rgba(74, 222, 128, 0.6))',
+      textColor: 'text-green-400',
+    };
+  }
+  if (score >= 60) {
+    return {
+      color: '#facc15', // yellow-400
+      glow: 'drop-shadow(0 0 20px rgba(250, 204, 21, 0.6))',
+      textColor: 'text-yellow-400',
+    };
+  }
+  if (score >= 50) {
+    return {
+      color: '#fb923c', // orange-400
+      glow: 'drop-shadow(0 0 20px rgba(251, 146, 60, 0.6))',
+      textColor: 'text-orange-400',
+    };
+  }
+  return {
+    color: '#f87171', // red-400
+    glow: 'drop-shadow(0 0 20px rgba(248, 113, 113, 0.6))',
+    textColor: 'text-red-400',
+  };
+}
+
+// -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 export function ScoreGauge({
@@ -92,7 +131,7 @@ export function ScoreGauge({
   const strokeOffset = circumference - (score / 100) * circumference;
 
   // Get semantic color and grade info
-  const color = getScoreColor(score);
+  const colorConfig = getScoreColorConfig(score);
   const gradeInfo = getGradeInfo(score);
 
   // Animate score counter on mount
@@ -125,29 +164,30 @@ export function ScoreGauge({
       className={`relative inline-flex flex-col items-center ${className}`}
       style={{ width: config.size, height: config.size }}
     >
-      {/* SVG Gauge */}
+      {/* SVG Gauge with glow */}
       <svg
         width={config.size}
         height={config.size}
         className="transform -rotate-90"
+        style={{ filter: colorConfig.glow }}
       >
-        {/* Background circle */}
+        {/* Background circle - glass style */}
         <circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
-          stroke="#e2e8f0"
+          stroke="rgba(255, 255, 255, 0.1)"
           strokeWidth={config.strokeWidth}
         />
 
-        {/* Progress arc - animated */}
+        {/* Progress arc - animated with glow */}
         <motion.circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={colorConfig.color}
           strokeWidth={config.strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -164,7 +204,7 @@ export function ScoreGauge({
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {/* Score number */}
         <motion.span
-          className={`font-bold text-slate-900 tabular-nums ${config.fontSize}`}
+          className={`font-bold text-white tabular-nums ${config.fontSize}`}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.4 }}
@@ -175,8 +215,7 @@ export function ScoreGauge({
         {/* Grade badge */}
         {showGrade && (
           <motion.span
-            className={`font-semibold ${config.gradeSize}`}
-            style={{ color }}
+            className={`font-semibold ${config.gradeSize} ${colorConfig.textColor}`}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.3 }}
@@ -188,7 +227,7 @@ export function ScoreGauge({
         {/* Custom label */}
         {showLabel && label && (
           <motion.span
-            className={`text-slate-500 mt-1 ${config.labelSize}`}
+            className={`text-white/50 mt-1 ${config.labelSize}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.3 }}
@@ -202,4 +241,3 @@ export function ScoreGauge({
 }
 
 export default ScoreGauge;
-

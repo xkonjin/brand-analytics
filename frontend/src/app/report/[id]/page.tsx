@@ -1,9 +1,9 @@
 /**
  * =============================================================================
- * Report Page
+ * Report Page - Apple Liquid Glass UI
  * =============================================================================
- * Main report page that displays the comprehensive brand analysis.
- * Uses new modular components for a publication-quality layout.
+ * Main report page with comprehensive brand analysis.
+ * Features glassmorphism, dark ambient background, and score-based glows.
  * =============================================================================
  */
 
@@ -80,11 +80,11 @@ interface Recommendation {
 }
 
 // -----------------------------------------------------------------------------
-// Loading Skeleton
+// Loading Skeleton - Glass Style
 // -----------------------------------------------------------------------------
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <motion.div
@@ -92,15 +92,25 @@ function LoadingSkeleton() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center"
           >
-            <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center mx-auto mb-6">
-              <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
+            {/* Glass loader container */}
+            <div className="w-20 h-20 rounded-full bg-white/[0.08] backdrop-blur-xl 
+                          border border-white/[0.15] flex items-center justify-center mx-auto mb-6
+                          shadow-[0_0_40px_rgba(99,102,241,0.3)]">
+              <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900 mb-2">
+            <h2 className="text-xl font-semibold text-white mb-2">
               Loading Report
             </h2>
-            <p className="text-slate-500">
+            <p className="text-white/50">
               Preparing your brand analysis...
             </p>
+            
+            {/* Shimmer skeleton */}
+            <div className="mt-8 space-y-4 w-80">
+              <div className="h-4 bg-white/[0.08] rounded-full animate-pulse" />
+              <div className="h-4 bg-white/[0.08] rounded-full animate-pulse w-3/4 mx-auto" />
+              <div className="h-4 bg-white/[0.08] rounded-full animate-pulse w-1/2 mx-auto" />
+            </div>
           </motion.div>
         </div>
       </div>
@@ -109,26 +119,33 @@ function LoadingSkeleton() {
 }
 
 // -----------------------------------------------------------------------------
-// Error State
+// Error State - Glass Style
 // -----------------------------------------------------------------------------
 function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-center max-w-md mx-auto px-4"
       >
-        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 rounded-full bg-red-500/20 backdrop-blur-xl 
+                      border border-red-500/30 flex items-center justify-center mx-auto mb-6
+                      shadow-[0_0_30px_rgba(248,113,113,0.3)]">
           <span className="text-2xl">⚠️</span>
         </div>
-        <h2 className="text-xl font-semibold text-slate-900 mb-2">
+        <h2 className="text-xl font-semibold text-white mb-2">
           Failed to Load Report
         </h2>
-        <p className="text-slate-600 mb-6">
+        <p className="text-white/60 mb-6">
           We couldn't retrieve your brand analysis. This might be a temporary issue.
         </p>
-        <button onClick={onRetry} className="btn-primary">
+        <button 
+          onClick={onRetry} 
+          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl
+                   font-medium shadow-[0_0_20px_rgba(99,102,241,0.4)]
+                   hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] transition-all"
+        >
           Try Again
         </button>
       </motion.div>
@@ -231,7 +248,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
   if (uniqueRecs.length > 0) visibleSections.push('action-plan');
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen">
       {/* Fixed Header */}
       <ReportHeader
         analysisId={id}
