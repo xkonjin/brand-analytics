@@ -215,7 +215,7 @@ async def test_openai():
         service = OpenAIService()
 
         # Test readability (doesn't use API)
-        readability = await service.analyze_readability(
+        _readability = await service.analyze_readability(
             "OpenAI is an artificial intelligence research company. "
         )
         print("  ✅ OpenAI Service initialized")
