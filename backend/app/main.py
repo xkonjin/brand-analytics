@@ -23,7 +23,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import settings
-from app.api.routes import analysis, reports, health
+from app.api.routes import analysis, reports, health, payment
 from app.auth.routes import router as auth_router
 from app.database import init_db, close_db
 from app.middleware.security import SecurityHeadersMiddleware
@@ -148,6 +148,8 @@ app.include_router(health.router, prefix=settings.API_V1_PREFIX, tags=["Health"]
 app.include_router(analysis.router, prefix=settings.API_V1_PREFIX, tags=["Analysis"])
 
 app.include_router(reports.router, prefix=settings.API_V1_PREFIX, tags=["Reports"])
+
+app.include_router(payment.router, prefix=settings.API_V1_PREFIX, tags=["Payments"])
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX, tags=["Authentication"])
 

@@ -138,7 +138,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
           Failed to Load Report
         </h2>
         <p className="text-white/60 mb-6">
-          We couldn't retrieve your brand analysis. This might be a temporary issue.
+          We couldn&apos;t retrieve your brand analysis. This might be a temporary issue.
         </p>
         <button 
           onClick={onRetry} 

@@ -222,6 +222,33 @@ class Settings(BaseSettings):
     ANALYZER_CONCURRENCY: int = 3
 
     # -------------------------------------------------------------------------
+    # x402 Payment Settings (Plasma Network)
+    # -------------------------------------------------------------------------
+    # Plasma Network RPC URL
+    PLASMA_RPC_URL: str = "https://rpc.plasma.to"
+    # Plasma Chain ID
+    PLASMA_CHAIN_ID: int = 9745
+    # USD₮0 Token Address on Plasma
+    USDT0_ADDRESS: str = "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb"
+    # Merchant Wallet Address (Recipient)
+    MERCHANT_ADDRESS: Optional[str] = None
+    # Relayer Private Key for submitting transactions (Optional - server side submission)
+    RELAYER_PRIVATE_KEY: Optional[str] = None
+    # Plasma Relayer API Secret
+    PLASMA_INTERNAL_SECRET: Optional[str] = (
+        "QpQG9f9kR23J1edDLgOjiTEqvVJz3IxUbg2fNRhJoHI"
+    )
+    # Plasma Relayer API URL
+    PLASMA_API_URL: str = "https://api.plasma.to"
+    # Payment Amount in atomic units (6 decimals)
+    # $0.10 USD = 100000 atomic units
+    PAYMENT_AMOUNT_ATOMIC: int = 100000
+    # Payment Deadline in minutes
+    PAYMENT_DEADLINE_MINUTES: int = 30
+    # Enable Payment Gating
+    REQUIRE_PAYMENT: bool = True
+
+    # -------------------------------------------------------------------------
     # Scoring Weights (configurable per deployment)
     # -------------------------------------------------------------------------
     # These weights determine how each module contributes to the overall score

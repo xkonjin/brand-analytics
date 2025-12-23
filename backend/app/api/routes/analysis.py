@@ -27,6 +27,7 @@ from app.models.analysis import (
 )
 from app.tasks.analysis_tasks import run_full_analysis
 from app.auth.dependencies import get_optional_auth, check_rate_limit
+from app.auth.payment import require_payment
 
 
 router = APIRouter()
@@ -57,6 +58,7 @@ async def start_analysis(
     request: AnalysisRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
+    _payment=Depends(require_payment),
     _auth=Depends(get_optional_auth),
     _rate_limit=Depends(check_rate_limit),
 ) -> AnalysisResponse:
@@ -67,12 +69,14 @@ async def start_analysis(
         request: Analysis request containing URL and optional metadata
         background_tasks: FastAPI background tasks for async processing
         db: Database session
+        _payment: Payment authorization (required)
 
     Returns:
         AnalysisResponse: Analysis ID and initial status
 
     Raises:
         HTTPException: 400 if URL is invalid
+        HTTPException: 402 if payment is missing/invalid
     """
     # -------------------------------------------------------------------------
     # Validate URL
