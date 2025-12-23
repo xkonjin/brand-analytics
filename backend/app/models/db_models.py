@@ -20,6 +20,7 @@ from sqlalchemy import (
     Enum as SQLEnum,
     Index,
     TypeDecorator,
+    BigInteger,
 )
 from sqlalchemy.orm import relationship
 import enum
@@ -68,6 +69,85 @@ class AnalysisStatusEnum(str, enum.Enum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class PaymentStatusEnum(str, enum.Enum):
+    """
+    Enum representing the status of a payment invoice.
+    """
+
+    PENDING = "pending"
+    COMPLETED = "completed"
+    EXPIRED = "expired"
+    FAILED = "failed"
+
+
+class PaymentInvoice(Base):
+    """
+    Database model for x402 payment invoices.
+    """
+
+    __tablename__ = "payment_invoices"
+
+    id = Column(
+        GUID(),
+        primary_key=True,
+        default=uuid.uuid4,
+        comment="Unique identifier for the invoice",
+    )
+
+    payer_address = Column(
+        String(42),
+        nullable=False,
+        comment="Wallet address of the payer",
+    )
+
+    amount_atomic = Column(
+        BigInteger,
+        nullable=False,
+        comment="Payment amount in atomic units (e.g. 100000 for $0.10)",
+    )
+
+    nonce = Column(
+        String(66),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Unique nonce for EIP-3009 replay protection",
+    )
+
+    deadline = Column(
+        DateTime,
+        nullable=False,
+        comment="Payment deadline timestamp",
+    )
+
+    status = Column(
+        SQLEnum(
+            PaymentStatusEnum,
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        default=PaymentStatusEnum.PENDING,
+        nullable=False,
+        index=True,
+        comment="Current status of the invoice",
+    )
+
+    tx_hash = Column(
+        String(66),
+        nullable=True,
+        index=True,
+        comment="Transaction hash of the completed payment",
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<PaymentInvoice(id={self.id}, status={self.status})>"
 
 
 class Analysis(Base):

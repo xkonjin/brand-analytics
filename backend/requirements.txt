@@ -69,6 +69,12 @@ python-jose[cryptography]>=3.3.0  # JWT token encoding/decoding
 passlib[bcrypt]>=1.7.4            # Password and API key hashing
 
 # -----------------------------------------------------------------------------
+# Web3 & Payments (x402)
+# -----------------------------------------------------------------------------
+web3>=6.0.0              # Ethereum/Plasma interaction
+eth-account>=0.10.0      # EIP-712 signature verification
+
+# -----------------------------------------------------------------------------
 # Logging & Monitoring
 # -----------------------------------------------------------------------------
 structlog>=24.1.0         # Structured logging with JSON output
@@ -96,4 +102,3 @@ httpx>=0.26.0             # Already included, used for test client
 black>=24.1.0             # Code formatter
 ruff>=0.1.0               # Fast Python linter
 mypy>=1.8.0               # Static type checker
-

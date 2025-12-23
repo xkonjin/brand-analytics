@@ -1,12 +1,13 @@
 // =============================================================================
-// Home Page - Apple Liquid Glass UI
+// Home Page - Apple Liquid Glass UI with x402 Payment Integration
 // =============================================================================
 // Beautiful landing page with glass morphism, ambient effects, and animations.
+// Includes x402 payment gateway for gating brand analysis.
 // =============================================================================
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -23,8 +24,10 @@ import {
   Brain
 } from 'lucide-react'
 import { GlassNavbar } from '@/components/glass/GlassNavbar'
+import { PaymentModal } from '@/components/PaymentModal'
+import { usePayment } from '@/lib/usePayment'
 import { Button } from '@/components/ui/button'
-import { Card, GlassCard } from '@/components/ui/card'
+import { GlassCard } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 // =============================================================================
@@ -37,6 +40,17 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [isFocused, setIsFocused] = useState(false)
+  
+  // Payment state
+  const [showPayment, setShowPayment] = useState(false)
+  const [invoiceData, setInvoiceData] = useState<{
+    invoice_id: string
+    amount: string
+    token: string
+    network: string
+    merchant_address: string
+  } | null>(null)
+  const { createInvoice } = usePayment()
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,28 +70,78 @@ export default function HomePage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/v1/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: normalizedUrl }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Failed to start analysis')
-      }
-
-      const data = await response.json()
-      router.push(`/analyze/${data.id}`)
+      await startAnalysis(normalizedUrl)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
       setIsLoading(false)
     }
   }
 
+  const startAnalysis = async (targetUrl: string, invoiceId?: string) => {
+    const headers: HeadersInit = { 'Content-Type': 'application/json' }
+    if (invoiceId) {
+      headers['X-Invoice-ID'] = invoiceId
+    }
+
+    const response = await fetch('/api/v1/analyze', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ url: targetUrl }),
+    })
+
+    if (response.status === 402) {
+      // Payment required - show payment modal
+      setIsLoading(false)
+      setShowPayment(true)
+      return
+    }
+
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.detail || 'Failed to start analysis')
+    }
+
+    const data = await response.json()
+    router.push(`/analyze/${data.id}`)
+  }
+
+  const handlePaymentModalOpen = async (open: boolean) => {
+    setShowPayment(open)
+  }
+
+  const handleWalletConnected = async (address: string) => {
+    try {
+      const invoice = await createInvoice(address)
+      setInvoiceData(invoice)
+    } catch (e) {
+      setError("Failed to generate invoice")
+    }
+  }
+
+  const handlePaymentSuccess = (invoiceId: string) => {
+    setShowPayment(false)
+    setIsLoading(true)
+    let normalizedUrl = url.trim()
+    if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+      normalizedUrl = `https://${normalizedUrl}`
+    }
+    startAnalysis(normalizedUrl, invoiceId).catch((err) => {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+      setIsLoading(false)
+    })
+  }
+
   return (
     <main className="min-h-screen">
       <GlassNavbar />
+      
+      <PaymentModal 
+        open={showPayment} 
+        onOpenChange={handlePaymentModalOpen}
+        invoiceData={invoiceData}
+        onWalletConnected={handleWalletConnected}
+        onSuccess={handlePaymentSuccess}
+      />
       
       {/* Hero Section */}
       <section className="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden">
@@ -113,7 +177,7 @@ export default function HomePage() {
             <br />
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 
                            bg-clip-text text-transparent">
-              Brand's Digital Presence
+              Brand&apos;s Digital Presence
             </span>
           </motion.h1>
 
@@ -214,7 +278,7 @@ export default function HomePage() {
           >
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-emerald-400" />
-              <span>Free analysis</span>
+              <span>$0.10 per analysis</span>
             </div>
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-400" />
@@ -243,7 +307,7 @@ export default function HomePage() {
               Comprehensive Brand Analysis
             </h2>
             <p className="text-white/60 max-w-2xl mx-auto">
-              Get a complete audit covering every aspect of your brand's online presence
+              Get a complete audit covering every aspect of your brand&apos;s online presence
             </p>
           </motion.div>
 
@@ -302,11 +366,11 @@ export default function HomePage() {
             <GlassCard intensity="heavy" className="relative p-8 md:p-12 text-center">
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-4"
                   style={{ fontFamily: 'var(--font-display)' }}>
-                Ready to discover your brand's potential?
+                Ready to discover your brand&apos;s potential?
               </h2>
               <p className="text-white/70 mb-8 max-w-xl mx-auto">
-                Get a comprehensive analysis of your brand's digital presence in minutes.
-                No signup required.
+                Get a comprehensive analysis of your brand&apos;s digital presence in minutes.
+                Just $0.10 per analysis, no signup required.
               </p>
               <Button 
                 variant="glow" 
@@ -315,7 +379,7 @@ export default function HomePage() {
                 className="gap-2"
               >
                 <Sparkles className="w-5 h-5" />
-                Start Free Analysis
+                Start Analysis
               </Button>
             </GlassCard>
           </motion.div>
@@ -419,5 +483,5 @@ const stats = [
   { value: "8", label: "Analysis Modules" },
   { value: "100+", label: "Data Points" },
   { value: "2 min", label: "Average Time" },
-  { value: "Free", label: "No Signup" },
+  { value: "$0.10", label: "Per Analysis" },
 ]

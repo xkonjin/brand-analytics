@@ -1,7 +1,7 @@
 // =============================================================================
 // Client Providers
 // =============================================================================
-// Wraps the app with React Query and other client-side providers.
+// Wraps the app with React Query, Wagmi, and other client-side providers.
 // =============================================================================
 
 'use client'
@@ -9,6 +9,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { WagmiProvider } from 'wagmi'
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { config } from '@/lib/wagmi'
+import '@rainbow-me/rainbowkit/styles.css'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create query client with sensible defaults
@@ -26,11 +30,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }))
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        {children}
-      </ErrorBoundary>
-    </QueryClientProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   )
 }
-
