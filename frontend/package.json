@@ -20,7 +20,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@tanstack/react-query": "^5.17.0",
+    "@tanstack/react-query": "^5.90.14",
     "@rainbow-me/rainbowkit": "^2.0.0",
     "wagmi": "^2.5.0",
     "viem": "^2.7.0",
