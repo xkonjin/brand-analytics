@@ -24,10 +24,8 @@
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
-import httpx
 import logging
 
-from app.config import settings
 from app.analyzers.base import BaseAnalyzer, AnalyzerResult
 from app.models.report import (
     Finding,
@@ -195,15 +193,15 @@ class SEOAnalyzer(BaseAnalyzer):
         """
         service = PageSpeedService()
         result = await service.analyze(self.url, strategy=Strategy.MOBILE)
-        
+
         if result.success and result.raw_data:
             return result.raw_data
-        
+
         # If service failed (e.g. no API key or timeout), try to fallback to mock data if in dev
         # But for now, we'll just return None or mock data similar to what the service does internally
         if result.error:
             logger.warning(f"PageSpeed service returned error: {result.error}")
-            
+
         return result.raw_data or self._get_mock_pagespeed_data()
 
     def _get_mock_pagespeed_data(self) -> Dict[str, Any]:
