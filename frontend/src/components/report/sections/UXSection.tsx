@@ -7,10 +7,17 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { Layout, Smartphone, Monitor, Shield, CheckCircle, XCircle } from 'lucide-react';
-import { ModuleSection } from './ModuleSection';
+import {
+  Layout,
+  Smartphone,
+  Monitor,
+  Shield,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import { ModuleSection } from "./ModuleSection";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -52,32 +59,32 @@ interface UXSectionProps {
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
-export function UXSection({ data, className = '' }: UXSectionProps) {
+export function UXSection({ data, className = "" }: UXSectionProps) {
   // Build metrics
   const metrics = [
     {
-      label: 'Mobile Score',
+      label: "Mobile Score",
       value: data.mobile_score ?? 0,
-      unit: '/100',
+      unit: "/100",
       icon: <Smartphone className="w-4 h-4" />,
     },
     {
-      label: 'Desktop Score',
+      label: "Desktop Score",
       value: data.desktop_score ?? 0,
-      unit: '/100',
+      unit: "/100",
       icon: <Monitor className="w-4 h-4" />,
     },
     {
-      label: 'Accessibility',
+      label: "Accessibility",
       value: data.accessibility_score ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Trust Signals',
+      label: "Trust Signals",
       value: data.trust_signals_count ?? 0,
-      subtitle: 'identified',
+      subtitle: "identified",
     },
-  ].filter(m => m.value !== undefined && m.value !== 0) as Array<{
+  ].filter((m) => m.value !== undefined && m.value !== 0) as Array<{
     label: string;
     value: string | number;
     unit?: string;
@@ -86,28 +93,34 @@ export function UXSection({ data, className = '' }: UXSectionProps) {
 
   // UX checklist
   const uxChecks = [
-    { label: 'Clear Navigation', passed: data.has_clear_navigation },
-    { label: 'Visible CTA', passed: data.has_visible_cta },
-    { label: 'Contact Information', passed: data.has_contact_info },
-    { label: 'Trust Badges', passed: data.has_trust_badges },
+    { label: "Clear Navigation", passed: data.has_clear_navigation },
+    { label: "Visible CTA", passed: data.has_visible_cta },
+    { label: "Contact Information", passed: data.has_contact_info },
+    { label: "Trust Badges", passed: data.has_trust_badges },
   ];
 
   // Transform findings
-  const findings = (data.findings || []).map(f => ({
+  const findings = (data.findings || []).map((f) => ({
     title: f.title,
-    description: f.description || (f as any).detail || '',
-    severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
+    description: f.description || (f as any).detail || "",
+    severity: f.severity as
+      | "critical"
+      | "high"
+      | "medium"
+      | "low"
+      | "info"
+      | "success",
     data: f.data as Record<string, string | number> | undefined,
   }));
 
   // Transform recommendations
-  const recommendations = (data.recommendations || []).map(r => ({
+  const recommendations = (data.recommendations || []).map((r) => ({
     title: r.title,
-    description: r.description || (r as any).detail || '',
-    priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
+    description: r.description || (r as any).detail || "",
+    priority: r.priority as "critical" | "high" | "medium" | "low",
     category: r.category,
-    impact: r.impact as 'high' | 'medium' | 'low',
-    effort: r.effort as 'high' | 'medium' | 'low',
+    impact: r.impact as "high" | "medium" | "low",
+    effort: r.effort as "high" | "medium" | "low",
   }));
 
   return (
@@ -123,14 +136,14 @@ export function UXSection({ data, className = '' }: UXSectionProps) {
       recommendations={recommendations}
       className={className}
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* UX Checklist */}
         <div>
-          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
             UX Essentials Checklist
           </h3>
-          <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white/[0.04] backdrop-blur-xl rounded-lg border border-white/[0.06] p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {uxChecks.map((check) => (
                 <div key={check.label} className="flex items-center gap-2">
                   {check.passed ? (
@@ -148,7 +161,7 @@ export function UXSection({ data, className = '' }: UXSectionProps) {
         {/* Trust Signals */}
         {data.trust_signals && data.trust_signals.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
               Trust Signals Found
             </h3>
             <div className="flex flex-wrap gap-2">
@@ -156,8 +169,8 @@ export function UXSection({ data, className = '' }: UXSectionProps) {
                 <span
                   key={signal}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 
-                           bg-emerald-500/10 text-emerald-400 rounded-lg text-sm 
-                           border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                           bg-emerald-500/10 text-emerald-400 rounded-md text-sm 
+                           border border-emerald-500/20 hover:bg-emerald-500/15 transition-all duration-150"
                 >
                   <Shield className="w-3.5 h-3.5" />
                   {signal}

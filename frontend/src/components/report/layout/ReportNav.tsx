@@ -7,10 +7,10 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   BarChart3,
   Search,
@@ -22,7 +22,7 @@ import {
   Users,
   Target,
   ListChecks,
-} from 'lucide-react';
+} from "lucide-react";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -46,25 +46,25 @@ interface ReportNavProps {
 // Navigation sections configuration
 // -----------------------------------------------------------------------------
 const NAV_SECTIONS: NavSection[] = [
-  { id: 'summary', label: 'Summary', icon: BarChart3 },
-  { id: 'seo', label: 'SEO', icon: Search },
-  { id: 'social', label: 'Social Media', icon: Share2 },
-  { id: 'brand', label: 'Brand Messaging', icon: MessageSquare },
-  { id: 'ux', label: 'Website UX', icon: Layout },
-  { id: 'ai', label: 'AI Discoverability', icon: Bot },
-  { id: 'content', label: 'Content', icon: FileText },
-  { id: 'team', label: 'Team Presence', icon: Users },
-  { id: 'channels', label: 'Channel Fit', icon: Target },
-  { id: 'action-plan', label: 'Action Plan', icon: ListChecks },
+  { id: "summary", label: "Summary", icon: BarChart3 },
+  { id: "seo", label: "SEO", icon: Search },
+  { id: "social", label: "Social Media", icon: Share2 },
+  { id: "brand", label: "Brand Messaging", icon: MessageSquare },
+  { id: "ux", label: "Website UX", icon: Layout },
+  { id: "ai", label: "AI Discoverability", icon: Bot },
+  { id: "content", label: "Content", icon: FileText },
+  { id: "team", label: "Team Presence", icon: Users },
+  { id: "channels", label: "Channel Fit", icon: Target },
+  { id: "action-plan", label: "Action Plan", icon: ListChecks },
 ];
 
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 export function ReportNav({
-  activeSection = 'summary',
+  activeSection = "summary",
   visibleSections,
-  className = '',
+  className = "",
 }: ReportNavProps) {
   const [currentSection, setCurrentSection] = useState(activeSection);
 
@@ -94,8 +94,8 @@ export function ReportNav({
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [sections]);
 
   // Handle click - smooth scroll to section
@@ -104,7 +104,7 @@ export function ReportNav({
     if (element) {
       const offset = 80; // Header height
       const top = element.getBoundingClientRect().top + window.scrollY - offset;
-      window.scrollTo({ top, behavior: 'smooth' });
+      window.scrollTo({ top, behavior: "smooth" });
     }
   };
 
@@ -112,7 +112,7 @@ export function ReportNav({
     <nav
       className={`
         sticky top-24 hidden lg:block w-64 shrink-0 no-print
-        bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-2xl p-4
+        bg-white/[0.08] backdrop-blur-xl border border-white/[0.15] rounded-2xl p-3
         ${className}
       `}
     >
@@ -129,26 +129,29 @@ export function ReportNav({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.03 }}
               className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm
-                transition-all duration-300 relative overflow-hidden group
-                ${isActive
-                  ? 'bg-white/[0.15] text-white font-medium shadow-[0_0_20px_rgba(255,255,255,0.1)]'
-                  : 'text-white/60 hover:text-white hover:bg-white/[0.08]'
+                w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm
+                transition-all duration-150 relative overflow-hidden group
+                ${
+                  isActive
+                    ? "bg-white/[0.1] text-white font-medium"
+                    : "text-white/60 hover:text-white hover:bg-white/[0.05]"
                 }
               `}
             >
               {isActive && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-purple-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-purple-400" />
               )}
-              
-              <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white'}`} />
+
+              <Icon
+                className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? "text-white" : "text-white/50 group-hover:text-white"}`}
+              />
               <span className="truncate">{section.label}</span>
 
               {/* Active indicator orb */}
               {isActive && (
                 <motion.div
                   layoutId="nav-indicator"
-                  className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]"
+                  className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400/80"
                 />
               )}
             </motion.button>
@@ -157,14 +160,21 @@ export function ReportNav({
       </div>
 
       {/* Progress indicator */}
-      <div className="mt-6 pt-6 border-t border-white/[0.1]">
-        <div className="px-3 text-xs text-white/40 mb-3 flex justify-between">
+      <div className="mt-4 pt-4 border-t border-white/[0.1]">
+        <div className="px-3 text-xs text-white/40 mb-2 flex justify-between">
           <span>Progress</span>
-          <span>{Math.round(((sections.findIndex((s) => s.id === currentSection) + 1) / sections.length) * 100)}%</span>
+          <span>
+            {Math.round(
+              ((sections.findIndex((s) => s.id === currentSection) + 1) /
+                sections.length) *
+                100,
+            )}
+            %
+          </span>
         </div>
-        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+            className="h-full bg-gradient-to-r from-blue-500/80 to-purple-500/80"
             initial={{ width: 0 }}
             animate={{
               width: `${((sections.findIndex((s) => s.id === currentSection) + 1) / sections.length) * 100}%`,
@@ -178,4 +188,3 @@ export function ReportNav({
 }
 
 export default ReportNav;
-

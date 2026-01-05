@@ -7,16 +7,16 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
-import { ScoreGauge } from '../charts/ScoreGauge';
-import { MetricCardGrid } from '../cards/MetricCard';
-import { InsightCardList } from '../cards/InsightCard';
-import { RecommendationList } from '../cards/RecommendationCard';
-import { getGradeInfo } from '@/lib/scoring';
-import { getBenchmark, compareToBenchmark } from '@/lib/benchmarks';
+import { ReactNode } from "react";
+import { motion } from "framer-motion";
+import { ScoreGauge } from "../charts/ScoreGauge";
+import { MetricCardGrid } from "../cards/MetricCard";
+import { InsightCardList } from "../cards/InsightCard";
+import { RecommendationList } from "../cards/RecommendationCard";
+import { getGradeInfo } from "@/lib/scoring";
+import { getBenchmark, compareToBenchmark } from "@/lib/benchmarks";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -25,24 +25,24 @@ interface Metric {
   label: string;
   value: string | number;
   unit?: string;
-  trend?: 'up' | 'down' | 'stable';
+  trend?: "up" | "down" | "stable";
   trendValue?: string;
 }
 
 interface Finding {
   title: string;
   description: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success';
+  severity: "critical" | "high" | "medium" | "low" | "info" | "success";
   data?: Record<string, string | number>;
 }
 
 interface Recommendation {
   title: string;
   description: string;
-  priority: 'critical' | 'high' | 'medium' | 'low';
+  priority: "critical" | "high" | "medium" | "low";
   category: string;
-  impact: 'high' | 'medium' | 'low';
-  effort: 'high' | 'medium' | 'low';
+  impact: "high" | "medium" | "low";
+  effort: "high" | "medium" | "low";
 }
 
 interface ModuleSectionProps {
@@ -76,41 +76,41 @@ interface ModuleSectionProps {
 function getScoreIconStyle(score: number) {
   if (score >= 80) {
     return {
-      bg: 'from-emerald-500/20 to-emerald-600/10',
-      border: 'border-emerald-500/30',
-      glow: 'shadow-[0_0_30px_rgba(52,211,153,0.3)]',
-      text: 'text-emerald-400',
+      bg: "from-emerald-500/20 to-emerald-600/10",
+      border: "border-emerald-500/30",
+      glow: "shadow-[0_0_30px_rgba(52,211,153,0.3)]",
+      text: "text-emerald-400",
     };
   }
   if (score >= 70) {
     return {
-      bg: 'from-green-500/20 to-green-600/10',
-      border: 'border-green-500/30',
-      glow: 'shadow-[0_0_30px_rgba(74,222,128,0.3)]',
-      text: 'text-green-400',
+      bg: "from-green-500/20 to-green-600/10",
+      border: "border-green-500/30",
+      glow: "shadow-[0_0_30px_rgba(74,222,128,0.3)]",
+      text: "text-green-400",
     };
   }
   if (score >= 60) {
     return {
-      bg: 'from-yellow-500/20 to-yellow-600/10',
-      border: 'border-yellow-500/30',
-      glow: 'shadow-[0_0_30px_rgba(250,204,21,0.3)]',
-      text: 'text-yellow-400',
+      bg: "from-yellow-500/20 to-yellow-600/10",
+      border: "border-yellow-500/30",
+      glow: "shadow-[0_0_30px_rgba(250,204,21,0.3)]",
+      text: "text-yellow-400",
     };
   }
   if (score >= 50) {
     return {
-      bg: 'from-orange-500/20 to-orange-600/10',
-      border: 'border-orange-500/30',
-      glow: 'shadow-[0_0_30px_rgba(251,146,60,0.3)]',
-      text: 'text-orange-400',
+      bg: "from-orange-500/20 to-orange-600/10",
+      border: "border-orange-500/30",
+      glow: "shadow-[0_0_30px_rgba(251,146,60,0.3)]",
+      text: "text-orange-400",
     };
   }
   return {
-    bg: 'from-red-500/20 to-red-600/10',
-    border: 'border-red-500/30',
-    glow: 'shadow-[0_0_30px_rgba(248,113,113,0.3)]',
-    text: 'text-red-400',
+    bg: "from-red-500/20 to-red-600/10",
+    border: "border-red-500/30",
+    glow: "shadow-[0_0_30px_rgba(248,113,113,0.3)]",
+    text: "text-red-400",
   };
 }
 
@@ -128,7 +128,7 @@ export function ModuleSection({
   findings = [],
   recommendations = [],
   children,
-  className = '',
+  className = "",
 }: ModuleSectionProps) {
   const gradeInfo = getGradeInfo(score);
   const benchmark = getBenchmark(moduleKey);
@@ -136,28 +136,38 @@ export function ModuleSection({
   const iconStyle = getScoreIconStyle(score);
 
   return (
-    <section id={id} className={`py-12 border-t border-white/[0.08] ${className}`}>
+    <section
+      id={id}
+      className={`py-8 border-t border-white/[0.08] ${className}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8"
+          transition={{ duration: 0.2 }}
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6"
         >
           {/* Left - Title and description */}
-          <div className="flex items-start gap-4">
-            <div className={`
-              p-3 rounded-xl bg-gradient-to-br ${iconStyle.bg} 
+          <div className="flex items-start gap-3">
+            <div
+              className={`
+              p-2 rounded-lg bg-gradient-to-br ${iconStyle.bg} 
               border ${iconStyle.border} ${iconStyle.glow} ${iconStyle.text}
-            `}>
+            `}
+            >
               {icon}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">{title}</h2>
-              <p className="text-white/60 mt-1 max-w-xl">{description}</p>
+              <h2 className="text-xl font-bold text-white leading-tight">
+                {title}
+              </h2>
+              <p className="text-white/60 text-sm mt-0.5 max-w-xl">
+                {description}
+              </p>
               {benchmark && (
-                <p className="text-sm text-white/40 mt-2">
+                <p className="text-xs text-white/40 mt-1.5">
                   {benchmark.methodology}
                 </p>
               )}
@@ -165,22 +175,27 @@ export function ModuleSection({
           </div>
 
           {/* Right - Score display */}
-          <div className="flex items-center gap-4">
-            <ScoreGauge score={score} size="md" showGrade={true} animate={false} />
+          <div className="flex items-center gap-3">
+            <ScoreGauge
+              score={score}
+              size="sm"
+              showGrade={true}
+              animate={false}
+            />
             <div className="text-right">
               <div
-                className={`text-sm font-medium ${
-                  comparison.percentile === 'above'
-                    ? 'text-emerald-400'
-                    : comparison.percentile === 'below'
-                    ? 'text-orange-400'
-                    : 'text-white/50'
+                className={`text-xs font-medium ${
+                  comparison.percentile === "above"
+                    ? "text-emerald-400"
+                    : comparison.percentile === "below"
+                      ? "text-orange-400"
+                      : "text-white/50"
                 }`}
               >
                 {comparison.label}
               </div>
               {benchmark && (
-                <div className="text-xs text-white/40 mt-1">
+                <div className="text-[10px] text-white/40 mt-0.5">
                   Benchmark: {benchmark.benchmark}
                 </div>
               )}
@@ -194,9 +209,10 @@ export function ModuleSection({
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-8"
+            transition={{ duration: 0.2, delay: 0.05 }}
+            className="mb-6"
           >
-            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
               Key Metrics
             </h3>
             <MetricCardGrid
@@ -214,22 +230,24 @@ export function ModuleSection({
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-8"
+            transition={{ duration: 0.2, delay: 0.1 }}
+            className="mb-6"
           >
             {children}
           </motion.div>
         )}
 
         {/* Two-column layout for findings and recommendations */}
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-6">
           {/* Findings */}
           {findings.length > 0 && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              transition={{ duration: 0.2, delay: 0.15 }}
             >
-              <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
                 Findings ({findings.length})
               </h3>
               <InsightCardList insights={findings} animate={false} />
@@ -242,8 +260,9 @@ export function ModuleSection({
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              transition={{ duration: 0.2, delay: 0.2 }}
             >
-              <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
                 Recommendations ({recommendations.length})
               </h3>
               <RecommendationList

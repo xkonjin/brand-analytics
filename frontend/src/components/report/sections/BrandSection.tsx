@@ -7,11 +7,11 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { MessageSquare, Sparkles, Quote } from 'lucide-react';
-import { ModuleSection } from './ModuleSection';
-import { ArchetypeCard } from '../cards/ArchetypeCard';
+import { MessageSquare, Quote } from "lucide-react";
+import { ModuleSection } from "./ModuleSection";
+import { ArchetypeCard } from "../cards/ArchetypeCard";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -64,56 +64,68 @@ interface BrandSectionProps {
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
-export function BrandSection({ data, className = '' }: BrandSectionProps) {
-  const archetype = typeof data.archetype === 'object' && data.archetype !== null
-    ? data.archetype
-    : data.archetype
-      ? { primary: data.archetype, secondary: data.archetype_secondary, confidence: data.archetype_confidence, description: data.archetype_description }
-      : null;
-  
+export function BrandSection({ data, className = "" }: BrandSectionProps) {
+  const archetype =
+    typeof data.archetype === "object" && data.archetype !== null
+      ? data.archetype
+      : data.archetype
+        ? {
+            primary: data.archetype,
+            secondary: data.archetype_secondary,
+            confidence: data.archetype_confidence,
+            description: data.archetype_description,
+          }
+        : null;
+
   const toneKeywords = data.tone_keywords || data.tone || [];
-  
+
   const metrics = [
     {
-      label: 'Value Prop Clarity',
+      label: "Value Prop Clarity",
       value: data.value_proposition_clarity ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Tone Consistency',
+      label: "Tone Consistency",
       value: data.tone_consistency ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Readability',
+      label: "Readability",
       value: data.readability_score ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Overall Clarity',
+      label: "Overall Clarity",
       value: data.clarity_score ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
-  ].filter(m => m.value !== undefined && m.value !== 0) as Array<{
+  ].filter((m) => m.value !== undefined && m.value !== 0) as Array<{
     label: string;
     value: string | number;
     unit?: string;
   }>;
 
-  const findings = (data.findings || []).map(f => ({
+  const findings = (data.findings || []).map((f) => ({
     title: f.title,
-    description: f.description || (f as any).detail || '',
-    severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
+    description: f.description || (f as any).detail || "",
+    severity: f.severity as
+      | "critical"
+      | "high"
+      | "medium"
+      | "low"
+      | "info"
+      | "success",
     data: f.data as Record<string, string | number> | undefined,
   }));
 
-  const recommendations = (data.recommendations || []).map(r => ({
+  const recommendations = (data.recommendations || []).map((r) => ({
     title: r.title,
-    description: r.description || (r as any).detail || '',
-    priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
+    description: r.description || (r as any).detail || "",
+    priority: r.priority as "critical" | "high" | "medium" | "low",
     category: r.category,
-    impact: r.impact as 'high' | 'medium' | 'low',
-    effort: r.effort as 'high' | 'medium' | 'low',
+    impact: r.impact as "high" | "medium" | "low",
+    effort: r.effort as "high" | "medium" | "low",
   }));
 
   return (
@@ -129,10 +141,10 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
       recommendations={recommendations}
       className={className}
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         {archetype && (
           <div>
-            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
               Brand Archetype
             </h3>
             <ArchetypeCard
@@ -147,11 +159,13 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
 
         {data.value_proposition && (
           <div>
-            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
               Value Proposition
             </h3>
-            <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-5
-                          relative overflow-hidden">
+            <div
+              className="bg-white/[0.04] backdrop-blur-xl rounded-lg border border-white/[0.06] p-5
+                          relative overflow-hidden"
+            >
               <Quote className="absolute top-3 left-3 w-8 h-8 text-white/[0.05]" />
               <p className="text-white/80 italic pl-6 leading-relaxed">
                 &quot;{data.value_proposition}&quot;
@@ -162,7 +176,7 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
 
         {toneKeywords.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
               Brand Tone
             </h3>
             <div className="flex flex-wrap gap-2">
@@ -170,10 +184,9 @@ export function BrandSection({ data, className = '' }: BrandSectionProps) {
                 <span
                   key={keyword}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 
-                           bg-purple-500/10 text-purple-300 rounded-full text-sm
-                           border border-purple-500/20 hover:bg-purple-500/20 transition-all"
+                           bg-purple-500/10 text-purple-300 rounded-lg text-sm
+                           border border-purple-500/20 hover:bg-purple-500/15 transition-all duration-150"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
                   {keyword}
                 </span>
               ))}
