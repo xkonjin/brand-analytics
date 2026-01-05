@@ -68,10 +68,10 @@ class WikipediaService:
         presence = await service.check_brand_presence("Apple Inc")
     """
 
-    # Wikipedia REST API endpoints
     SUMMARY_API = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
     SEARCH_API = "https://en.wikipedia.org/w/api.php"
     TIMEOUT = 15
+    USER_AGENT = "BrandAnalytics/1.0 (https://github.com/brand-analytics; contact@brand-analytics.io)"
 
     async def check_brand_presence(
         self,
@@ -169,7 +169,10 @@ class WikipediaService:
             async with httpx.AsyncClient(timeout=self.TIMEOUT) as client:
                 response = await client.get(
                     url,
-                    headers={"Accept": "application/json"},
+                    headers={
+                        "Accept": "application/json",
+                        "User-Agent": self.USER_AGENT,
+                    },
                 )
 
                 if response.status_code == 200:
@@ -235,6 +238,7 @@ class WikipediaService:
                 response = await client.get(
                     self.SEARCH_API,
                     params=params,
+                    headers={"User-Agent": self.USER_AGENT},
                 )
 
                 if response.status_code == 200:
@@ -270,6 +274,7 @@ class WikipediaService:
                 response = await client.get(
                     self.SEARCH_API,
                     params=params,
+                    headers={"User-Agent": self.USER_AGENT},
                 )
 
                 if response.status_code == 200:

@@ -30,7 +30,7 @@ class PerplexityService:
     """Research brand information using Perplexity API before analysis."""
 
     API_URL = "https://api.perplexity.ai/chat/completions"
-    MODEL = "llama-3.1-sonar-small-128k-online"
+    MODEL = "sonar"
 
     def __init__(self):
         self.api_key = settings.PERPLEXITY_API_KEY
@@ -111,7 +111,11 @@ JSON Response:"""
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(self.API_URL, headers=headers, json=payload)
-            response.raise_for_status()
+            
+            if response.status_code != 200:
+                logger.error(f"Perplexity API error {response.status_code}: {response.text}")
+                response.raise_for_status()
+                
             data = response.json()
             return data.get("choices", [{}])[0].get("message", {}).get("content", "")
 
