@@ -111,11 +111,13 @@ JSON Response:"""
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(self.API_URL, headers=headers, json=payload)
-            
+
             if response.status_code != 200:
-                logger.error(f"Perplexity API error {response.status_code}: {response.text}")
+                logger.error(
+                    f"Perplexity API error {response.status_code}: {response.text}"
+                )
                 response.raise_for_status()
-                
+
             data = response.json()
             return data.get("choices", [{}])[0].get("message", {}).get("content", "")
 

@@ -48,7 +48,9 @@ class MozService:
         self.api_key = api_key or getattr(settings, "MOZ_API_KEY", None)
         self.timeout = timeout
 
-    async def get_url_metrics(self, url: str, include_subdomain: bool = True) -> MozMetrics:
+    async def get_url_metrics(
+        self, url: str, include_subdomain: bool = True
+    ) -> MozMetrics:
         if not url.startswith(("http://", "https://")):
             url = f"https://{url}"
 
@@ -59,28 +61,24 @@ class MozService:
             logger.warning("Moz API not configured, returning mock data")
             return self._get_mock_metrics(url, domain)
 
-        # Determine auth method (Token vs Basic Auth)
+        # Moz JSON-RPC API uses x-moz-token header for auth
+        # It accepts both new-style tokens and legacy base64 keys
         headers = {
             "Content-Type": "application/json",
+            "x-moz-token": self.api_key,
         }
-        
-        # Check if legacy key format (base64) - if so, use Basic Auth which V2 supports
-        is_legacy_key = "==" in self.api_key or ":" in self.api_key
-        
-        if is_legacy_key:
-            headers["Authorization"] = f"Basic {self.api_key}"
-        else:
-            headers["x-moz-token"] = self.api_key
 
         try:
             payload = {
                 "jsonrpc": "2.0",
-                "id": "brand-analytics-1-moz-v2-req", # Needs to be > 24 chars
+                "id": "brand-analytics-1-moz-v2-req",  # Needs to be > 24 chars
                 "method": "data.site.metrics.fetch",
                 "params": {
-                    "site_query": {
-                        "query": domain,
-                        "scope": "domain",
+                    "data": {
+                        "site_query": {
+                            "query": domain,
+                            "scope": "domain",
+                        }
                     }
                 },
             }
@@ -88,7 +86,9 @@ class MozService:
             logger.info(f"Fetching Moz metrics for {domain}")
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(self.API_URL, json=payload, headers=headers)
+                response = await client.post(
+                    self.API_URL, json=payload, headers=headers
+                )
 
                 if response.status_code == 200:
                     data = response.json()
@@ -122,7 +122,9 @@ class MozService:
                     )
 
                 else:
-                    logger.error(f"Moz API error: {response.status_code} - {response.text}")
+                    logger.error(
+                        f"Moz API error: {response.status_code} - {response.text}"
+                    )
                     return MozMetrics(
                         success=False,
                         url=url,
@@ -132,12 +134,16 @@ class MozService:
 
         except httpx.TimeoutException:
             logger.error(f"Moz API timeout for {url}")
-            return MozMetrics(success=False, url=url, domain=domain, error="Request timed out")
+            return MozMetrics(
+                success=False, url=url, domain=domain, error="Request timed out"
+            )
         except Exception as e:
             logger.error(f"Moz API request failed: {e}")
             return MozMetrics(success=False, url=url, domain=domain, error=str(e))
 
-    def _parse_response(self, url: str, domain: str, data: Dict[str, Any]) -> MozMetrics:
+    def _parse_response(
+        self, url: str, domain: str, data: Dict[str, Any]
+    ) -> MozMetrics:
         result = data.get("result", {})
         site_metrics = result.get("site_metrics", {})
 
@@ -158,7 +164,9 @@ class MozService:
             total_links=int(total_links),
         )
 
-    async def get_linking_domains(self, url: str, limit: int = 50) -> List[Dict[str, Any]]:
+    async def get_linking_domains(
+        self, url: str, limit: int = 50
+    ) -> List[Dict[str, Any]]:
         if not self.api_key:
             logger.warning("Moz API not configured, returning empty list")
             return []
@@ -170,38 +178,34 @@ class MozService:
         domain = parsed.netloc.lower()
 
         try:
-            # Determine auth method (Token vs Basic Auth)
             headers = {
                 "Content-Type": "application/json",
+                "x-moz-token": self.api_key,
             }
-            
-            # Check if legacy key format (base64)
-            is_legacy_key = "==" in self.api_key or ":" in self.api_key
-            
-            if is_legacy_key:
-                headers["Authorization"] = f"Basic {self.api_key}"
-            else:
-                headers["x-moz-token"] = self.api_key
 
             payload = {
                 "jsonrpc": "2.0",
                 "id": "brand-analytics-2-moz-v2-req",
                 "method": "data.link.lists.linking_domains",
                 "params": {
-                    "target": domain,
-                    "target_scope": "root_domain",
-                    "limit": min(limit, 50),
+                    "data": {
+                        "target": domain,
+                        "target_scope": "root_domain",
+                        "limit": min(limit, 50),
+                    }
                 },
             }
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(self.API_URL, json=payload, headers=headers)
+                response = await client.post(
+                    self.API_URL, json=payload, headers=headers
+                )
 
                 if response.status_code == 200:
                     data = response.json()
                     if "error" in data:
                         return []
-                    
+
                     results = data.get("result", {}).get("linking_domains", [])
                     return [
                         {
@@ -228,38 +232,34 @@ class MozService:
         domain = parsed.netloc.lower()
 
         try:
-            # Determine auth method (Token vs Basic Auth)
             headers = {
                 "Content-Type": "application/json",
+                "x-moz-token": self.api_key,
             }
-            
-            # Check if legacy key format (base64)
-            is_legacy_key = "==" in self.api_key or ":" in self.api_key
-            
-            if is_legacy_key:
-                headers["Authorization"] = f"Basic {self.api_key}"
-            else:
-                headers["x-moz-token"] = self.api_key
 
             payload = {
                 "jsonrpc": "2.0",
                 "id": "brand-analytics-3-moz-v2-req",
                 "method": "data.link.lists.anchor_text",
                 "params": {
-                    "target": domain,
-                    "target_scope": "root_domain",
-                    "limit": min(limit, 50),
+                    "data": {
+                        "target": domain,
+                        "target_scope": "root_domain",
+                        "limit": min(limit, 50),
+                    }
                 },
             }
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(self.API_URL, json=payload, headers=headers)
+                response = await client.post(
+                    self.API_URL, json=payload, headers=headers
+                )
 
                 if response.status_code == 200:
                     data = response.json()
                     if "error" in data:
                         return []
-                    
+
                     results = data.get("result", {}).get("anchor_texts", [])
                     return [
                         {
@@ -315,7 +315,9 @@ def interpret_spam_score(spam: float) -> str:
         return "Very High Risk"
 
 
-def calculate_authority_score(da: float, linking_domains: int, spam_score: float) -> float:
+def calculate_authority_score(
+    da: float, linking_domains: int, spam_score: float
+) -> float:
     import math
 
     ld_score = min(100, (math.log10(max(linking_domains, 1) + 1) / 4) * 100)
