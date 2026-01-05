@@ -59,26 +59,23 @@ class MozService:
             logger.warning("Moz API not configured, returning mock data")
             return self._get_mock_metrics(url, domain)
 
-        # Check for legacy API key format (base64)
-        if "==" in self.api_key or ":" in self.api_key:
-            logger.error("Invalid Moz API key format. You are using the legacy base64 format. "
-                        "Please get a new JSON-RPC API token from https://moz.com/api/dashboard")
-            return MozMetrics(
-                success=False,
-                url=url,
-                domain=domain,
-                error="Invalid API key format (legacy key detected)",
-            )
+        # Determine auth method (Token vs Basic Auth)
+        headers = {
+            "Content-Type": "application/json",
+        }
+        
+        # Check if legacy key format (base64) - if so, use Basic Auth which V2 supports
+        is_legacy_key = "==" in self.api_key or ":" in self.api_key
+        
+        if is_legacy_key:
+            headers["Authorization"] = f"Basic {self.api_key}"
+        else:
+            headers["x-moz-token"] = self.api_key
 
         try:
-            headers = {
-                "x-moz-token": self.api_key,
-                "Content-Type": "application/json",
-            }
-
             payload = {
                 "jsonrpc": "2.0",
-                "id": "brand-analytics-1",
+                "id": "brand-analytics-1-moz-v2-req", # Needs to be > 24 chars
                 "method": "data.site.metrics.fetch",
                 "params": {
                     "site_query": {
@@ -173,14 +170,22 @@ class MozService:
         domain = parsed.netloc.lower()
 
         try:
+            # Determine auth method (Token vs Basic Auth)
             headers = {
-                "x-moz-token": self.api_key,
                 "Content-Type": "application/json",
             }
+            
+            # Check if legacy key format (base64)
+            is_legacy_key = "==" in self.api_key or ":" in self.api_key
+            
+            if is_legacy_key:
+                headers["Authorization"] = f"Basic {self.api_key}"
+            else:
+                headers["x-moz-token"] = self.api_key
 
             payload = {
                 "jsonrpc": "2.0",
-                "id": "brand-analytics-2",
+                "id": "brand-analytics-2-moz-v2-req",
                 "method": "data.link.lists.linking_domains",
                 "params": {
                     "target": domain,
@@ -223,14 +228,22 @@ class MozService:
         domain = parsed.netloc.lower()
 
         try:
+            # Determine auth method (Token vs Basic Auth)
             headers = {
-                "x-moz-token": self.api_key,
                 "Content-Type": "application/json",
             }
+            
+            # Check if legacy key format (base64)
+            is_legacy_key = "==" in self.api_key or ":" in self.api_key
+            
+            if is_legacy_key:
+                headers["Authorization"] = f"Basic {self.api_key}"
+            else:
+                headers["x-moz-token"] = self.api_key
 
             payload = {
                 "jsonrpc": "2.0",
-                "id": "brand-analytics-3",
+                "id": "brand-analytics-3-moz-v2-req",
                 "method": "data.link.lists.anchor_text",
                 "params": {
                     "target": domain,
