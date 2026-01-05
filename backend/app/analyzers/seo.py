@@ -24,10 +24,8 @@
 # =============================================================================
 
 from typing import Dict, Any, Optional, List
-import httpx
 import logging
 
-from app.config import settings
 from app.analyzers.base import BaseAnalyzer, AnalyzerResult
 from app.models.report import (
     Finding,
@@ -40,6 +38,7 @@ from app.services.moz_service import (
     interpret_domain_authority,
     interpret_spam_score,
 )
+from app.services.pagespeed_service import PageSpeedService, Strategy
 
 logger = logging.getLogger(__name__)
 
@@ -190,31 +189,20 @@ class SEOAnalyzer(BaseAnalyzer):
 
     async def _get_pagespeed_insights(self) -> Optional[Dict[str, Any]]:
         """
-        Fetch PageSpeed Insights data from Google API.
+        Fetch PageSpeed Insights data using the PageSpeedService.
         """
-        if not settings.GOOGLE_API_KEY:
-            # Return mock data for development without API key
-            return self._get_mock_pagespeed_data()
+        service = PageSpeedService()
+        result = await service.analyze(self.url, strategy=Strategy.MOBILE)
 
-        api_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
-        params = {
-            "url": self.url,
-            "key": settings.GOOGLE_API_KEY,
-            "category": ["performance", "accessibility", "best-practices", "seo"],
-            "strategy": "mobile",  # Mobile-first index means we check mobile
-        }
+        if result.success and result.raw_data:
+            return result.raw_data
 
-        try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.get(api_url, params=params)
-                if response.status_code == 200:
-                    return response.json()
-                else:
-                    print(f"PageSpeed API error: {response.status_code}")
-                    return self._get_mock_pagespeed_data()
-        except Exception as e:
-            print(f"PageSpeed API request failed: {e}")
-            return self._get_mock_pagespeed_data()
+        # If service failed (e.g. no API key or timeout), try to fallback to mock data if in dev
+        # But for now, we'll just return None or mock data similar to what the service does internally
+        if result.error:
+            logger.warning(f"PageSpeed service returned error: {result.error}")
+
+        return result.raw_data or self._get_mock_pagespeed_data()
 
     def _get_mock_pagespeed_data(self) -> Dict[str, Any]:
         """Return mock PageSpeed data for development."""

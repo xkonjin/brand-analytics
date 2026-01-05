@@ -7,10 +7,10 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { FileText, Tag, BarChart3, Calendar } from 'lucide-react';
-import { ModuleSection } from './ModuleSection';
+import { FileText, Tag, BarChart3, Calendar } from "lucide-react";
+import { ModuleSection } from "./ModuleSection";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -48,30 +48,30 @@ interface ContentSectionProps {
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
-export function ContentSection({ data, className = '' }: ContentSectionProps) {
+export function ContentSection({ data, className = "" }: ContentSectionProps) {
   // Build metrics
   const metrics = [
     {
-      label: 'Content Quality',
+      label: "Content Quality",
       value: data.content_quality_score ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Freshness',
+      label: "Freshness",
       value: data.content_freshness ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Consistency',
+      label: "Consistency",
       value: data.posting_consistency ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Variety',
+      label: "Variety",
       value: data.content_variety_score ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
-  ].filter(m => m.value !== undefined && m.value !== 0) as Array<{
+  ].filter((m) => m.value !== undefined && m.value !== 0) as Array<{
     label: string;
     value: string | number;
     unit?: string;
@@ -82,21 +82,27 @@ export function ContentSection({ data, className = '' }: ContentSectionProps) {
   const uniqueTopics = Array.from(new Set(allTopics));
 
   // Transform findings
-  const findings = (data.findings || []).map(f => ({
+  const findings = (data.findings || []).map((f) => ({
     title: f.title,
-    description: f.description || (f as any).detail || '',
-    severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
+    description: f.description || (f as any).detail || "",
+    severity: f.severity as
+      | "critical"
+      | "high"
+      | "medium"
+      | "low"
+      | "info"
+      | "success",
     data: f.data as Record<string, string | number> | undefined,
   }));
 
   // Transform recommendations
-  const recommendations = (data.recommendations || []).map(r => ({
+  const recommendations = (data.recommendations || []).map((r) => ({
     title: r.title,
-    description: r.description || (r as any).detail || '',
-    priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
+    description: r.description || (r as any).detail || "",
+    priority: r.priority as "critical" | "high" | "medium" | "low",
     category: r.category,
-    impact: r.impact as 'high' | 'medium' | 'low',
-    effort: r.effort as 'high' | 'medium' | 'low',
+    impact: r.impact as "high" | "medium" | "low",
+    effort: r.effort as "high" | "medium" | "low",
   }));
 
   return (
@@ -115,7 +121,7 @@ export function ContentSection({ data, className = '' }: ContentSectionProps) {
       {/* Content Topics/Themes */}
       {uniqueTopics.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
             Content Topics
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -123,8 +129,8 @@ export function ContentSection({ data, className = '' }: ContentSectionProps) {
               <span
                 key={topic}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 
-                         bg-white/[0.05] text-white/70 rounded-full text-sm
-                         border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+                         bg-white/[0.04] text-white/70 rounded-lg text-sm
+                         border border-white/[0.06] hover:bg-white/[0.06] transition-all duration-150"
               >
                 <Tag className="w-3.5 h-3.5 text-white/40" />
                 {topic}
@@ -136,16 +142,22 @@ export function ContentSection({ data, className = '' }: ContentSectionProps) {
 
       {/* Word Count Average */}
       {data.word_count_avg && data.word_count_avg > 0 && (
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+        <div className="mt-4">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
             Content Depth
           </h3>
-          <div className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4
-                        inline-flex items-center gap-3">
+          <div
+            className="bg-white/[0.04] backdrop-blur-xl rounded-lg border border-white/[0.06] p-4
+                        inline-flex items-center gap-3"
+          >
             <BarChart3 className="w-5 h-5 text-white/40" />
             <div>
-              <div className="text-white font-medium">{Math.round(data.word_count_avg).toLocaleString()} words</div>
-              <div className="text-xs text-white/40">Average content length</div>
+              <div className="text-white font-medium">
+                {Math.round(data.word_count_avg).toLocaleString()} words
+              </div>
+              <div className="text-xs text-white/40">
+                Average content length
+              </div>
             </div>
           </div>
         </div>

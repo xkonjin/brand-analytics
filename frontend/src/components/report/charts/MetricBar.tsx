@@ -7,10 +7,10 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { getBenchmarkValue } from '@/lib/benchmarks';
+import { motion } from "framer-motion";
+import { getBenchmarkValue } from "@/lib/benchmarks";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -29,7 +29,7 @@ interface MetricBarProps {
   /** Whether to animate on mount */
   animate?: boolean;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   /** Optional className */
   className?: string;
 }
@@ -39,19 +39,19 @@ interface MetricBarProps {
 // -----------------------------------------------------------------------------
 const SIZES = {
   sm: {
-    height: 'h-2',
-    labelSize: 'text-xs',
-    scoreSize: 'text-sm',
+    height: "h-1.5",
+    labelSize: "text-xs",
+    scoreSize: "text-sm",
   },
   md: {
-    height: 'h-3',
-    labelSize: 'text-sm',
-    scoreSize: 'text-base',
+    height: "h-2",
+    labelSize: "text-sm",
+    scoreSize: "text-base",
   },
   lg: {
-    height: 'h-4',
-    labelSize: 'text-base',
-    scoreSize: 'text-lg',
+    height: "h-3",
+    labelSize: "text-base",
+    scoreSize: "text-lg",
   },
 };
 
@@ -61,36 +61,36 @@ const SIZES = {
 function getScoreGradient(score: number) {
   if (score >= 80) {
     return {
-      gradient: 'from-emerald-400 to-emerald-500',
-      glow: 'shadow-[0_0_15px_rgba(52,211,153,0.5)]',
-      textColor: 'text-emerald-400',
+      gradient: "from-emerald-400 to-emerald-500",
+      glow: "shadow-[0_0_10px_rgba(52,211,153,0.3)]",
+      textColor: "text-emerald-400",
     };
   }
   if (score >= 70) {
     return {
-      gradient: 'from-green-400 to-green-500',
-      glow: 'shadow-[0_0_15px_rgba(74,222,128,0.5)]',
-      textColor: 'text-green-400',
+      gradient: "from-green-400 to-green-500",
+      glow: "shadow-[0_0_10px_rgba(74,222,128,0.3)]",
+      textColor: "text-green-400",
     };
   }
   if (score >= 60) {
     return {
-      gradient: 'from-yellow-400 to-yellow-500',
-      glow: 'shadow-[0_0_15px_rgba(250,204,21,0.5)]',
-      textColor: 'text-yellow-400',
+      gradient: "from-yellow-400 to-yellow-500",
+      glow: "shadow-[0_0_10px_rgba(250,204,21,0.3)]",
+      textColor: "text-yellow-400",
     };
   }
   if (score >= 50) {
     return {
-      gradient: 'from-orange-400 to-orange-500',
-      glow: 'shadow-[0_0_15px_rgba(251,146,60,0.5)]',
-      textColor: 'text-orange-400',
+      gradient: "from-orange-400 to-orange-500",
+      glow: "shadow-[0_0_10px_rgba(251,146,60,0.3)]",
+      textColor: "text-orange-400",
     };
   }
   return {
-    gradient: 'from-red-400 to-red-500',
-    glow: 'shadow-[0_0_15px_rgba(248,113,113,0.5)]',
-    textColor: 'text-red-400',
+    gradient: "from-red-400 to-red-500",
+    glow: "shadow-[0_0_10px_rgba(248,113,113,0.3)]",
+    textColor: "text-red-400",
   };
 }
 
@@ -104,8 +104,8 @@ export function MetricBar({
   benchmark: customBenchmark,
   showBenchmark = true,
   animate = true,
-  size = 'md',
-  className = '',
+  size = "md",
+  className = "",
 }: MetricBarProps) {
   // Get benchmark value from module key or use custom value
   const benchmark =
@@ -123,11 +123,11 @@ export function MetricBar({
     diff > 0
       ? `+${diff.toFixed(0)} above avg`
       : diff < 0
-      ? `${diff.toFixed(0)} below avg`
-      : 'At average';
+        ? `${diff.toFixed(0)} below avg`
+        : "At average";
 
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div className={`space-y-1 ${className}`}>
       {/* Label row with score */}
       <div className="flex items-center justify-between">
         <span className={`font-medium text-white ${config.labelSize}`}>
@@ -139,10 +139,10 @@ export function MetricBar({
             <span
               className={`text-xs ${
                 diff > 0
-                  ? 'text-emerald-400'
+                  ? "text-emerald-400"
                   : diff < 0
-                  ? 'text-orange-400'
-                  : 'text-white/50'
+                    ? "text-orange-400"
+                    : "text-white/50"
               }`}
             >
               {comparisonLabel}
@@ -166,11 +166,11 @@ export function MetricBar({
           {/* Filled portion - animated with gradient and glow */}
           <motion.div
             className={`${config.height} rounded-full bg-gradient-to-r ${scoreStyle.gradient} ${scoreStyle.glow}`}
-            initial={{ width: animate ? '0%' : `${score}%` }}
+            initial={{ width: animate ? "0%" : `${score}%` }}
             animate={{ width: `${score}%` }}
             transition={{
-              duration: animate ? 1 : 0,
-              ease: 'easeOut',
+              duration: animate ? 0.6 : 0,
+              ease: "easeOut",
             }}
           />
         </div>
@@ -180,13 +180,13 @@ export function MetricBar({
           <motion.div
             className="absolute top-0 w-0.5 bg-white/50 rounded-full"
             style={{
-              height: '100%',
+              height: "100%",
               left: `${benchmark}%`,
-              transform: 'translateX(-50%)',
+              transform: "translateX(-50%)",
             }}
             initial={{ opacity: 0, scaleY: 0 }}
             animate={{ opacity: 1, scaleY: 1 }}
-            transition={{ delay: 0.5, duration: 0.3 }}
+            transition={{ delay: 0.3, duration: 0.2 }}
           >
             {/* Benchmark label tooltip */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -213,7 +213,7 @@ interface MetricBarGroupProps {
   }>;
   showBenchmarks?: boolean;
   animate?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -221,8 +221,8 @@ export function MetricBarGroup({
   metrics,
   showBenchmarks = true,
   animate = true,
-  size = 'md',
-  className = '',
+  size = "md",
+  className = "",
 }: MetricBarGroupProps) {
   return (
     <div className={`space-y-4 ${className}`}>
@@ -232,7 +232,7 @@ export function MetricBarGroup({
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{
-            delay: animate ? index * 0.1 : 0,
+            delay: animate ? index * 0.05 : 0,
             duration: 0.4,
           }}
         >

@@ -7,10 +7,10 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import {
   ArrowLeft,
   Download,
@@ -18,7 +18,7 @@ import {
   ExternalLink,
   Printer,
   MoreHorizontal,
-} from 'lucide-react';
+} from "lucide-react";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -43,22 +43,22 @@ export function ReportHeader({
   analysisId,
   url,
   generatedAt,
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  className = '',
+  apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+  className = "",
 }: ReportHeaderProps) {
   const router = useRouter();
 
   // Format the generation date
   const formattedDate = generatedAt
-    ? format(new Date(generatedAt), 'MMM d, yyyy \'at\' h:mm a')
+    ? format(new Date(generatedAt), "MMM d, yyyy 'at' h:mm a")
     : null;
 
   // Extract domain from URL for display
-  const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const displayUrl = url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
   // Handle PDF download
   const handleDownloadPDF = () => {
-    window.open(`${apiUrl}/api/v1/analysis/${analysisId}/pdf`, '_blank');
+    window.open(`${apiUrl}/api/v1/analysis/${analysisId}/pdf`, "_blank");
   };
 
   // Handle print
@@ -69,7 +69,7 @@ export function ReportHeader({
   // Handle share (copy link)
   const handleShare = async () => {
     const shareUrl = window.location.href;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -95,15 +95,15 @@ export function ReportHeader({
       `}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14">
           {/* Left section - Back button and URL */}
           <div className="flex items-center gap-4">
             {/* Back button */}
             <button
-              onClick={() => router.push('/')}
-              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors group"
+              onClick={() => router.push("/")}
+              className="flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-150 group"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-150" />
               <span className="text-sm font-medium hidden sm:inline">
                 New Analysis
               </span>
@@ -118,7 +118,7 @@ export function ReportHeader({
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-white hover:text-blue-400 transition-colors"
+                className="flex items-center gap-1.5 text-white hover:text-blue-400 transition-colors duration-150"
               >
                 <span className="font-medium text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
                   {displayUrl}
@@ -142,8 +142,8 @@ export function ReportHeader({
             {/* Print button - desktop only */}
             <button
               onClick={handlePrint}
-              className="hidden lg:flex items-center gap-2 px-3 py-2 text-sm text-white/60 
-                       hover:text-white hover:bg-white/[0.08] rounded-lg transition-colors border border-transparent hover:border-white/[0.1]"
+              className="hidden lg:flex items-center gap-2 px-3 py-2 text-sm text-white/70 
+                       hover:text-white hover:bg-white/[0.08] rounded-lg transition-colors duration-150 border border-transparent hover:border-white/[0.1]"
             >
               <Printer className="w-4 h-4" />
               <span>Print</span>
@@ -152,8 +152,8 @@ export function ReportHeader({
             {/* Share button */}
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-white/60 
-                       hover:text-white hover:bg-white/[0.08] rounded-lg transition-colors border border-transparent hover:border-white/[0.1]"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 
+                       hover:text-white hover:bg-white/[0.08] rounded-lg transition-colors duration-150 border border-transparent hover:border-white/[0.1]"
             >
               <Share2 className="w-4 h-4" />
               <span className="hidden sm:inline">Share</span>
@@ -164,8 +164,8 @@ export function ReportHeader({
               onClick={handleDownloadPDF}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium
                        bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg
-                       hover:from-blue-500 hover:to-indigo-500 transition-all duration-300
-                       shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)]
+                       hover:from-blue-500 hover:to-indigo-500 transition-all duration-150
+                       shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_20px_rgba(79,70,229,0.5)]
                        border border-white/10"
             >
               <Download className="w-4 h-4" />

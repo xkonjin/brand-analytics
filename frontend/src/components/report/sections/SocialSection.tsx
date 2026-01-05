@@ -7,10 +7,19 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { Share2, Twitter, Linkedin, Instagram, Youtube, Users, Heart, MessageCircle } from 'lucide-react';
-import { ModuleSection } from './ModuleSection';
+import {
+  Share2,
+  Twitter,
+  Linkedin,
+  Instagram,
+  Youtube,
+  Users,
+  Heart,
+  MessageCircle,
+} from "lucide-react";
+import { ModuleSection } from "./ModuleSection";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -73,14 +82,14 @@ interface SocialSectionProps {
 // Helper - Format large numbers
 // -----------------------------------------------------------------------------
 function formatNumber(num?: number): string {
-  if (num === undefined || num === null) return 'N/A';
+  if (num === undefined || num === null) return "N/A";
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num.toString();
 }
 
 function formatPercent(num?: number): string {
-  if (num === undefined || num === null) return 'N/A';
+  if (num === undefined || num === null) return "N/A";
   return `${num.toFixed(2)}%`;
 }
 
@@ -90,14 +99,14 @@ function formatPercent(num?: number): string {
 function getPlatformIcon(platform: string) {
   const name = platform.toLowerCase();
   switch (name) {
-    case 'twitter':
-    case 'x':
+    case "twitter":
+    case "x":
       return <Twitter className="w-4 h-4 text-sky-400" />;
-    case 'linkedin':
+    case "linkedin":
       return <Linkedin className="w-4 h-4 text-blue-400" />;
-    case 'instagram':
+    case "instagram":
       return <Instagram className="w-4 h-4 text-pink-400" />;
-    case 'youtube':
+    case "youtube":
       return <Youtube className="w-4 h-4 text-red-400" />;
     default:
       return <Share2 className="w-4 h-4 text-white/40" />;
@@ -107,58 +116,71 @@ function getPlatformIcon(platform: string) {
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
-export function SocialSection({ data, className = '' }: SocialSectionProps) {
-  const twitterData = data.platforms?.find(p => p.platform === 'twitter');
-  const linkedinData = data.platforms?.find(p => p.platform === 'linkedin');
+export function SocialSection({ data, className = "" }: SocialSectionProps) {
+  const twitterData = data.platforms?.find((p) => p.platform === "twitter");
+  const linkedinData = data.platforms?.find((p) => p.platform === "linkedin");
 
   const metrics = [
     {
-      label: 'Total Followers',
-      value: formatNumber(data.total_followers || (twitterData?.followers || 0) + (linkedinData?.followers || 0)),
+      label: "Total Followers",
+      value: formatNumber(
+        data.total_followers ||
+          (twitterData?.followers || 0) + (linkedinData?.followers || 0),
+      ),
       icon: <Users className="w-4 h-4 text-blue-400" />,
     },
     {
-      label: 'Engagement Rate',
-      value: formatPercent(data.overall_engagement_rate || data.engagement_rate || twitterData?.engagement_rate),
+      label: "Engagement Rate",
+      value: formatPercent(
+        data.overall_engagement_rate ||
+          data.engagement_rate ||
+          twitterData?.engagement_rate,
+      ),
       icon: <Heart className="w-4 h-4 text-red-400" />,
     },
     {
-      label: 'Twitter Followers',
+      label: "Twitter Followers",
       value: formatNumber(twitterData?.followers || data.twitter_followers),
       icon: <Twitter className="w-4 h-4 text-sky-400" />,
     },
     {
-      label: 'LinkedIn Followers',
+      label: "LinkedIn Followers",
       value: formatNumber(linkedinData?.followers || data.linkedin_followers),
       icon: <Linkedin className="w-4 h-4 text-blue-400" />,
     },
-  ].filter(m => m.value !== 'N/A') as Array<{
+  ].filter((m) => m.value !== "N/A") as Array<{
     label: string;
     value: string | number;
     unit?: string;
-    trend?: 'up' | 'down' | 'stable';
+    trend?: "up" | "down" | "stable";
   }>;
 
   // Platform presence - handle both object array and string array formats
   const platformObjects = data.platforms || [];
-  const platformNames = (data.platforms_found || []).concat(
-    platformObjects.map((p: PlatformData) => p.platform)
-  ).filter((v, i, a) => v && a.indexOf(v) === i); // unique, non-null
+  const platformNames = (data.platforms_found || [])
+    .concat(platformObjects.map((p: PlatformData) => p.platform))
+    .filter((v, i, a) => v && a.indexOf(v) === i); // unique, non-null
 
-  const findings = (data.findings || []).map(f => ({
+  const findings = (data.findings || []).map((f) => ({
     title: f.title,
-    description: f.description || (f as any).detail || '',
-    severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
+    description: f.description || (f as any).detail || "",
+    severity: f.severity as
+      | "critical"
+      | "high"
+      | "medium"
+      | "low"
+      | "info"
+      | "success",
     data: f.data as Record<string, string | number> | undefined,
   }));
 
-  const recommendations = (data.recommendations || []).map(r => ({
+  const recommendations = (data.recommendations || []).map((r) => ({
     title: r.title,
-    description: r.description || (r as any).detail || '',
-    priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
+    description: r.description || (r as any).detail || "",
+    priority: r.priority as "critical" | "high" | "medium" | "low",
     category: r.category,
-    impact: r.impact as 'high' | 'medium' | 'low',
-    effort: r.effort as 'high' | 'medium' | 'low',
+    impact: r.impact as "high" | "medium" | "low",
+    effort: r.effort as "high" | "medium" | "low",
   }));
 
   return (
@@ -176,16 +198,16 @@ export function SocialSection({ data, className = '' }: SocialSectionProps) {
     >
       {platformNames.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
             Platforms Found
           </h3>
           <div className="flex flex-wrap gap-2">
             {platformNames.map((platform) => (
               <span
                 key={platform}
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/[0.05] backdrop-blur-xl 
-                         border border-white/[0.08] rounded-lg text-sm text-white/70
-                         hover:bg-white/[0.08] transition-all"
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] backdrop-blur-xl 
+                         border border-white/[0.06] rounded-md text-sm text-white/70
+                         hover:bg-white/[0.06] transition-all duration-150"
               >
                 {getPlatformIcon(platform)}
                 {platform}
@@ -197,29 +219,33 @@ export function SocialSection({ data, className = '' }: SocialSectionProps) {
 
       {/* Platform Details Grid */}
       {platformObjects.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+        <div className="mt-4">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
             Platform Performance
           </h3>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-3">
             {platformObjects.slice(0, 4).map((platform) => (
               <div
                 key={platform.platform}
-                className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4
-                         hover:bg-white/[0.08] transition-all"
+                className="bg-white/[0.04] backdrop-blur-xl rounded-lg border border-white/[0.06] p-4
+                         hover:bg-white/[0.06] transition-all duration-150"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-white/[0.05]">
+                  <div className="p-2 rounded-md bg-white/[0.04]">
                     {getPlatformIcon(platform.platform)}
                   </div>
                   <div>
-                    <div className="font-medium text-white capitalize">{platform.platform}</div>
+                    <div className="font-medium text-white capitalize">
+                      {platform.platform}
+                    </div>
                     {platform.handle && (
-                      <div className="text-xs text-white/40">@{platform.handle}</div>
+                      <div className="text-xs text-white/40">
+                        @{platform.handle}
+                      </div>
                     )}
                   </div>
                   {platform.is_verified && (
-                    <span className="ml-auto text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full">
+                    <span className="ml-auto text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-md">
                       Verified
                     </span>
                   )}
@@ -228,25 +254,33 @@ export function SocialSection({ data, className = '' }: SocialSectionProps) {
                   {platform.followers !== undefined && (
                     <div>
                       <div className="text-white/40 text-xs">Followers</div>
-                      <div className="text-white font-medium">{formatNumber(platform.followers)}</div>
+                      <div className="text-white font-medium">
+                        {formatNumber(platform.followers)}
+                      </div>
                     </div>
                   )}
                   {platform.engagement_rate !== undefined && (
                     <div>
                       <div className="text-white/40 text-xs">Engagement</div>
-                      <div className="text-white font-medium">{formatPercent(platform.engagement_rate)}</div>
+                      <div className="text-white font-medium">
+                        {formatPercent(platform.engagement_rate)}
+                      </div>
                     </div>
                   )}
                   {platform.posts_last_30_days !== undefined && (
                     <div>
                       <div className="text-white/40 text-xs">Posts (30d)</div>
-                      <div className="text-white font-medium">{platform.posts_last_30_days}</div>
+                      <div className="text-white font-medium">
+                        {platform.posts_last_30_days}
+                      </div>
                     </div>
                   )}
                   {platform.avg_likes !== undefined && (
                     <div>
                       <div className="text-white/40 text-xs">Avg Likes</div>
-                      <div className="text-white font-medium">{formatNumber(platform.avg_likes)}</div>
+                      <div className="text-white font-medium">
+                        {formatNumber(platform.avg_likes)}
+                      </div>
                     </div>
                   )}
                 </div>

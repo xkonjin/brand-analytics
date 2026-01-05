@@ -7,7 +7,7 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
 import {
   Radar,
@@ -18,8 +18,8 @@ import {
   ResponsiveContainer,
   Legend,
   Tooltip,
-} from 'recharts';
-import { MODULE_BENCHMARKS } from '@/lib/benchmarks';
+} from "recharts";
+import { MODULE_BENCHMARKS } from "@/lib/benchmarks";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -46,11 +46,11 @@ interface DataPoint {
 // Score-based color for Glass UI
 // -----------------------------------------------------------------------------
 function getScoreColor(score: number) {
-  if (score >= 80) return '#34d399'; // emerald-400
-  if (score >= 70) return '#4ade80'; // green-400
-  if (score >= 60) return '#facc15'; // yellow-400
-  if (score >= 50) return '#fb923c'; // orange-400
-  return '#f87171'; // red-400
+  if (score >= 80) return "#34d399"; // emerald-400
+  if (score >= 70) return "#4ade80"; // green-400
+  if (score >= 60) return "#facc15"; // yellow-400
+  if (score >= 50) return "#fb923c"; // orange-400
+  return "#f87171"; // red-400
 }
 
 // -----------------------------------------------------------------------------
@@ -59,8 +59,8 @@ function getScoreColor(score: number) {
 export function BrandRadarChart({
   scores,
   showBenchmark = true,
-  height = 400,
-  className = '',
+  height = 260,
+  className = "",
 }: BrandRadarChartProps) {
   // Transform scores into chart data format
   const data: DataPoint[] = MODULE_BENCHMARKS.map((benchmark) => ({
@@ -82,15 +82,41 @@ export function BrandRadarChart({
         <RadarChart
           cx="50%"
           cy="50%"
-          outerRadius="75%"
+          outerRadius="70%"
           data={data}
-          margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+          margin={{ top: 10, right: 30, bottom: 10, left: 30 }}
         >
           {/* Grid lines - glass style */}
           <PolarGrid
-            stroke="rgba(255, 255, 255, 0.1)"
+            stroke="rgba(255, 255, 255, 0.05)"
             strokeDasharray="3 3"
             gridType="polygon"
+          />
+
+          {/* Axis labels - module names */}
+          <PolarAngleAxis
+            dataKey="module"
+            tick={({ payload, x, y, textAnchor, ...rest }) => (
+              <text
+                {...rest}
+                x={x}
+                y={y}
+                textAnchor={textAnchor}
+                className="fill-white/80 text-[11px] font-semibold tracking-wide"
+              >
+                {payload.value}
+              </text>
+            )}
+            tickLine={false}
+          />
+
+          {/* Radial axis - score scale 0-100 */}
+          <PolarRadiusAxis
+            angle={90}
+            domain={[0, 100]}
+            tick={{ fill: "rgba(255, 255, 255, 0.2)", fontSize: 10 }}
+            tickCount={5}
+            axisLine={false}
           />
 
           {/* Axis labels - module names */}
@@ -114,7 +140,7 @@ export function BrandRadarChart({
           <PolarRadiusAxis
             angle={90}
             domain={[0, 100]}
-            tick={{ fill: 'rgba(255, 255, 255, 0.4)', fontSize: 10 }}
+            tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10 }}
             tickCount={5}
             axisLine={false}
           />
@@ -144,13 +170,13 @@ export function BrandRadarChart({
             dot={{
               r: 4,
               fill: primaryColor,
-              stroke: 'rgba(255, 255, 255, 0.8)',
+              stroke: "rgba(255, 255, 255, 0.8)",
               strokeWidth: 2,
             }}
             activeDot={{
               r: 6,
               fill: primaryColor,
-              stroke: '#fff',
+              stroke: "#fff",
               strokeWidth: 2,
             }}
             style={{
@@ -168,10 +194,14 @@ export function BrandRadarChart({
                 diff > 0
                   ? `+${diff.toFixed(0)} above`
                   : diff < 0
-                  ? `${diff.toFixed(0)} below`
-                  : 'At benchmark';
+                    ? `${diff.toFixed(0)} below`
+                    : "At benchmark";
               const diffColor =
-                diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-orange-400' : 'text-white/50';
+                diff > 0
+                  ? "text-emerald-400"
+                  : diff < 0
+                    ? "text-orange-400"
+                    : "text-white/50";
 
               return (
                 <div className="bg-[rgb(30,30,50)]/90 backdrop-blur-xl border border-white/[0.15] rounded-xl shadow-2xl p-4 text-sm">
@@ -180,14 +210,16 @@ export function BrandRadarChart({
                   </p>
                   <div className="space-y-1">
                     <p className="text-white/80">
-                      Score:{' '}
+                      Score:{" "}
                       <span className="font-bold text-white">
                         {dataPoint.score.toFixed(0)}
                       </span>
                     </p>
                     <p className="text-white/50">
-                      Benchmark:{' '}
-                      <span className="font-medium text-white/70">{dataPoint.benchmark}</span>
+                      Benchmark:{" "}
+                      <span className="font-medium text-white/70">
+                        {dataPoint.benchmark}
+                      </span>
                     </p>
                     <p className={`text-xs font-medium ${diffColor}`}>
                       {diffLabel}
@@ -200,9 +232,11 @@ export function BrandRadarChart({
 
           {/* Legend */}
           <Legend
-            wrapperStyle={{ paddingTop: 16 }}
+            wrapperStyle={{ paddingTop: 8 }}
             formatter={(value) => (
-              <span className="text-sm text-white/60">{value}</span>
+              <span className="text-xs font-semibold text-white/90 tracking-wide">
+                {value}
+              </span>
             )}
           />
         </RadarChart>

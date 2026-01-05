@@ -7,10 +7,10 @@
  * =============================================================================
  */
 
-'use client';
+"use client";
 
-import { Users, Linkedin, Award, Building, User } from 'lucide-react';
-import { ModuleSection } from './ModuleSection';
+import { Users, Linkedin, Award, Building, User } from "lucide-react";
+import { ModuleSection } from "./ModuleSection";
 
 // -----------------------------------------------------------------------------
 // Types
@@ -54,30 +54,30 @@ interface TeamSectionProps {
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
-export function TeamSection({ data, className = '' }: TeamSectionProps) {
+export function TeamSection({ data, className = "" }: TeamSectionProps) {
   // Build metrics
   const metrics = [
     {
-      label: 'Founder Visibility',
+      label: "Founder Visibility",
       value: data.founder_visibility_score ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Team Size',
+      label: "Team Size",
       value: data.team_size ?? 0,
-      subtitle: 'identified members',
+      subtitle: "identified members",
     },
     {
-      label: 'Leadership Visibility',
+      label: "Leadership Visibility",
       value: data.leadership_visibility ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
     {
-      label: 'Credibility Score',
+      label: "Credibility Score",
       value: data.company_credibility_score ?? 0,
-      unit: '/100',
+      unit: "/100",
     },
-  ].filter(m => m.value !== undefined && m.value !== 0) as Array<{
+  ].filter((m) => m.value !== undefined && m.value !== 0) as Array<{
     label: string;
     value: string | number;
     unit?: string;
@@ -85,21 +85,27 @@ export function TeamSection({ data, className = '' }: TeamSectionProps) {
   }>;
 
   // Transform findings
-  const findings = (data.findings || []).map(f => ({
+  const findings = (data.findings || []).map((f) => ({
     title: f.title,
-    description: f.description || (f as any).detail || '',
-    severity: f.severity as 'critical' | 'high' | 'medium' | 'low' | 'info' | 'success',
+    description: f.description || (f as any).detail || "",
+    severity: f.severity as
+      | "critical"
+      | "high"
+      | "medium"
+      | "low"
+      | "info"
+      | "success",
     data: f.data as Record<string, string | number> | undefined,
   }));
 
   // Transform recommendations
-  const recommendations = (data.recommendations || []).map(r => ({
+  const recommendations = (data.recommendations || []).map((r) => ({
     title: r.title,
-    description: r.description || (r as any).detail || '',
-    priority: r.priority as 'critical' | 'high' | 'medium' | 'low',
+    description: r.description || (r as any).detail || "",
+    priority: r.priority as "critical" | "high" | "medium" | "low",
     category: r.category,
-    impact: r.impact as 'high' | 'medium' | 'low',
-    effort: r.effort as 'high' | 'medium' | 'low',
+    impact: r.impact as "high" | "medium" | "low",
+    effort: r.effort as "high" | "medium" | "low",
   }));
 
   return (
@@ -118,26 +124,28 @@ export function TeamSection({ data, className = '' }: TeamSectionProps) {
       {/* Team Members */}
       {data.team_members && data.team_members.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wide mb-4">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-3">
             Key Team Members
           </h3>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {data.team_members.slice(0, 6).map((member, idx) => (
               <div
                 key={member.name || idx}
-                className="bg-white/[0.05] backdrop-blur-xl rounded-xl border border-white/[0.08] p-4 
-                         flex items-center gap-3 hover:bg-white/[0.08] transition-all group"
+                className="bg-white/[0.04] backdrop-blur-xl rounded-lg border border-white/[0.06] p-4 
+                         flex items-center gap-3 hover:bg-white/[0.06] transition-all duration-150 group"
               >
-                <div className="w-10 h-10 rounded-full bg-white/[0.08] flex items-center justify-center text-white/50
-                              group-hover:bg-white/[0.12] transition-all">
+                <div
+                  className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50
+                              group-hover:bg-white/[0.08] transition-all duration-150"
+                >
                   <User className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-white truncate">
-                    {member.name || 'Unknown'}
+                    {member.name || "Unknown"}
                   </div>
                   <div className="text-sm text-white/50 truncate">
-                    {member.role || 'Team Member'}
+                    {member.role || "Team Member"}
                   </div>
                 </div>
                 {member.linkedin_url && (
@@ -145,7 +153,7 @@ export function TeamSection({ data, className = '' }: TeamSectionProps) {
                     href={member.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                    className="text-blue-400 hover:text-blue-300 transition-colors duration-150"
                   >
                     <Linkedin className="w-4 h-4" />
                   </a>
@@ -158,15 +166,19 @@ export function TeamSection({ data, className = '' }: TeamSectionProps) {
 
       {/* LinkedIn Presence Indicator */}
       {data.linkedin_presence !== undefined && (
-        <div className="mt-6">
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-            data.linkedin_presence
-              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20'
-              : 'bg-white/[0.05] text-white/50 border border-white/[0.08] hover:bg-white/[0.08]'
-          }`}>
+        <div className="mt-4">
+          <div
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-150 ${
+              data.linkedin_presence
+                ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/15"
+                : "bg-white/[0.04] text-white/50 border border-white/[0.06] hover:bg-white/[0.06]"
+            }`}
+          >
             <Linkedin className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {data.linkedin_presence ? 'LinkedIn presence confirmed' : 'No LinkedIn presence detected'}
+              {data.linkedin_presence
+                ? "LinkedIn presence confirmed"
+                : "No LinkedIn presence detected"}
             </span>
           </div>
         </div>
