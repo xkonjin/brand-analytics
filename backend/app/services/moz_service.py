@@ -7,8 +7,13 @@ import httpx
 from urllib.parse import urlparse
 
 from app.config import settings
+from app.utils.cache import cache
 
 logger = logging.getLogger(__name__)
+
+MOZ_CACHE_TTL = 3600 * 24  # 24 hours - DA doesn't change frequently
+MAX_RETRIES = 2
+RETRY_DELAY_BASE = 2.0
 
 
 @dataclass
@@ -61,85 +66,140 @@ class MozService:
             logger.warning("Moz API not configured, returning mock data")
             return self._get_mock_metrics(url, domain)
 
-        # Moz JSON-RPC API uses x-moz-token header for auth
-        # It accepts both new-style tokens and legacy base64 keys
+        cache_key = cache._make_key("moz_metrics", domain)
+        cached_result = await cache.get(cache_key)
+        if cached_result:
+            logger.info(f"Moz cache hit for {domain}")
+            return MozMetrics(**cached_result)
+
         headers = {
             "Content-Type": "application/json",
             "x-moz-token": self.api_key,
         }
 
-        try:
-            payload = {
-                "jsonrpc": "2.0",
-                "id": "brand-analytics-1-moz-v2-req",  # Needs to be > 24 chars
-                "method": "data.site.metrics.fetch",
-                "params": {
-                    "data": {
-                        "site_query": {
-                            "query": domain,
-                            "scope": "domain",
-                        }
+        payload = {
+            "jsonrpc": "2.0",
+            "id": "brand-analytics-1-moz-v2-req",
+            "method": "data.site.metrics.fetch",
+            "params": {
+                "data": {
+                    "site_query": {
+                        "query": domain,
+                        "scope": "domain",
                     }
-                },
-            }
+                }
+            },
+        }
 
-            logger.info(f"Fetching Moz metrics for {domain}")
+        logger.info(f"Fetching Moz metrics for {domain}")
 
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    self.API_URL, json=payload, headers=headers
-                )
+        for attempt in range(MAX_RETRIES + 1):
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        self.API_URL, json=payload, headers=headers
+                    )
 
-                if response.status_code == 200:
-                    data = response.json()
-                    if "error" in data:
-                        error_msg = data["error"].get("message", "Unknown error")
-                        logger.error(f"Moz API error: {error_msg}")
+                    if response.status_code == 200:
+                        data = response.json()
+                        if "error" in data:
+                            error_msg = data["error"].get("message", "Unknown error")
+                            logger.error(f"Moz API error: {error_msg}")
+                            return MozMetrics(
+                                success=False,
+                                url=url,
+                                domain=domain,
+                                error=error_msg,
+                            )
+                        result = self._parse_response(url, domain, data)
+                        await cache.set(
+                            cache_key,
+                            {
+                                "success": result.success,
+                                "url": result.url,
+                                "domain": result.domain,
+                                "domain_authority": result.domain_authority,
+                                "page_authority": result.page_authority,
+                                "spam_score": result.spam_score,
+                                "linking_domains": result.linking_domains,
+                                "total_links": result.total_links,
+                            },
+                            ttl=MOZ_CACHE_TTL,
+                        )
+                        return result
+
+                    elif response.status_code == 401:
+                        logger.error("Moz API authentication failed - check API token")
                         return MozMetrics(
                             success=False,
                             url=url,
                             domain=domain,
-                            error=error_msg,
+                            error="Authentication failed - invalid API token",
                         )
-                    return self._parse_response(url, domain, data)
 
-                elif response.status_code == 401:
-                    logger.error("Moz API authentication failed - check API token")
-                    return MozMetrics(
-                        success=False,
-                        url=url,
-                        domain=domain,
-                        error="Authentication failed - invalid API token",
-                    )
+                    elif response.status_code == 429:
+                        if attempt < MAX_RETRIES:
+                            delay = RETRY_DELAY_BASE * (2**attempt)
+                            logger.warning(
+                                f"Moz rate limited, retry {attempt + 1} in {delay}s"
+                            )
+                            await asyncio.sleep(delay)
+                            continue
+                        logger.warning("Moz API rate limited after retries")
+                        return MozMetrics(
+                            success=False,
+                            url=url,
+                            domain=domain,
+                            error="Rate limited - API quota exceeded",
+                        )
 
-                elif response.status_code == 429:
-                    logger.warning("Moz API rate limited")
-                    return MozMetrics(
-                        success=False,
-                        url=url,
-                        domain=domain,
-                        error="Rate limited - API quota exceeded",
-                    )
+                    elif response.status_code >= 500:
+                        if attempt < MAX_RETRIES:
+                            delay = RETRY_DELAY_BASE * (2**attempt)
+                            logger.warning(
+                                f"Moz server error {response.status_code}, "
+                                f"retry {attempt + 1} in {delay}s"
+                            )
+                            await asyncio.sleep(delay)
+                            continue
+                        logger.error(
+                            f"Moz API error after retries: {response.status_code}"
+                        )
+                        return MozMetrics(
+                            success=False,
+                            url=url,
+                            domain=domain,
+                            error=f"API error: {response.status_code}",
+                        )
 
-                else:
-                    logger.error(
-                        f"Moz API error: {response.status_code} - {response.text}"
-                    )
-                    return MozMetrics(
-                        success=False,
-                        url=url,
-                        domain=domain,
-                        error=f"API error: {response.status_code}",
-                    )
+                    else:
+                        logger.error(
+                            f"Moz API error: {response.status_code} - {response.text}"
+                        )
+                        return MozMetrics(
+                            success=False,
+                            url=url,
+                            domain=domain,
+                            error=f"API error: {response.status_code}",
+                        )
 
-        except httpx.TimeoutException:
-            logger.error(f"Moz API timeout for {url}")
-            return MozMetrics(
-                success=False, url=url, domain=domain, error="Request timed out"
-            )
-        except Exception as e:
-            logger.error(f"Moz API request failed: {e}")
-            return MozMetrics(success=False, url=url, domain=domain, error=str(e))
+            except httpx.TimeoutException:
+                if attempt < MAX_RETRIES:
+                    delay = RETRY_DELAY_BASE * (2**attempt)
+                    logger.warning(f"Moz timeout, retry {attempt + 1} in {delay}s")
+                    await asyncio.sleep(delay)
+                    continue
+                logger.error(f"Moz API timeout for {url} after retries")
+                return MozMetrics(
+                    success=False, url=url, domain=domain, error="Request timed out"
+                )
+            except Exception as e:
+                logger.error(f"Moz API request failed: {e}")
+                return MozMetrics(success=False, url=url, domain=domain, error=str(e))
+
+        return MozMetrics(
+            success=False, url=url, domain=domain, error="Max retries exceeded"
+        )
 
     def _parse_response(
         self, url: str, domain: str, data: Dict[str, Any]
